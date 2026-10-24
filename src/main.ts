@@ -2,7 +2,7 @@ import './styles.css';
 import { mulberry32 } from './core/rng';
 import { createStore } from './storage';
 import { mountApp } from './ui/app';
-import { createSilentSound } from './ui/sound';
+import { createSound } from './ui/sound';
 
 function safeLocalStorage(): Storage | null {
   try {
@@ -17,5 +17,5 @@ mountApp({
   rng: mulberry32(Date.now()),
   now: () => performance.now(),
   store: createStore(safeLocalStorage()),
-  sound: createSilentSound(),
+  sound: createSound(),
 });

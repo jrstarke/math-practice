@@ -94,3 +94,15 @@ test('destroy removes keyboard listener', () => {
   window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
   expect(s.saved).toHaveLength(0);
 });
+
+test('mute toggle saves and updates icon', () => {
+  const s = setup();
+  expect(s.sound.setMuted).toHaveBeenLastCalledWith(false);
+  expect(s.q('[data-action="mute"]')!.textContent).toBe('🔊');
+  s.tap('[data-action="mute"]');
+  expect(s.sound.setMuted).toHaveBeenLastCalledWith(true);
+  expect(s.saved.at(-1)!.muted).toBe(true);
+  expect(s.q('[data-action="mute"]')!.textContent).toBe('🔇');
+  s.tap('[data-action="mute"]');
+  expect(s.sound.setMuted).toHaveBeenLastCalledWith(false);
+});

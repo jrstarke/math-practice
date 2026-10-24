@@ -47,6 +47,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
 
   // Static shell
   const streakEl = el('span', { class: 'streak', 'data-role': 'streak' });
+  const muteBtn = el('button', { type: 'button', class: 'icon-button', 'data-action': 'mute', 'aria-label': 'Sound on or off' });
   const problemArea = el('div', { class: 'problem-area', 'data-role': 'problem-area' });
   const messageEl = el('div', { class: 'message', 'data-role': 'message', 'aria-live': 'polite' });
   const bubble = createHintBubble();
@@ -55,7 +56,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   const actions = el('div', { class: 'actions' });
   root.replaceChildren(
     el('div', { class: 'app' },
-      el('header', { class: 'topbar' }, streakEl),
+      el('header', { class: 'topbar' }, streakEl, muteBtn),
       el('main', { class: 'play' },
         el('section', { class: 'stage' }, bubble.el, problemArea, messageEl),
         el('section', { class: 'controls' }, actions, createNumberPad()))));
@@ -69,6 +70,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     renderProblem(problemArea, { problem, entry, ghosts: reveal.ghosts, highlight: reveal.column, phase });
     streakEl.textContent = `🔥 ${progress.streak}`;
     messageEl.textContent = message;
+    muteBtn.textContent = progress.muted ? '🔇' : '🔊';
     bubble.set(reveal.text);
     const allShown = hintsShown >= steps.length;
     hintBtn.disabled = allShown;
@@ -159,6 +161,13 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     passStep();
   }
 
+  function toggleMute() {
+    progress = { ...progress, muted: !progress.muted };
+    store.save(progress);
+    sound.setMuted(progress.muted);
+    render();
+  }
+
   function handleKey(key: Key) {
     if (phase !== 'answering') return;
     const r = pressKey(entry, key);
@@ -174,6 +183,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     const keyEl = target.closest<HTMLElement>('[data-key]');
     if (keyEl) { e.preventDefault(); handleKey(keyEl.dataset.key as Key); return; }
     const action = target.closest<HTMLElement>('[data-action]')?.dataset.action;
+    if (action === 'mute') { toggleMute(); return; }
     if (action === 'hint') { hint(); return; }
     if (action === 'pass') { pass(); return; }
     if (action === 'next') { if (phase === 'passed') showNext(); return; }
@@ -196,6 +206,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
 
   root.addEventListener('pointerdown', onPointerDown);
   window.addEventListener('keydown', onKeyDown);
+  sound.setMuted(progress.muted);
   showNext();
 
   return {
