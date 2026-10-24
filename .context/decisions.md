@@ -5,3 +5,6 @@
   vertical layout, left-to-right entry right-aligned, custom number pad, optional scratch boxes,
   unlimited tries + tap-only column hints + Pass, invisible timing, separate 9-level ladders per op,
   endless mode w/ streak, synthesized Web Audio sounds + mute, single user, localStorage, no parent view.
+- 2026-10-24 (final review fixes): hint bubble floats above the problem (never resizes it); problem sized by container
+  query to the space left; borrow-across-zero hint split into 2 steps; 400ms Hint/Pass guard after Next;
+  audio unlock retried on every gesture. Details + all rulings in wip.md.

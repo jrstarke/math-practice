@@ -1,0 +1,12 @@
+import { chromium } from 'playwright';
+const b = await chromium.launch({ channel: 'chromium' });
+const p = await b.newPage({ viewport: { width: 375, height: 647 } });
+const lvl = { level: 9, window: [], calibrationLeft: 0 };
+await p.addInitScript(l => { localStorage.setItem('math-practice-progress', JSON.stringify({ version: 1, addition: l, subtraction: l, streak: 1, bestStreak: 1, muted: false, installTipShown: true }));
+  let f = true; const r = Date.now; Date.now = () => (f ? (f = false, 2 * 7919) : r()); }, lvl);
+await p.goto('http://localhost:5173'); await p.waitForSelector('.pad');
+for (let i = 0; i < 2; i++) await p.dispatchEvent('[data-action="hint"]', 'pointerdown');
+console.log(await p.evaluate(() => { const r = s => { const x = document.querySelector(s).getBoundingClientRect(); return `${s} top=${x.top.toFixed(0)} bottom=${x.bottom.toFixed(0)} h=${x.height.toFixed(0)} w=${x.width.toFixed(0)}`; };
+  return [document.querySelector('.bubble').textContent, r('.topbar'), r('.stage'), r('.problem-area'), r('.problem-anchor'), r('.bubble'), r('.problem'), r('.message'), r('.controls')].join('\n'); }));
+await p.screenshot({ path: 'out/dbg2.png' });
+await b.close();

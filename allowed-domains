@@ -1,0 +1,8 @@
+# Extra domains for this project's sandbox firewall (one per line; full-line comments only).
+# Each line is resolved with `dig` once at container start — an unresolvable line aborts the firewall.
+
+# Playwright browser download (`npx playwright install chromium`) for layout checks.
+# These CDNs rotate IPs, so addresses resolved at startup can go stale: install soon after a restart.
+cdn.playwright.dev
+playwright.download.prss.microsoft.com
+storage.googleapis.com

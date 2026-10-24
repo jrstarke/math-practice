@@ -1,0 +1,11 @@
+import { chromium } from 'playwright';
+const b = await chromium.launch({ channel: 'chromium' });
+const p = await b.newPage({ viewport: { width: 820, height: 1180 } });
+await p.goto('http://localhost:5173');
+await p.waitForSelector('[data-role="answer"]', { state: 'attached' });
+console.log('empty answer row h =', await p.evaluate(() => document.querySelector('[data-role="answer"]').getBoundingClientRect().height));
+await p.dispatchEvent('[data-key="5"]', 'pointerdown');
+console.log('after 1 digit h =', await p.evaluate(() => document.querySelector('[data-role="answer"]').getBoundingClientRect().height));
+await p.dispatchEvent('[data-key="back"]', 'pointerdown');
+await p.screenshot({ path: 'out/empty.png' });
+await b.close();
