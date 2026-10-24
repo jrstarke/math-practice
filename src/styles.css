@@ -11,6 +11,7 @@
   --key: #ffffff;
   --key-shadow: #e6dccb;
   --cell: clamp(44px, 13vw, 84px);
+  --bubble-room: 4rem; /* space kept above the problem for a one-line hint bubble */
   font-family: ui-rounded, "SF Pro Rounded", "Nunito", system-ui, sans-serif;
   color: var(--ink);
   background: var(--bg);
@@ -57,9 +58,17 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 }
 
 .play { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; }
-.stage {
-  flex: 1; min-height: 0; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 12px;
+.stage { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.problem-area {
+  flex: 1 1 0; min-height: 0; align-self: stretch;
+  display: flex; flex-direction: column; align-items: center; justify-content: safe center;
+}
+.problem-anchor { position: relative; margin-top: var(--bubble-room); }
+
+/* The problem fills whatever height the stage has left, so it never runs under the controls. */
+@supports (container-type: size) {
+  .problem-area { container-type: size; }
+  .problem-anchor { --cell: min(84px, 100cqw / 5.8, (100cqh - var(--bubble-room) - 22px) / 3.46); }
 }
 .controls { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 460px; align-self: center; }
 
@@ -77,6 +86,7 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
   font-size: calc(var(--cell) * 0.8);
   font-weight: 800;
   line-height: 1.15;
+  height: calc(var(--cell) * 0.92); /* fixed, so empty answer boxes still show */
   font-variant-numeric: tabular-nums;
 }
 .cell { display: flex; align-items: center; justify-content: center; border-radius: 12px; }
@@ -140,7 +150,9 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 
 /* Hints */
 .bubble {
-  position: relative; max-width: min(520px, 100%);
+  /* Floats above the problem and grows upward, so long hints never move or shrink the problem. */
+  position: absolute; bottom: calc(100% + 12px); left: 50%; transform: translateX(-50%); z-index: 3;
+  width: max-content; max-width: min(520px, calc(100vw - 32px));
   background: var(--card); border-radius: 20px; padding: 12px 18px;
   font-size: 1.25rem; font-weight: 700; line-height: 1.35; text-align: center;
   box-shadow: 0 3px 0 var(--key-shadow);
@@ -150,6 +162,12 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
   border: 10px solid transparent; border-bottom: 0; border-top-color: var(--card);
 }
 .bubble.empty { visibility: hidden; }
+.bubble.long { font-size: 1.05rem; line-height: 1.3; max-width: min(620px, calc(100vw - 32px)); }
+@supports (container-type: size) {
+  /* Stay within the stage (matters in landscape, where the pad is beside it). */
+  .bubble { max-width: min(520px, 100cqw); }
+  .bubble.long { max-width: min(620px, 100cqw); }
+}
 
 .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .action {
@@ -170,3 +188,39 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 }
 .install-tip span { flex: 1; }
 .tip-dismiss { width: 44px; height: 44px; border-radius: 50%; font-size: 1.2rem; flex: none; }
+
+/* Short screens (iPhone SE/8, iPhone in a Safari tab): tighten chrome so the problem keeps room. */
+@media (max-height: 760px) {
+  :root { --bubble-room: 2.9rem; }
+  .app {
+    padding: max(8px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
+             max(8px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    gap: 6px;
+  }
+  .topbar { min-height: 40px; }
+  .streak { font-size: 1.2rem; padding: 2px 12px; }
+  .icon-button { width: 40px; height: 40px; font-size: 1.25rem; }
+  .play, .controls, .pad { gap: 8px; }
+  .stage { gap: 4px; }
+  .key { min-height: 44px; height: clamp(44px, 8dvh, 64px); font-size: 1.6rem; border-radius: 14px; }
+  .action { min-height: 44px; font-size: 1.1rem; }
+  .bubble { font-size: 1.05rem; padding: 8px 14px; }
+  .bubble.long { font-size: 0.9rem; }
+  .message { font-size: 1.1rem; }
+}
+
+/* Phones: no room in the column, so float the one-time tip over the number pad until dismissed. */
+@media (max-height: 760px), (max-width: 600px) {
+  .install-tip {
+    position: fixed; z-index: 10; left: 12px; right: 12px; bottom: max(12px, env(safe-area-inset-bottom));
+    font-size: 0.95rem; box-shadow: 0 6px 24px rgba(43, 42, 76, 0.25);
+  }
+}
+
+/* Phones in landscape: problem beside the pad, pad keys share the full height. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .play { flex-direction: row; align-items: stretch; }
+  .controls { width: 46%; max-width: 420px; align-self: stretch; }
+  .pad { flex: 1; min-height: 0; grid-auto-rows: 1fr; }
+  .key { height: auto; min-height: 0; }
+}

@@ -55,16 +55,19 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   // Static shell
   const streakEl = el('span', { class: 'streak', 'data-role': 'streak' });
   const muteBtn = el('button', { type: 'button', class: 'icon-button', 'data-action': 'mute', 'aria-label': 'Sound on or off' });
-  const problemArea = el('div', { class: 'problem-area', 'data-role': 'problem-area' });
+  const problemHost = el('div');
   const messageEl = el('div', { class: 'message', 'data-role': 'message', 'aria-live': 'polite' });
   const bubble = createHintBubble();
+  // The bubble floats above the problem (anchored to it) so hint length never resizes the problem.
+  const problemArea = el('div', { class: 'problem-area', 'data-role': 'problem-area' },
+    el('div', { class: 'problem-anchor' }, bubble.el, problemHost));
   const hintBtn = el('button', { type: 'button', class: 'action hint', 'data-action': 'hint' });
   const passBtn = el('button', { type: 'button', class: 'action pass', 'data-action': 'pass' }, 'Pass');
   const actions = el('div', { class: 'actions' });
   const appEl = el('div', { class: 'app' },
       el('header', { class: 'topbar' }, streakEl, muteBtn),
       el('main', { class: 'play' },
-        el('section', { class: 'stage' }, bubble.el, problemArea, messageEl),
+        el('section', { class: 'stage' }, problemArea, messageEl),
         el('section', { class: 'controls' }, actions, createNumberPad())));
   root.replaceChildren(appEl);
   if (shouldShowInstallTip(nav, progress)) appEl.prepend(createInstallTip());
@@ -75,7 +78,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   }
 
   function render() {
-    renderProblem(problemArea, { problem, entry, ghosts: reveal.ghosts, highlight: reveal.column, phase });
+    renderProblem(problemHost, { problem, entry, ghosts: reveal.ghosts, highlight: reveal.column, phase });
     streakEl.textContent = `🔥 ${progress.streak}`;
     messageEl.textContent = message;
     muteBtn.textContent = progress.muted ? '🔇' : '🔊';

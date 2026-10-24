@@ -30,8 +30,14 @@ test('62 − 29 borrow steps', () => {
 
 test('302 − 147 borrows across zero', () => {
   const s = solve({ op: '-', a: 302, b: 147, level: 9 });
-  expect(s[1].text).toBe('The tens has nothing to lend, so borrow from the hundreds first: 3 becomes 2 and 0 becomes 10. Now the tens can lend: 10 becomes 9 and 2 becomes 12.');
-  expect(s[1].scratch).toEqual({ 2: '2', 1: '9', 0: '12' });
+  // Two short steps (fits the hint bubble on small phones, and shows the 10 before it becomes 9).
+  expect(s[1].text).toBe('The tens has nothing to lend, so borrow from the hundreds first: 3 becomes 2 and 0 becomes 10.');
+  expect(s[1].scratch).toEqual({ 2: '2', 1: '10' });
+  expect(s[1].column).toBe(1);
+  expect(s[2].text).toBe('Now the tens can lend: 10 becomes 9 and 2 becomes 12.');
+  expect(s[2].scratch).toEqual({ 1: '9', 0: '12' });
+  expect(s[2].column).toBe(0);
+  expect(revealState(s, 3).scratch).toEqual({ 2: '2', 1: '9', 0: '12' });
 });
 
 test('carry out of top column ghosts a new leading digit (68 + 57, 7 + 8)', () => {

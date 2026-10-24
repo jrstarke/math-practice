@@ -91,10 +91,11 @@ function solveSubtraction(a: number, b: number): Step[] {
       const m = top[i + 2];
       top[i + 2] = m - 1;
       top[i + 1] = 9;
-      steps.push(step(i,
-        `The ${NAMES[i + 1]} has nothing to lend, so borrow from the ${NAMES[i + 2]} first: ${m} becomes ${m - 1} and 0 becomes 10. ` +
-        `Now the ${NAMES[i + 1]} can lend: 10 becomes 9 and ${t} becomes ${t + 10}.`,
-        { [i + 2]: String(m - 1), [i + 1]: '9', [i]: String(t + 10) }));
+      steps.push(step(i + 1,
+        `The ${NAMES[i + 1]} has nothing to lend, so borrow from the ${NAMES[i + 2]} first: ${m} becomes ${m - 1} and 0 becomes 10.`,
+        { [i + 2]: String(m - 1), [i + 1]: '10' }));
+      steps.push(step(i, `Now the ${NAMES[i + 1]} can lend: 10 becomes 9 and ${t} becomes ${t + 10}.`,
+        { [i + 1]: '9', [i]: String(t + 10) }));
     }
     t += 10;
     top[i] = t;
