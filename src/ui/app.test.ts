@@ -106,3 +106,16 @@ test('mute toggle saves and updates icon', () => {
   s.tap('[data-action="mute"]');
   expect(s.sound.setMuted).toHaveBeenLastCalledWith(false);
 });
+
+test('install tip shows on iOS Safari and dismiss saves installTipShown', () => {
+  const s = setup(1, { nav: { standalone: false } });
+  expect(s.q('[data-role="install-tip"]')!.textContent).toContain('Add to Home Screen');
+  s.tap('[data-action="dismiss-tip"]');
+  expect(s.q('[data-role="install-tip"]')).toBeNull();
+  expect(s.saved.at(-1)!.installTipShown).toBe(true);
+});
+
+test('install tip hidden when not iOS Safari', () => {
+  const s = setup(1, { nav: {} });
+  expect(s.q('[data-role="install-tip"]')).toBeNull();
+});

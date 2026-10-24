@@ -9,6 +9,7 @@ import type { ProgressStore } from '../storage';
 import { el } from './dom';
 import { shake } from './feedback';
 import { createHintBubble } from './hintBubble';
+import { createInstallTip, shouldShowInstallTip } from './installTip';
 import { createNumberPad, keyFromKeyboard } from './numberPad';
 import { renderProblem, type Phase } from './problemView';
 import type { SoundPlayer } from './sound';
@@ -19,6 +20,8 @@ export interface AppDeps {
   now: () => number;
   store: ProgressStore;
   sound: SoundPlayer;
+  /** iOS exposes navigator.standalone; injectable for tests. */
+  nav?: { standalone?: boolean };
 }
 
 export const ADVANCE_MS = 1000;
@@ -29,6 +32,7 @@ interface Attempt extends AttemptInput { firstSubmitMs: number }
 
 export function mountApp(deps: AppDeps): { destroy(): void } {
   const { root, rng, now, store, sound } = deps;
+  const nav = deps.nav ?? (navigator as { standalone?: boolean });
 
   let progress: Progress = store.load();
   const recent: Problem[] = [];
@@ -54,12 +58,13 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   const hintBtn = el('button', { type: 'button', class: 'action hint', 'data-action': 'hint' });
   const passBtn = el('button', { type: 'button', class: 'action pass', 'data-action': 'pass' }, 'Pass');
   const actions = el('div', { class: 'actions' });
-  root.replaceChildren(
-    el('div', { class: 'app' },
+  const appEl = el('div', { class: 'app' },
       el('header', { class: 'topbar' }, streakEl, muteBtn),
       el('main', { class: 'play' },
         el('section', { class: 'stage' }, bubble.el, problemArea, messageEl),
-        el('section', { class: 'controls' }, actions, createNumberPad()))));
+        el('section', { class: 'controls' }, actions, createNumberPad())));
+  root.replaceChildren(appEl);
+  if (shouldShowInstallTip(nav, progress)) appEl.prepend(createInstallTip());
 
   function later(fn: () => void, ms: number) {
     const t = setTimeout(() => { timers.delete(t); fn(); }, ms);
@@ -161,6 +166,12 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     passStep();
   }
 
+  function dismissTip() {
+    root.querySelector('[data-role="install-tip"]')?.remove();
+    progress = { ...progress, installTipShown: true };
+    store.save(progress);
+  }
+
   function toggleMute() {
     progress = { ...progress, muted: !progress.muted };
     store.save(progress);
@@ -184,6 +195,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     if (keyEl) { e.preventDefault(); handleKey(keyEl.dataset.key as Key); return; }
     const action = target.closest<HTMLElement>('[data-action]')?.dataset.action;
     if (action === 'mute') { toggleMute(); return; }
+    if (action === 'dismiss-tip') { dismissTip(); return; }
     if (action === 'hint') { hint(); return; }
     if (action === 'pass') { pass(); return; }
     if (action === 'next') { if (phase === 'passed') showNext(); return; }

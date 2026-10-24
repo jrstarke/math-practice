@@ -161,3 +161,12 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 .action.hint:disabled { opacity: 0.55; font-size: 1.05rem; }
 .action.pass { color: var(--muted); }
 .action.next { grid-column: 1 / -1; background: var(--accent); color: #fff; box-shadow: 0 4px 0 #c97300; }
+
+/* Install tip */
+.install-tip {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--highlight); color: var(--accent-ink);
+  border-radius: 16px; padding: 10px 12px 10px 16px; font-weight: 700;
+}
+.install-tip span { flex: 1; }
+.tip-dismiss { width: 44px; height: 44px; border-radius: 50%; font-size: 1.2rem; flex: none; }

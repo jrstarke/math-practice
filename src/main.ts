@@ -1,4 +1,5 @@
 import './styles.css';
+import { registerSW } from 'virtual:pwa-register';
 import { mulberry32 } from './core/rng';
 import { createStore } from './storage';
 import { mountApp } from './ui/app';
@@ -19,3 +20,5 @@ mountApp({
   store: createStore(safeLocalStorage()),
   sound: createSound(),
 });
+
+registerSW({ immediate: true });
