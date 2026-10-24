@@ -1,11 +1,11 @@
 # WIP (updated 2026-10-24)
 
 ## Status
-- On master (no main branch; no remote). 145 tests pass, build OK. Ledger in .superpowers/sdd deleted after merge.
+- On main (renamed from master; no remote). 145 tests pass, build OK. Ledger in .superpowers/sdd deleted after merge.
 - Plan: docs/superpowers/plans/2026-10-24-math-practice.md; Spec: docs/superpowers/specs/2026-10-24-math-practice-design.md
 
 ## Merged (2026-10-24)
-- feat/math-practice fast-forwarded into master (HEAD 4d9b6a5); branch + .superpowers/sdd ledger deleted. No git remote yet.
+- feat/math-practice fast-forwarded into master (HEAD 4d9b6a5), then master renamed to main; branch + .superpowers/sdd ledger deleted. No git remote yet.
 - Next ideas: GitHub Pages deploy (needs remote + Vite base path; streak lives per-origin, so moving off ngrok loses it unless we add a transfer), then multiplication (brainstorm started: times tables vs multi-digit undecided).
 
 ## Device testing
