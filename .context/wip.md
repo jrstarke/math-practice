@@ -1,22 +1,15 @@
-# WIP (updated 2026-10-24, end of session)
+# WIP (updated 2026-10-24)
 
 ## Status
-- Branch `feat/math-practice` (base bf5062e on main). All 11 plan tasks + final-review fixes committed.
-  HEAD dde6403. 145 tests pass (`npx vitest run`), `npm run build` OK.
+- On master (no main branch; no remote). 145 tests pass, build OK. Ledger in .superpowers/sdd deleted after merge.
 - Plan: docs/superpowers/plans/2026-10-24-math-practice.md; Spec: docs/superpowers/specs/2026-10-24-math-practice-design.md
-- Ledger (all tasks + rulings): `.superpowers/sdd/2026-10-24-math-practice/progress.md` (gitignored;
-  review findings in final-review.md there). Everything needed from it is copied below.
 
-## NEXT (waiting on user)
-1. User decides: merge to main / open PR / test on device first. Final report already given to user.
-2. Then: delete `.superpowers/sdd/2026-10-24-math-practice/` and run superpowers:finishing-a-development-branch.
-3. `.context/` itself is uncommitted (wip.md modified; domains.md, running.md, playwright/ untracked) — ask user.
+## Merged (2026-10-24)
+- feat/math-practice fast-forwarded into master (HEAD 4d9b6a5); branch + .superpowers/sdd ledger deleted. No git remote yet.
+- Next ideas: GitHub Pages deploy (needs remote + Vite base path; streak lives per-origin, so moving off ngrok loses it unless we add a transfer), then multiplication (brainstorm started: times tables vs multi-digit undecided).
 
-## Device testing is blocked: no published port
-- `$PUBLISH_PORT` is EMPTY in this container (user confirmed with `echo $PUBLISH_PORT`; not in PID 1 env either).
-  → no host port is published; LAN/iPad can't reach the dev/preview server. Needs sandbox restart with a
-  published port, then `PUBLISH_PORT=<port> npm run preview` and open http://<host LAN IP>:<port>.
-- LAN is plain HTTP → service worker/offline won't work there; HTTPS host (e.g. GitHub Pages) offered, undecided.
+## Device testing
+- $PUBLISH_PORT is set on newer container runs (was 64181). Daughter uses the app via ngrok https://slate-washer-unreal.ngrok-free.dev (see running.md); her progress (streak 58+) lives in that origin's localStorage.
 
 ## Final-review fixes (done)
 - #2 double-tap Next→Pass + #3 iOS audio unlock: 9f29593. #1 iPhone SE overflow + #4 iPhone landscape: dde6403.
