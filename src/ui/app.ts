@@ -26,6 +26,8 @@ export interface AppDeps {
 
 export const ADVANCE_MS = 1000;
 export const PASS_STEP_MS = 1500;
+/** Hint/Pass ignore taps this soon after Next, so a double-tap on Next cannot pass the new problem. */
+export const ACTION_GUARD_MS = 400;
 const TRY_AGAIN = 'Not quite — try again';
 
 interface Attempt extends AttemptInput { firstSubmitMs: number }
@@ -47,6 +49,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   let hintsShown = 0;
   let reveal: RevealState = revealState([], 0);
   let passTimer: ReturnType<typeof setTimeout> | null = null;
+  let actionsReadyAt = -Infinity;
   const timers = new Set<ReturnType<typeof setTimeout>>();
 
   // Static shell
@@ -187,18 +190,23 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     if (r.submit) submit(); else render();
   }
 
-  let unlocked = false;
+  const unlockSound = () => sound.unlock();
   function onPointerDown(e: Event) {
-    if (!unlocked) { unlocked = true; sound.unlock(); }
+    sound.unlock();
     const target = e.target as HTMLElement;
     const keyEl = target.closest<HTMLElement>('[data-key]');
     if (keyEl) { e.preventDefault(); handleKey(keyEl.dataset.key as Key); return; }
     const action = target.closest<HTMLElement>('[data-action]')?.dataset.action;
     if (action === 'mute') { toggleMute(); return; }
     if (action === 'dismiss-tip') { dismissTip(); return; }
-    if (action === 'hint') { hint(); return; }
-    if (action === 'pass') { pass(); return; }
-    if (action === 'next') { if (phase === 'passed') showNext(); return; }
+    if (action === 'hint' || action === 'pass') {
+      if (now() >= actionsReadyAt) { if (action === 'hint') hint(); else pass(); }
+      return;
+    }
+    if (action === 'next') {
+      if (phase === 'passed') { showNext(); actionsReadyAt = now() + ACTION_GUARD_MS; }
+      return;
+    }
     if (phase === 'passing') {
       if (target.closest('[data-role="bubble"], [data-role="problem-area"]')) passStep();
       return;
@@ -210,6 +218,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   }
 
   function onKeyDown(e: KeyboardEvent) {
+    sound.unlock();
     const key = keyFromKeyboard(e);
     if (!key) return;
     e.preventDefault();
@@ -217,6 +226,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   }
 
   root.addEventListener('pointerdown', onPointerDown);
+  root.addEventListener('pointerup', unlockSound);
   window.addEventListener('keydown', onKeyDown);
   sound.setMuted(progress.muted);
   showNext();
@@ -224,6 +234,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   return {
     destroy() {
       root.removeEventListener('pointerdown', onPointerDown);
+      root.removeEventListener('pointerup', unlockSound);
       window.removeEventListener('keydown', onKeyDown);
       timers.forEach(clearTimeout);
       timers.clear();

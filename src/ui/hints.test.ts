@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { defaultProgress } from '../core/progress';
+import { ACTION_GUARD_MS } from './app';
 import { setup } from './testUtil';
 
 const bubble = (s: ReturnType<typeof setup>) => s.q('[data-role="bubble"]')!.textContent;
@@ -96,4 +97,18 @@ test('pass continues from hints already shown', () => {
   const shown = bubble(s);
   s.tap('[data-action="pass"]');
   expect(bubble(s)).not.toBe(shown); // first pass step is the 3rd step
+});
+
+test('a fast second tap after Next does not hit Hint/Pass on the new problem', () => {
+  const s = setup();
+  s.tap('[data-action="pass"]');
+  s.advance(1500 * 20);
+  s.tap('[data-action="next"]');
+  s.tap('[data-action="pass"]');
+  s.tap('[data-action="hint"]');
+  expect(s.saved).toHaveLength(1);
+  expect(bubble(s)).toBe('');
+  s.advance(ACTION_GUARD_MS);
+  s.tap('[data-action="pass"]');
+  expect(s.saved).toHaveLength(2);
 });

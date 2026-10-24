@@ -26,7 +26,8 @@ const E5 = 659.25, G5 = 783.99, C5 = 523.25;
 
 /**
  * Synthesized sound effects via Web Audio (spec §9). Silent until `unlock()` is
- * called from a user gesture (iOS autoplay rules) and while muted.
+ * called from a user gesture (iOS autoplay rules) and while muted. Call `unlock()`
+ * on every gesture: it is cheap and resumes the context whenever it is not running.
  */
 export function createSound(ctor: typeof AudioContext | undefined = defaultCtor()): SoundPlayer {
   let ctx: AudioContext | null = null;
@@ -60,7 +61,8 @@ export function createSound(ctor: typeof AudioContext | undefined = defaultCtor(
       if (!ctor) return;
       try {
         ctx ??= new ctor();
-        void ctx.resume?.();
+        // iOS may ignore the first gesture, and re-suspends after lock/app switch.
+        if (ctx.state !== 'running') void ctx.resume?.();
       } catch {
         ctx = null;
       }

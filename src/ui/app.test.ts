@@ -119,3 +119,11 @@ test('install tip hidden when not iOS Safari', () => {
   const s = setup(1, { nav: {} });
   expect(s.q('[data-role="install-tip"]')).toBeNull();
 });
+
+test('sound unlock is retried on every pointerup and keydown (iOS gesture rules)', () => {
+  const s = setup();
+  s.q('[data-key="3"]')!.dispatchEvent(new Event('pointerup', { bubbles: true }));
+  s.q('[data-key="3"]')!.dispatchEvent(new Event('pointerup', { bubbles: true }));
+  window.dispatchEvent(new KeyboardEvent('keydown', { key: '4' }));
+  expect(s.sound.unlock).toHaveBeenCalledTimes(3);
+});
