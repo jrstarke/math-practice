@@ -17,6 +17,6 @@
   Needs ngrok domains granted (see domains.md) + authtoken set via host `docker exec -it` (lost on restart).
 - Deploy (2026-10-25): two repos, same code + workflow, each GitHub Pages w/ custom domain, built at root:
   remote `dev` = jrstarke/math-practice-dev → math-practice-dev.jamiestarke.com (user pushes manually);
-  remote `origin` = jrstarke/math-practice → math-practice.jamiestarke.com (user pushes when ready).
+  remote `prod` = jrstarke/math-practice → math-practice.jamiestarke.com (user pushes when ready).
   User pushes from the host (container has no GitHub auth). DNS is on Cloudflare (proxied IPs 104.21.x/172.67.x).
   Custom domains are blocked by the container firewall — can't curl them from here.
