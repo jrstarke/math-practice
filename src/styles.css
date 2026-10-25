@@ -89,7 +89,7 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
      silently inside the scrollable box or over-shrinks pictures that had room to
      spare). */
   .picture-host {
-    --picture-budget: max(56px, calc(100cqh - var(--bubble-room) - (var(--cell) * 1.84) - 16px));
+    --picture-budget: max(56px, calc(100cqh - var(--bubble-room) - (var(--cell) * 1.84) - 10px));
     /* Re-declare on .picture-host itself (not just inherited from :root's plain --picture-cell
        fallback): custom-property var() substitution resolves against the SAME element's own
        --cell at computed-value time, so without this, descendants would inherit :root's --cell
@@ -228,7 +228,15 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
   max-height: var(--picture-budget, none);
   overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
 }
-.picture { display: flex; flex-direction: column; align-items: center; gap: calc(var(--picture-cell) * 0.12); margin-top: calc(var(--picture-cell) * 0.1); }
+.picture {
+  display: flex; flex-direction: column; align-items: center; gap: calc(var(--picture-cell) * 0.12); margin-top: calc(var(--picture-cell) * 0.1);
+  /* The base-ten unit square's size, floored once (not per block shape — see .block.square/
+     rod/flat below): a square is 1 unit, a rod 1×5, a flat 5×5, so flooring here keeps every
+     shape's proportions exactly right even once --picture-cell has shrunk past the point where
+     a block would otherwise be too small to see. Declared here (inside .picture-host), not at
+     :root, so it resolves against the container-local, already-fitted --picture-cell. */
+  --unit: max(4px, calc(var(--picture-cell) * 0.15));
+}
 /* Applied by fitPicture() (pictureView.ts) only when stacking the tally under the groups would
    need the picture shrunk below a legibility-floor-dominated scale: putting them side by side
    trades the stage's spare width (phones are narrow but the controls column still leaves some)
@@ -239,10 +247,12 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 .group {
   display: flex; align-items: flex-end; flex-wrap: wrap; gap: calc(var(--picture-cell) * 0.05);
   padding: calc(var(--picture-cell) * 0.1);
-  /* Floored, not just scaled: once blocks hit their own floors (above), letting this keep
-     shrinking too would squeeze fewer floored blocks onto each row, adding MORE wrapped rows
-     and making the picture taller as --picture-cell keeps dropping — the opposite of fitting. */
-  max-width: max(calc(var(--picture-cell) * 4.2), 112px);
+  /* 28 × --unit, i.e. 28 × 0.15 × --picture-cell = 4.2 × --picture-cell at full scale (same as the
+     original, unfloored width) — but once --unit floors (see .picture below), this floors with it
+     instead of continuing to shrink on its own, which would otherwise squeeze fewer (floored)
+     blocks onto each row, adding MORE wrapped rows and making the picture taller as --picture-cell
+     keeps dropping — the opposite of fitting. */
+  max-width: calc(var(--unit) * 28);
   background: var(--card); border-radius: 10px; box-shadow: 0 2px 0 var(--key-shadow);
 }
 .part { display: flex; flex-wrap: wrap; align-items: flex-end; gap: calc(var(--picture-cell) * 0.03); }
@@ -250,12 +260,14 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 .block.pending { background: var(--muted); opacity: 0.4; }
 .block.color-a { background: var(--accent); }
 .block.color-b { background: var(--good); }
-/* Floor every block's own size too (not just text), so a single countable square or rod stays
-   visible even once a very tall picture has scaled --picture-cell far down — the ratio between
-   a rod's width and height floor (6px : 30px) matches its unscaled 0.15 : 0.75 aspect. */
-.block.square { width: max(6px, calc(var(--picture-cell) * 0.15)); height: max(6px, calc(var(--picture-cell) * 0.15)); }
-.block.rod { width: max(6px, calc(var(--picture-cell) * 0.15)); height: max(30px, calc(var(--picture-cell) * 0.75)); }
-.block.flat { width: max(10px, calc(var(--picture-cell) * 0.75)); height: max(10px, calc(var(--picture-cell) * 0.75)); }
+/* One floored unit, not a separate floor per block shape: squares/rods/flats are all multiples of
+   it (0.15 / 0.75 / 0.75 of --picture-cell = 1 / 5 / 5 units), so flooring the unit keeps a rod
+   exactly as tall as a flat and 5× a square at every scale — flooring each shape's own size
+   independently let a floored rod (its own floor engaging earlier, being thinner) end up TALLER
+   than a floored flat, which breaks the base-ten metaphor this picture exists to teach. */
+.block.square { width: var(--unit); height: var(--unit); }
+.block.rod { width: var(--unit); height: calc(var(--unit) * 5); }
+.block.flat { width: calc(var(--unit) * 5); height: calc(var(--unit) * 5); }
 .group-outline {
   display: flex; align-items: center; justify-content: center;
   /* Size the circle off its own (already-floored) font via em, not a flat px floor: a floored
