@@ -235,7 +235,8 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
      shape's proportions exactly right even once --picture-cell has shrunk past the point where
      a block would otherwise be too small to see. Declared here (inside .picture-host), not at
      :root, so it resolves against the container-local, already-fitted --picture-cell. */
-  --unit: max(4px, calc(var(--picture-cell) * 0.15));
+  /* --unit-floor is normally unset (4px); fitPicture() lowers it only as a last resort. */
+  --unit: max(var(--unit-floor, 4px), calc(var(--picture-cell) * 0.15));
 }
 /* Applied by fitPicture() (pictureView.ts) only when stacking the tally under the groups would
    need the picture shrunk below a legibility-floor-dominated scale: putting them side by side

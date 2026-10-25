@@ -64,48 +64,87 @@ function renderOutline(groupSize: number, parts: PicturePart[], place: Place | u
 
 /**
  * Shrink --picture-cell (as a `calc(var(--cell) * ratio)` override on the container) just enough
- * that the picture's rendered content fits the vertical budget CSS reserves for it
- * (--picture-budget — see styles.css). The container's `max-height: var(--picture-budget)` means
+ * that the picture's rendered content fits the box CSS reserves for it (--picture-budget tall — see
+ * styles.css — and the container's width). The container's `max-height: var(--picture-budget)` means
  * `clientHeight` reads as the true budget in px whenever content overflows it (`scrollHeight` always
  * reads the full, unclipped content height, budget or not) — no guessed divisor is involved, and
- * every picture dimension is `calc(var(--picture-cell) * <constant>)`, so content height scales
+ * every picture dimension is `calc(var(--picture-cell) * <constant>)`, so content size scales
  * linearly with --picture-cell: one measurement gives an exact ratio, not an estimate. A couple of
- * correction passes account for text/line-height not scaling perfectly linearly at small sizes; if
- * it still doesn't fit after that (only possible at the most extreme content + smallest viewports),
- * the CSS `overflow-y: auto` on .picture-host is the last-resort fallback so nothing paints over the
- * message or controls — it just scrolls internally instead.
+ * correction passes account for text/line-height not scaling perfectly linearly at small sizes.
+ * The CSS `overflow-y: auto` on .picture-host stays as a safety net so nothing paints over the
+ * message or controls, but the layout check (.context/playwright/shots.mjs) fails if it's ever used.
  */
 export function fitPicture(container: HTMLElement): void {
-  container.style.removeProperty('--picture-cell'); // start from the full-size (--cell) baseline
   const pic = container.querySelector<HTMLElement>('.picture');
+  resetScale(container);
   pic?.classList.remove('side');
-  let natural = container.scrollHeight;
+  const natural = container.scrollHeight;
   const budget = container.clientHeight;
   if (natural === 0) return;
-  if (natural > budget + 1 && pic?.querySelector('.tally')?.childElementCount) {
+  const hasTally = !!pic?.querySelector('.tally')?.childElementCount;
+  if (natural > budget + 1 && hasTally) {
     // Stacked (groups above tally) doesn't fit even at full scale: try the side-by-side layout
     // instead — if it measures shorter, keep it; a wrapping-width regression (narrow viewport)
     // would make it measure the same or taller, so this is a measured trade, not a guess. It must
     // also not be wider than the container: .picture-host hides horizontal overflow, so a too-wide
     // side-by-side layout would be clipped rather than wrapped.
     pic!.classList.add('side');
-    const sideNatural = container.scrollHeight;
-    if (sideNatural < natural && container.scrollWidth <= container.clientWidth + 1) natural = sideNatural;
-    else pic!.classList.remove('side');
+    if (!(container.scrollHeight < natural && container.scrollWidth <= container.clientWidth + 1)) pic!.classList.remove('side');
   }
-  if (natural <= budget + 1) return; // already fits at full size
-  let scale = Math.max(0.2, (budget / natural) * 0.96);
+  if (shrinkToFit(container, budget) || !hasTally) return;
+  // Even fully shrunk, the layout picked at full size doesn't fit (only the densest level-9
+  // pictures on the smallest phones): try the other layout — side-by-side can be too wide at full
+  // size yet fit once shrunk — and keep whichever overflows less.
+  const before = overflow(container, budget);
+  pic!.classList.toggle('side');
+  if (shrinkToFit(container, budget) || overflow(container, budget) <= before) return;
+  pic!.classList.toggle('side');
+  shrinkToFit(container, budget);
+}
+
+/** Last-resort block-unit floors (see shrinkToFit). */
+const UNIT_FLOOR_STEPS = ['3.5px', '3px', '2.5px', '2px', '1.5px'];
+
+function resetScale(container: HTMLElement): void {
+  container.style.removeProperty('--picture-cell'); // back to the full-size (--cell) baseline
+  container.style.removeProperty('--unit-floor');
+}
+
+function fits(container: HTMLElement, budget: number): boolean {
+  return container.scrollHeight <= budget + 1 && container.scrollWidth <= container.clientWidth + 1;
+}
+
+function overflow(container: HTMLElement, budget: number): number {
+  return Math.max(0, container.scrollHeight - budget) + Math.max(0, container.scrollWidth - container.clientWidth);
+}
+
+/** Scale the picture down in its current layout until it fits; true if it does. */
+function shrinkToFit(container: HTMLElement, budget: number): boolean {
+  resetScale(container);
+  if (fits(container, budget)) return true; // already fits at full size
+  const ratio = () => Math.min(budget / container.scrollHeight, container.clientWidth / container.scrollWidth);
+  let scale = Math.max(0.2, ratio() * 0.96);
   container.style.setProperty('--picture-cell', `calc(var(--cell) * ${scale.toFixed(4)})`);
-  // Several elements inside the picture (borders, box-shadows, gaps) use fixed px values rather
-  // than scaling with --picture-cell, so content height isn't *exactly* proportional to scale —
-  // it's height = fixedOverhead + K*scale, not K*scale alone. A single ratio therefore slightly
-  // under-shrinks; a few more passes converge geometrically onto the exact fit.
+  // Several elements inside the picture (borders, gaps, text floors) don't scale exactly with
+  // --picture-cell, so content size isn't *exactly* proportional to scale — it's
+  // fixedOverhead + K*scale, not K*scale alone. A single ratio therefore slightly under-shrinks;
+  // a few more passes converge geometrically onto the exact fit.
   for (let pass = 0; pass < 5; pass++) {
-    const h = container.scrollHeight;
-    if (h <= budget + 1) return;
-    scale = Math.max(0.15, scale * (budget / h) * 0.97);
+    if (fits(container, budget)) return true;
+    scale = Math.max(0.15, scale * ratio() * 0.97);
     container.style.setProperty('--picture-cell', `calc(var(--cell) * ${scale.toFixed(4)})`);
   }
+  // Last resort, for the densest pictures on the smallest viewports (e.g. 968 × 5 on an iPhone SE:
+  // five same-size groups of 9 flats, 6 rods and 8 squares): by now --picture-cell is so small that
+  // the block unit's 4px legibility floor (--unit in styles.css) is what sets the picture's size,
+  // so lower that floor step by step until it fits. Every block is a multiple of the unit, so
+  // flats/rods/squares keep their exact base-ten proportions — just drawn smaller (spec: "level 9
+  // may draw flats smaller").
+  for (const floor of UNIT_FLOOR_STEPS) {
+    if (fits(container, budget)) return true;
+    container.style.setProperty('--unit-floor', floor);
+  }
+  return fits(container, budget);
 }
 
 /** Draw a PictureState's groups-of picture, or clear the container when there's nothing to show yet. */
@@ -113,6 +152,7 @@ export function renderPicture(container: HTMLElement, state: PictureState | null
   if (!state) {
     container.replaceChildren();
     container.style.removeProperty('--picture-cell');
+    container.style.removeProperty('--unit-floor');
     return;
   }
   const groups = Array.from({ length: state.groupsShown },
