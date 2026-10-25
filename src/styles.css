@@ -244,8 +244,13 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 .picture.side { flex-direction: row; align-items: center; justify-content: center; gap: calc(var(--picture-cell) * 0.3); }
 .picture.side .tally { align-items: flex-start; text-align: left; }
 .groups { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: calc(var(--picture-cell) * 0.2); }
-.group {
-  display: flex; align-items: flex-end; flex-wrap: wrap; gap: calc(var(--picture-cell) * 0.05);
+/* Each group is circled with a dashed outline, as in the approved mockup (option 1 of
+   docs/superpowers/specs/assets/2026-10-25-multiplication-three-ways.html). .group-outline (levels
+   8-9) shares every sizing rule here and holds the same blocks as invisible spacers, so it is the
+   same size as the drawn group at every scale. The border width scales with --picture-cell (~3px
+   at full size) so it doesn't add fixed px that fitPicture()'s linear scaling can't shrink. */
+.group, .group-outline {
+  display: flex; align-items: flex-end; justify-content: center; flex-wrap: wrap; gap: calc(var(--picture-cell) * 0.05);
   padding: calc(var(--picture-cell) * 0.1);
   /* 28 × --unit, i.e. 28 × 0.15 × --picture-cell = 4.2 × --picture-cell at full scale (same as the
      original, unfloored width) — but once --unit floors (see .picture below), this floors with it
@@ -253,7 +258,9 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
      blocks onto each row, adding MORE wrapped rows and making the picture taller as --picture-cell
      keeps dropping — the opposite of fitting. */
   max-width: calc(var(--unit) * 28);
-  background: var(--card); border-radius: 10px; box-shadow: 0 2px 0 var(--key-shadow);
+  border: max(1.5px, calc(var(--picture-cell) * 0.036)) dashed var(--muted);
+  border-radius: calc(var(--picture-cell) * 0.2);
+  background: rgba(255, 255, 255, 0.6);
 }
 .part { display: flex; flex-wrap: wrap; align-items: flex-end; gap: calc(var(--picture-cell) * 0.03); }
 .block { background: var(--accent); border-radius: 3px; }
@@ -265,20 +272,29 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
    exactly as tall as a flat and 5× a square at every scale — flooring each shape's own size
    independently let a floored rod (its own floor engaging earlier, being thinner) end up TALLER
    than a floored flat, which breaks the base-ten metaphor this picture exists to teach. */
-.block.square { width: var(--unit); height: var(--unit); }
-.block.rod { width: var(--unit); height: calc(var(--unit) * 5); }
-.block.flat { width: calc(var(--unit) * 5); height: calc(var(--unit) * 5); }
-.group-outline {
-  display: flex; align-items: center; justify-content: center;
-  /* Size the circle off its own (already-floored) font via em, not a flat px floor: a floored
-     px size large enough for "995" would be oversized at full scale, while a size that's right
-     at full scale is too small to hold a floored 3-digit label without the text overflowing the
-     dashed ring once --picture-cell has shrunk past where the 0.85 term stops dominating. */
-  width: max(calc(var(--picture-cell) * 0.85), 2.7em); height: max(calc(var(--picture-cell) * 0.85), 2.7em);
-  border: 3px dashed var(--muted); border-radius: 50%;
+.block.square, .spacer.square { width: var(--unit); height: var(--unit); }
+.block.rod, .spacer.rod { width: var(--unit); height: calc(var(--unit) * 5); }
+.block.flat, .spacer.flat { width: calc(var(--unit) * 5); height: calc(var(--unit) * 5); }
+/* An outline group's invisible spacer blocks (pictureView.ts renderOutline) give it the drawn
+   group's exact size; its label is laid over them so it never changes that size. */
+.group-outline { position: relative; }
+.spacer { visibility: hidden; }
+/* Levels 8-9 only (pictureView.ts adds .outlined): at small scales a group like 11 (one rod, one
+   square) is narrower than its floored label, so the drawn group and its outlines all get the same
+   label-sized minimum width — both still match, and the label always stays inside its circle. */
+.groups.outlined { font-size: max(0.7rem, calc(var(--picture-cell) * 0.3)); }
+.groups.outlined > .group, .groups.outlined > .group-outline { min-width: 2.4em; }
+.outline-label {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   font-weight: 800; color: var(--muted); font-size: max(0.7rem, calc(var(--picture-cell) * 0.3));
   font-variant-numeric: tabular-nums;
 }
+/* Hint highlights (pictureView.ts): the groups a skip-count step is counting, the part of the
+   drawn group a level 8-9 step is working on, and the matching digit of each outline label.
+   Colour only — never border width or padding — so a highlight never changes the picture's size. */
+.group.hl { background: var(--highlight); border-color: var(--accent); }
+.part.hl { background: var(--highlight); border-radius: 3px; box-shadow: 0 0 0 calc(var(--picture-cell) * 0.04) var(--highlight); }
+.outline-label .hl { color: var(--accent-ink); background: var(--highlight); border-radius: 3px; }
 .tally {
   list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column;
   align-items: center; gap: 2px; font-weight: 700; color: var(--ink);

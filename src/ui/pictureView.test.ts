@@ -127,3 +127,64 @@ test('two colours are used only once more than one part is revealed', () => {
   expect(host.querySelectorAll('.block.color-a').length).toBe(2);
   expect(host.querySelectorAll('.block.color-b').length).toBe(1);
 });
+
+test('highlightGroups marks exactly the first n drawn groups with .hl', () => {
+  const host = mount();
+  renderPicture(host, pic({
+    totalGroups: 6, groupSize: 2, groupsShown: 6,
+    parts: [{ label: '2', count: 2, revealed: true }],
+    highlightGroups: 5,
+  }));
+  const groups = [...host.querySelectorAll('.group')];
+  expect(groups.map(g => g.classList.contains('hl'))).toEqual([true, true, true, true, true, false]);
+});
+
+test('no highlight fields → nothing is highlighted', () => {
+  const host = mount();
+  renderPicture(host, pic({ totalGroups: 3, groupSize: 24, groupsShown: 1, groupsOutlined: 2,
+    parts: [{ label: 'tens', count: 2, revealed: true }, { label: 'ones', count: 4, revealed: false }] }));
+  expect(host.querySelectorAll('.hl').length).toBe(0);
+});
+
+test('highlightPlace marks that part of the drawn group and that digit of each outline label', () => {
+  const host = mount();
+  renderPicture(host, pic({
+    totalGroups: 3, groupSize: 24, groupsShown: 1, groupsOutlined: 2,
+    parts: [{ label: 'tens', count: 2, revealed: true }, { label: 'ones', count: 4, revealed: false }],
+    highlightPlace: 'tens',
+  }));
+  const hlParts = [...host.querySelectorAll('.group .part.hl')];
+  expect(hlParts).toHaveLength(1);
+  expect(hlParts[0].querySelectorAll('.block.rod')).toHaveLength(2);
+  const outlines = [...host.querySelectorAll('.group-outline')];
+  expect(outlines).toHaveLength(2);
+  for (const o of outlines) {
+    expect(o.textContent).toBe('24');
+    expect([...o.querySelectorAll('.hl')].map(d => d.textContent)).toEqual(['2']);
+  }
+});
+
+test('highlightPlace on a zero-tens level-9 label picks the right digit', () => {
+  const host = mount();
+  renderPicture(host, pic({
+    totalGroups: 3, groupSize: 305, groupsShown: 1, groupsOutlined: 2,
+    parts: [{ label: 'hundreds', count: 3, revealed: true }, { label: 'ones', count: 5, revealed: true }],
+    highlightPlace: 'ones',
+  }));
+  for (const o of host.querySelectorAll('.group-outline'))
+    expect([...o.querySelectorAll('.hl')].map(d => d.textContent)).toEqual(['5']);
+  expect(host.querySelector('.group .part.hl .block.square')).not.toBeNull();
+});
+
+test('outline groups hold the same (invisible) blocks as the drawn group, so they are the same size', () => {
+  const host = mount();
+  renderPicture(host, pic({
+    totalGroups: 3, groupSize: 24, groupsShown: 1, groupsOutlined: 2,
+    parts: [{ label: 'tens', count: 2, revealed: false }, { label: 'ones', count: 4, revealed: false }],
+  }));
+  for (const o of host.querySelectorAll('.group-outline')) {
+    expect(o.querySelectorAll('.spacer.rod')).toHaveLength(2);
+    expect(o.querySelectorAll('.spacer.square')).toHaveLength(4);
+    expect(o.querySelectorAll('.block')).toHaveLength(0);
+  }
+});

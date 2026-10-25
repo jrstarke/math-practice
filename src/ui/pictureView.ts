@@ -1,4 +1,4 @@
-import type { PicturePart, PictureState } from '../core/operations/types';
+import type { PicturePart, PictureState, Place } from '../core/operations/types';
 import { el } from './dom';
 
 type BlockShape = 'flat' | 'rod' | 'square';
@@ -18,19 +18,20 @@ function shapeFor(label: string): BlockShape {
 }
 
 /** One part's blocks: faded/neutral while not yet revealed, otherwise its assigned colour (if any). */
-function renderPart(part: PicturePart, colorClass: string | null): HTMLElement {
+function renderPart(part: PicturePart, colorClass: string | null, highlighted: boolean): HTMLElement {
   const shape = shapeFor(part.label);
   const classes = ['block', shape];
   if (!part.revealed) classes.push('pending');
   else if (colorClass) classes.push(colorClass);
   const blocks = Array.from({ length: part.count }, () => el('span', { class: classes.join(' ') }));
-  return el('div', { class: 'part' }, ...blocks);
+  return el('div', { class: highlighted ? 'part hl' : 'part' }, ...blocks);
 }
 
 /** One full "groups of" group, built from the shared parts breakdown. Two colours
  * distinguish revealed parts only once more than one part is revealed — a single
- * revealed part (or none) stays monochrome. */
-function renderGroup(parts: PicturePart[]): HTMLElement {
+ * revealed part (or none) stays monochrome. `highlighted` marks a group a skip-count
+ * hint is counting; `place` marks the part a level 8-9 hint is working on. */
+function renderGroup(parts: PicturePart[], highlighted: boolean, place: Place | undefined): HTMLElement {
   const useTwoColors = parts.filter(p => p.revealed).length > 1;
   let revealedIndex = 0;
   const partEls = parts.map(part => {
@@ -39,14 +40,26 @@ function renderGroup(parts: PicturePart[]): HTMLElement {
       colorClass = revealedIndex % 2 === 0 ? 'color-a' : 'color-b';
       revealedIndex++;
     }
-    return renderPart(part, colorClass);
+    return renderPart(part, colorClass, place !== undefined && part.label === place);
   });
-  return el('div', { class: 'group' }, ...partEls);
+  return el('div', { class: highlighted ? 'group hl' : 'group' }, ...partEls);
 }
 
-/** A remaining, undetailed group (levels 8-9), shown as a labelled dashed circle. */
-function renderOutline(groupSize: number): HTMLElement {
-  return el('div', { class: 'group-outline' }, String(groupSize));
+const PLACE_INDEX: Record<Place, number> = { ones: 0, tens: 1, hundreds: 2 }; // digits from the right
+
+/**
+ * A remaining, undetailed group (levels 8-9): the same dashed circle as the drawn group,
+ * holding the same blocks as invisible spacers so it is exactly the drawn group's size at
+ * every --picture-cell scale, with its value written across it. Each label digit is its own
+ * span so a hint can highlight the digit for the place it is working on.
+ */
+function renderOutline(groupSize: number, parts: PicturePart[], place: Place | undefined): HTMLElement {
+  const spacers = parts.map(part => el('div', { class: 'part' },
+    ...Array.from({ length: part.count }, () => el('span', { class: `spacer ${shapeFor(part.label)}` }))));
+  const digits = String(groupSize).split('');
+  const label = el('span', { class: 'outline-label' }, ...digits.map((d, i) =>
+    el('span', { class: place !== undefined && digits.length - 1 - i === PLACE_INDEX[place] ? 'hl' : undefined }, d)));
+  return el('div', { class: 'group-outline' }, ...spacers, label);
 }
 
 /**
@@ -72,10 +85,12 @@ export function fitPicture(container: HTMLElement): void {
   if (natural > budget + 1 && pic?.querySelector('.tally')?.childElementCount) {
     // Stacked (groups above tally) doesn't fit even at full scale: try the side-by-side layout
     // instead — if it measures shorter, keep it; a wrapping-width regression (narrow viewport)
-    // would make it measure the same or taller, so this is a measured trade, not a guess.
+    // would make it measure the same or taller, so this is a measured trade, not a guess. It must
+    // also not be wider than the container: .picture-host hides horizontal overflow, so a too-wide
+    // side-by-side layout would be clipped rather than wrapped.
     pic!.classList.add('side');
     const sideNatural = container.scrollHeight;
-    if (sideNatural < natural) natural = sideNatural;
+    if (sideNatural < natural && container.scrollWidth <= container.clientWidth + 1) natural = sideNatural;
     else pic!.classList.remove('side');
   }
   if (natural <= budget + 1) return; // already fits at full size
@@ -100,12 +115,14 @@ export function renderPicture(container: HTMLElement, state: PictureState | null
     container.style.removeProperty('--picture-cell');
     return;
   }
-  const groups = Array.from({ length: state.groupsShown }, () => renderGroup(state.parts));
-  const outlines = Array.from({ length: state.groupsOutlined }, () => renderOutline(state.groupSize));
+  const groups = Array.from({ length: state.groupsShown },
+    (_, i) => renderGroup(state.parts, i < (state.highlightGroups ?? 0), state.highlightPlace));
+  const outlines = Array.from({ length: state.groupsOutlined },
+    () => renderOutline(state.groupSize, state.parts, state.highlightPlace));
   const tally = el('ul', { class: 'tally' }, ...state.tally.map(line => el('li', {}, line)));
   container.replaceChildren(
     el('div', { class: 'picture' },
-      el('div', { class: 'groups' }, ...groups, ...outlines),
+      el('div', { class: outlines.length > 0 ? 'groups outlined' : 'groups' }, ...groups, ...outlines),
       tally),
   );
   fitPicture(container);
