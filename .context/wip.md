@@ -12,7 +12,7 @@
   per-operation modules (approach A, no behaviour change, existing tests unchanged), then the × module, picture, hints,
   Progress v4 (key math-practice-progress-v4, chain v4→v3→v2→v1), unlock rule multiplication {addition:6, subtraction:5}.
   User chose **native** execution (executing-plans + one fresh opus reviewer) for the last two plans.
-- **Git (2026-10-25):** on main. dev/main = 94d8e59 (learning path deployed to dev; main is 1 docs commit ahead).
+- **Git (2026-10-25):** on main. dev/main = 94d8e59 (learning path deployed to dev; main is ahead only by docs/notes commits).
   prod/main = f4372d6 (no learning path yet). User pushes manually from the host; container has no GitHub/SSH auth.
 - **Dev site** math-practice-dev.jamiestarke.com verified working (custom domain reachable from container). User was
   testing the learning path there (their record: add 6, sub 6, both unlocked).
