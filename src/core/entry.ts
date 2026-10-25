@@ -24,7 +24,7 @@ function pressScratch(s: EntryState, column: number, key: Key): { state: EntrySt
 }
 
 /** Apply one key press. `submit` is true when the answer should be checked. */
-export function pressKey(s: EntryState, key: Key): { state: EntryState; submit: boolean } {
+export function pressKey(s: EntryState, key: Key, maxLen: number = MAX_ANSWER): { state: EntryState; submit: boolean } {
   if (s.focus.kind === 'scratch') return pressScratch(s, s.focus.column, key);
 
   if (key === 'submit') return { state: s, submit: s.answer !== '' && !s.faded };
@@ -33,7 +33,7 @@ export function pressKey(s: EntryState, key: Key): { state: EntryState; submit: 
   }
   if (key === 'back') return { state: { ...s, answer: s.answer.slice(0, -1) }, submit: false };
   if (s.answer === '0') return { state: { ...s, answer: key }, submit: false };
-  if (s.answer.length >= MAX_ANSWER) return { state: s, submit: false };
+  if (s.answer.length >= maxLen) return { state: s, submit: false };
   return { state: { ...s, answer: s.answer + key }, submit: false };
 }
 

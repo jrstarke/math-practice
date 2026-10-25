@@ -108,6 +108,15 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 
 .rule { align-self: stretch; border-top: 6px solid var(--ink); border-radius: 3px; margin: 4px 0 8px; }
 
+/* Horizontal (multiplication) equation line: plain inline spans, no per-digit celling. */
+.problem.horizontal { align-items: center; }
+.equation {
+  display: flex; align-items: center; justify-content: center; gap: 0.35em;
+  font-size: calc(var(--cell) * 0.8); font-weight: 800; line-height: 1.15;
+  font-variant-numeric: tabular-nums; margin-bottom: 8px;
+}
+.equation .eq { color: var(--ink); }
+
 .answer-wrap { position: relative; }
 .ghost-row { position: absolute; inset: 0; pointer-events: none; }
 .ghost { color: var(--muted); opacity: 0.45; }

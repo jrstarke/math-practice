@@ -45,3 +45,13 @@ test('scratch backspace and focusAnswer', () => {
 test('setScratch overwrites given columns only', () =>
   expect(setScratch({ ...initialEntry(), scratch: { 1: '4', 2: '7' } }, { 1: '5', 0: '12' }).scratch)
     .toEqual({ 0: '12', 1: '5', 2: '7' }));
+
+test('maxLen caps the answer; back and submit are unaffected by it', () => {
+  let s = initialEntry();
+  s = pressKey(s, '9', 2).state;
+  s = pressKey(s, '9', 2).state;
+  s = pressKey(s, '9', 2).state; // third digit ignored: capped at maxLen
+  expect(s.answer).toBe('99');
+  expect(pressKey(s, 'back', 2).state.answer).toBe('9');
+  expect(pressKey(s, 'submit', 2).submit).toBe(true);
+});

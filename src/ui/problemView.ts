@@ -24,7 +24,7 @@ export function scratchColumns(p: Problem): number[] {
 }
 
 /** Re-render the vertical problem: scratch boxes, operands, rule, ghosts, and answer. */
-export function renderProblem(container: HTMLElement, vm: ProblemViewModel): void {
+export function renderColumnProblem(container: HTMLElement, vm: ProblemViewModel): void {
   const { problem: p, entry, ghosts, highlight, phase } = vm;
   const aDigits = digitsOf(p.a), bDigits = digitsOf(p.b);
   const cols = Math.max(aDigits.length + 1, bDigits.length + 1, entry.answer.length);

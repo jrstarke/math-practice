@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
-import { defaultProgress } from '../core/progress';
+import { defaultProgress, type Progress } from '../core/progress';
+import { hintLimit, solve } from '../core/solver';
 import { setup } from './testUtil';
 
 test('renders a problem and number pad', () => {
@@ -162,6 +163,53 @@ test('unlocking subtraction plays the level-up sound and shows a friendly messag
   expect(msg.textContent).toBe('New: subtraction!');
   expect(msg.classList.contains('good')).toBe(true);
   expect(s.saved[0].unlocked).toEqual(['addition', 'subtraction']);
+});
+
+// Only multiplication unlocked, calibrating at level 1, so every problem is multiplication
+// at a known level — bypasses storage validation entirely via testUtil's raw `initial` override.
+const multiplicationOnly = (level = 1): Progress => ({
+  ...defaultProgress(),
+  unlocked: ['multiplication'],
+  multiplication: { level, window: [], calibrationLeft: 10 },
+});
+
+test('multiplication renders the horizontal × layout and records a clean answer', () => {
+  const s = setup(1, {}, multiplicationOnly());
+  expect(s.current().op).toBe('×');
+  expect(s.q('[data-role="op"]')!.textContent).toBe('×');
+  s.typeAnswer(s.correctAnswer());
+  s.tap('[data-key="submit"]');
+  expect(s.saved).toHaveLength(1);
+  expect(s.saved[0].streak).toBe(1);
+  expect(s.q('[data-role="answer"]')!.classList.contains('correct')).toBe(true);
+});
+
+test('multiplication: Hint is gated at hintLimit (never reaching the pass-only step), Pass reveals the rest', () => {
+  const s = setup(1, {}, multiplicationOnly());
+  const c = s.current();
+  const steps = solve({ op: '×', a: c.a, b: c.b, level: 1 });
+  const limit = hintLimit(steps);
+  expect(limit).toBeLessThan(steps.length); // multiplication's trailing step is pass-only
+
+  for (let i = 0; i < limit; i++) s.tap('[data-action="hint"]');
+  expect((s.q('[data-action="hint"]') as HTMLButtonElement).disabled).toBe(true);
+  expect(s.root.querySelectorAll('[data-ghost]').length).toBe(0); // answer not yet revealed
+  const bubbleAtLimit = s.q('[data-role="bubble"]')!.textContent;
+
+  // A determined extra tap on the disabled Hint button must not reach the pass-only step.
+  s.tap('[data-action="hint"]');
+  expect(s.q('[data-role="bubble"]')!.textContent).toBe(bubbleAtLimit);
+  expect(s.q('[data-role="bubble"]')!.textContent).not.toBe(steps.at(-1)!.text);
+  expect(s.root.querySelectorAll('[data-ghost]').length).toBe(0);
+
+  s.tap('[data-action="pass"]');
+  const ghosts = [...s.root.querySelectorAll('[data-ghost]')]
+    .sort((x, y) => Number(x.getAttribute('data-ghost')) - Number(y.getAttribute('data-ghost')))
+    .reverse()
+    .map(e => e.textContent)
+    .join('');
+  expect(ghosts).toBe(String(c.a * c.b));
+  expect(s.q('[data-action="next"]')).not.toBeNull();
 });
 
 test('unlock message survives the auto-advance and clears on the next key', () => {

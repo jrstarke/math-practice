@@ -1,17 +1,19 @@
 import { answerOf } from '../core/arith';
 import { focusAnswer, focusScratch, initialEntry, markWrong, pressKey, setScratch, type EntryState, type Key } from '../core/entry';
+import { maxAnswerLength } from '../core/levels';
 import type { Progress } from '../core/progress';
 import type { Rng } from '../core/rng';
 import { nextProblem, recordResult, RECENT_LIMIT, type AttemptInput } from '../core/session';
-import { revealState, solve, type RevealState, type Step } from '../core/solver';
+import { hintLimit, revealState, solve, type RevealState, type Step } from '../core/solver';
 import type { Problem } from '../core/types';
 import type { ProgressStore } from '../storage';
 import { el } from './dom';
 import { shake } from './feedback';
 import { createHintBubble } from './hintBubble';
+import { renderHorizontalProblem } from './horizontalProblemView';
 import { createInstallTip, shouldShowInstallTip } from './installTip';
 import { createNumberPad, keyFromKeyboard } from './numberPad';
-import { renderProblem, type Phase } from './problemView';
+import { renderColumnProblem, type Phase } from './problemView';
 import type { SoundPlayer } from './sound';
 
 export interface AppDeps {
@@ -80,14 +82,15 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   }
 
   function render() {
-    renderProblem(problemHost, { problem, entry, ghosts: reveal.ghosts, highlight: reveal.column, phase });
+    const renderFn = problem.op === '×' ? renderHorizontalProblem : renderColumnProblem;
+    renderFn(problemHost, { problem, entry, ghosts: reveal.ghosts, highlight: reveal.column, phase });
     totalEl.textContent = `⭐ ${progress.total}`;
     streakEl.textContent = `🔥 ${progress.streak}`;
     messageEl.textContent = message || unlockNote;
     messageEl.classList.toggle('good', !message && unlockNote !== '');
     muteBtn.textContent = progress.muted ? '🔇' : '🔊';
     bubble.set(reveal.text);
-    const allShown = hintsShown >= steps.length;
+    const allShown = hintsShown >= hintLimit(steps);
     hintBtn.disabled = allShown;
     hintBtn.textContent = allShown ? "💡 That's every hint!" : '💡 Hint';
     if (phase === 'passed') {
@@ -150,7 +153,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   }
 
   function hint() {
-    if (phase !== 'answering' || hintsShown >= steps.length) return;
+    if (phase !== 'answering' || hintsShown >= hintLimit(steps)) return;
     showSteps(hintsShown + 1);
     attempt.hintsUsed = hintsShown;
     render();
@@ -193,7 +196,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   function handleKey(key: Key) {
     if (phase !== 'answering') return;
     unlockNote = '';
-    const r = pressKey(entry, key);
+    const r = pressKey(entry, key, maxAnswerLength(problem));
     entry = r.state;
     if (key !== 'submit' && message === TRY_AGAIN && !entry.faded) message = '';
     if (r.submit) submit(); else render();
