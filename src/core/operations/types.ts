@@ -20,12 +20,20 @@ export interface RevealState {
   picture?: PictureState;
 }
 
-export interface PicturePart { label: string; count: number; revealed: boolean }
+export interface PicturePart {
+  // 'hundreds'/'tens'/'ones' mean place-value blocks (flats/rods/squares)
+  // and count is the DIGIT at that place, not the place value — actual
+  // block count = count × placeValue(label) (100/10/1). Any other label
+  // means count plain unit squares.
+  label: string;
+  count: number;
+  revealed: boolean;
+}
 
 export interface PictureState {
   totalGroups: number;     // the N in "N groups of G"
   groupSize: number;       // the G in "N groups of G" (e.g. 24, or 3)
-  groupsShown: number;     // groups drawn in full so far: grows 0→totalGroups on levels 1–7; 0 or 1 on levels 8–9
+  groupsShown: number;     // levels 1–7: equals totalGroups from the first hint (every group is drawn at once — what grows across hints is tally/parts.revealed, not this count). Levels 8–9: 0 or 1 (the one drawn group).
   groupsOutlined: number;  // remaining groups shown as labelled outline circles (0 on levels 1–7)
   parts: PicturePart[];    // the one drawn group's breakdown, revealed left-to-right as hints progress
   tally: string[];         // running-total lines under the picture, e.g. ["6 tens = 60"]
