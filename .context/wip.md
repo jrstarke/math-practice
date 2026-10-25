@@ -13,6 +13,16 @@
 - Progress is now v2 under localStorage key `math-practice-progress-v2`; v1 key `math-practice-progress` is read once to migrate (total = bestStreak) and never written. Rolling back to an older build is safe: it reads the untouched v1 key (losing only progress made since the upgrade).
 - dist/ (ngrok) still serves the pre-total build until someone runs `npm run build` on main.
 
+## Learning path (branch feat/learning-path, 2026-10-25)
+- Spec/plan: docs/superpowers/{specs,plans}/2026-10-25-learning-path*. Done + reviewed (no Critical/Important), 179 tests.
+- Progress v3 under key `math-practice-progress-v3` (+ `unlocked`); load chain v3 → v2 key → v1 key; old keys never written.
+- Rules in src/core/path.ts: subtraction unlocks at addition ≥3 (permanent); all ops start level 1; level-9 op gets 1/5 share.
+- Deferred minors: unlock note persists through Hint/Pass; pass() ignores unlocks; no app-level v2-upgrade test.
+- NEXT: multiplication project (full design + builder check). Decisions so far: written mult, BC curriculum, breaking apart,
+  levels ×2, ×10, ×5, ×3, ×4, mixed, 6–9 (split 5+rest), 2d×1d, 3d×1d; hints = nudges along one strategy, last hint stops
+  one step short, Pass shows all; picture = groups of base-ten blocks (appears on Hint); horizontal equation layout;
+  approach A (one module per operation); unlock at addition 6 + subtraction 5.
+
 ## Device testing
 - $PUBLISH_PORT is set on newer container runs (was 64181). ngrok tunnel stopped 2026-10-25 (she moves to math-practice.jamiestarke.com). Steps to restart it are in running.md.
 
