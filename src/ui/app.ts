@@ -13,6 +13,7 @@ import { createHintBubble } from './hintBubble';
 import { renderHorizontalProblem } from './horizontalProblemView';
 import { createInstallTip, shouldShowInstallTip } from './installTip';
 import { createNumberPad, keyFromKeyboard } from './numberPad';
+import { renderPicture } from './pictureView';
 import { renderColumnProblem, type Phase } from './problemView';
 import type { SoundPlayer } from './sound';
 
@@ -62,9 +63,10 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   const problemHost = el('div');
   const messageEl = el('div', { class: 'message', 'data-role': 'message', 'aria-live': 'polite' });
   const bubble = createHintBubble();
+  const pictureHost = el('div', { class: 'picture-host', 'data-role': 'picture' });
   // The bubble floats above the problem (anchored to it) so hint length never resizes the problem.
   const problemArea = el('div', { class: 'problem-area', 'data-role': 'problem-area' },
-    el('div', { class: 'problem-anchor' }, bubble.el, problemHost));
+    el('div', { class: 'problem-anchor' }, bubble.el, problemHost), pictureHost);
   const hintBtn = el('button', { type: 'button', class: 'action hint', 'data-action': 'hint' });
   const passBtn = el('button', { type: 'button', class: 'action pass', 'data-action': 'pass' }, 'Pass');
   const actions = el('div', { class: 'actions' });
@@ -90,6 +92,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     messageEl.classList.toggle('good', !message && unlockNote !== '');
     muteBtn.textContent = progress.muted ? '🔇' : '🔊';
     bubble.set(reveal.text);
+    renderPicture(pictureHost, reveal.picture ?? null);
     const allShown = hintsShown >= hintLimit(steps);
     hintBtn.disabled = allShown;
     hintBtn.textContent = allShown ? "💡 That's every hint!" : '💡 Hint';

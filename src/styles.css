@@ -71,7 +71,7 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 /* The problem fills whatever height the stage has left, so it never runs under the controls. */
 @supports (container-type: size) {
   .problem-area { container-type: size; }
-  .problem-anchor { --cell: min(84px, 100cqw / 5.8, (100cqh - var(--bubble-room) - 22px) / 3.46); }
+  .problem-anchor, .picture-host { --cell: min(84px, 100cqw / 5.8, (100cqh - var(--bubble-room) - 22px) / 3.46); }
 }
 .controls { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 460px; align-self: center; }
 
@@ -192,6 +192,36 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 .action.hint:disabled { opacity: 0.55; font-size: 1.05rem; }
 .action.pass { color: var(--muted); }
 .action.next { grid-column: 1 / -1; background: var(--accent); color: #fff; box-shadow: 0 4px 0 #c97300; }
+
+/* Multiplication "groups of" picture, shown below the equation once the first Hint is tapped. */
+.picture-host:empty { display: none; }
+.picture { display: flex; flex-direction: column; align-items: center; gap: calc(var(--cell) * 0.12); margin-top: calc(var(--cell) * 0.1); }
+.groups { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: calc(var(--cell) * 0.2); }
+.group {
+  display: flex; align-items: flex-end; flex-wrap: wrap; gap: calc(var(--cell) * 0.05);
+  padding: calc(var(--cell) * 0.1); max-width: calc(var(--cell) * 2.6);
+  background: var(--card); border-radius: 10px; box-shadow: 0 2px 0 var(--key-shadow);
+}
+.part { display: flex; flex-wrap: wrap; align-items: flex-end; gap: calc(var(--cell) * 0.03); }
+.block { background: var(--accent); border-radius: 3px; }
+.block.pending { background: var(--muted); opacity: 0.4; }
+.block.color-a { background: var(--accent); }
+.block.color-b { background: var(--good); }
+.block.square { width: calc(var(--cell) * 0.15); height: calc(var(--cell) * 0.15); }
+.block.rod { width: calc(var(--cell) * 0.15); height: calc(var(--cell) * 0.75); }
+.block.flat { width: calc(var(--cell) * 0.75); height: calc(var(--cell) * 0.75); }
+.group-outline {
+  display: flex; align-items: center; justify-content: center;
+  width: calc(var(--cell) * 0.85); height: calc(var(--cell) * 0.85);
+  border: 3px dashed var(--muted); border-radius: 50%;
+  font-weight: 800; color: var(--muted); font-size: calc(var(--cell) * 0.3);
+  font-variant-numeric: tabular-nums;
+}
+.tally {
+  list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column;
+  align-items: center; gap: 2px; font-weight: 700; color: var(--ink);
+  font-size: calc(var(--cell) * 0.28); font-variant-numeric: tabular-nums;
+}
 
 /* Install tip */
 .install-tip {

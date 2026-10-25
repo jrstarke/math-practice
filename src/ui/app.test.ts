@@ -212,6 +212,13 @@ test('multiplication: Hint is gated at hintLimit (never reaching the pass-only s
   expect(s.q('[data-action="next"]')).not.toBeNull();
 });
 
+test('multiplication: picture appears only after the first hint tap', () => {
+  const s = setup(1, {}, multiplicationOnly());
+  expect(s.q('[data-role="picture"]')!.children.length).toBe(0);
+  s.tap('[data-action="hint"]');
+  expect(s.q('[data-role="picture"]')!.children.length).toBeGreaterThan(0);
+});
+
 test('unlock message survives the auto-advance and clears on the next key', () => {
   const s = setup(1, {}, nearUnlock());
   s.typeAnswer(s.correctAnswer());
