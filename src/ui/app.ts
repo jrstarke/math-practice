@@ -45,6 +45,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   let shownAt: number;
   let phase: Phase;
   let message = '';
+  let unlockNote = ''; // 'New: subtraction!' — stays into the next problem until her first key press
   let steps: Step[] = [];
   let hintsShown = 0;
   let reveal: RevealState = revealState([], 0);
@@ -82,7 +83,8 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     renderProblem(problemHost, { problem, entry, ghosts: reveal.ghosts, highlight: reveal.column, phase });
     totalEl.textContent = `⭐ ${progress.total}`;
     streakEl.textContent = `🔥 ${progress.streak}`;
-    messageEl.textContent = message;
+    messageEl.textContent = message || unlockNote;
+    messageEl.classList.toggle('good', !message && unlockNote !== '');
     muteBtn.textContent = progress.muted ? '🔇' : '🔊';
     bubble.set(reveal.text);
     const allShown = hintsShown >= steps.length;
@@ -115,7 +117,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     store.save(progress);
     recent.push(problem);
     if (recent.length > RECENT_LIMIT) recent.shift();
-    return result.levelChange;
+    return result;
   }
 
   function submit() {
@@ -124,8 +126,9 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
       firstSubmitted = true;
     }
     if (Number(entry.answer) === answerOf(problem)) {
-      const change = finish(attempt);
-      if (change === 1) sound.levelUp(); else sound.correct();
+      const { levelChange, unlocked } = finish(attempt);
+      if (unlocked.length > 0) unlockNote = `New: ${unlocked.join(' and ')}!`;
+      if (levelChange === 1 || unlocked.length > 0) sound.levelUp(); else sound.correct();
       phase = 'correct';
       message = '';
       render();
@@ -189,6 +192,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
 
   function handleKey(key: Key) {
     if (phase !== 'answering') return;
+    unlockNote = '';
     const r = pressKey(entry, key);
     entry = r.state;
     if (key !== 'submit' && message === TRY_AGAIN && !entry.faded) message = '';

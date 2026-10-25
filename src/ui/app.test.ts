@@ -148,3 +148,29 @@ test('sound unlock is retried on every pointerup and keydown (iOS gesture rules)
   window.dispatchEvent(new KeyboardEvent('keydown', { key: '4' }));
   expect(s.sound.unlock).toHaveBeenCalledTimes(3);
 });
+
+// One clean, quick answer at level 2 during calibration, after a perfect one, moves addition to 3 and unlocks subtraction.
+const nearUnlock = () => ({ ...defaultProgress(), addition: { level: 2, window: [1], calibrationLeft: 9 } });
+
+test('unlocking subtraction plays the level-up sound and shows a friendly message', () => {
+  const s = setup(1, {}, nearUnlock());
+  s.typeAnswer(s.correctAnswer());
+  s.tap('[data-key="submit"]');
+  expect(s.sound.levelUp).toHaveBeenCalledOnce();
+  expect(s.sound.correct).not.toHaveBeenCalled();
+  const msg = s.q('[data-role="message"]')!;
+  expect(msg.textContent).toBe('New: subtraction!');
+  expect(msg.classList.contains('good')).toBe(true);
+  expect(s.saved[0].unlocked).toEqual(['addition', 'subtraction']);
+});
+
+test('unlock message survives the auto-advance and clears on the next key', () => {
+  const s = setup(1, {}, nearUnlock());
+  s.typeAnswer(s.correctAnswer());
+  s.tap('[data-key="submit"]');
+  s.advance(1000);
+  expect(s.q('[data-role="message"]')!.textContent).toBe('New: subtraction!');
+  s.tap('[data-key="1"]');
+  expect(s.q('[data-role="message"]')!.textContent).toBe('');
+  expect(s.q('[data-role="message"]')!.classList.contains('good')).toBe(false);
+});

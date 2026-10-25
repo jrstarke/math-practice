@@ -120,6 +120,7 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 .answer-row:not(:empty) .cell:not(:empty) { position: relative; z-index: 1; }
 
 .message { min-height: 1.6em; font-size: 1.3rem; font-weight: 700; color: var(--bad); text-align: center; }
+.message.good { color: var(--good); }
 
 @keyframes shake {
   0%, 100% { transform: translateX(0); }

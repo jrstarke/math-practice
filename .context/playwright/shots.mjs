@@ -9,7 +9,7 @@ const views = process.env.VIEWS ? JSON.parse(process.env.VIEWS) : [
   ['ipad6-l', 1024, 768], ['ipad6-l-tabs', 1024, 665], ['ipad102-l-tabs', 1080, 707], ['ipad6-p-tabs', 768, 918],
 ];
 const lvl = { level: 9, window: [], calibrationLeft: 0 };
-const progress = { version: 2, addition: lvl, subtraction: lvl, streak: 12, bestStreak: 12, total: +(process.env.TOTAL ?? 12), muted: false, installTipShown: false };
+const progress = { version: 3, unlocked: ['addition', 'subtraction'], addition: lvl, subtraction: lvl, streak: 12, bestStreak: 12, total: +(process.env.TOTAL ?? 12), muted: false, installTipShown: false };
 const browser = await chromium.launch({ channel: 'chromium' });
 let failures = 0;
 
@@ -53,7 +53,7 @@ for (const [name, w, h] of views) {
       const page = await ctx.newPage();
       page.on('pageerror', e => agg.issues.add('PAGEERROR ' + e.message));
       await page.addInitScript(([p, tip, seed]) => {
-        localStorage.setItem('math-practice-progress-v2', JSON.stringify(p));
+        localStorage.setItem('math-practice-progress-v3', JSON.stringify(p));
         if (tip) Object.defineProperty(navigator, 'standalone', { value: false });
         let first = true; const real = Date.now;
         Date.now = () => (first ? (first = false, seed * 7919) : real());
