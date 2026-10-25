@@ -5,7 +5,9 @@ const run = (s: OpState, scores: number[]) =>
   scores.reduce((acc, sc) => update(acc.state, sc), { state: s, change: 0 as LevelChange });
 const normal = (level: number): OpState => ({ level, window: [], calibrationLeft: 0 });
 
-test('initial state', () => expect(initialOpState()).toEqual({ level: 4, window: [], calibrationLeft: 10 }));
+const calibrating4: OpState = { level: 4, window: [], calibrationLeft: 10 };
+
+test('initial state', () => expect(initialOpState()).toEqual({ level: 1, window: [], calibrationLeft: 10 }));
 
 test('normal: up after 5 with mean ≥ 0.8, window resets', () => {
   const r = run(normal(5), [1, 1, 0.6, 1, 0.6]); // mean 0.84
@@ -21,12 +23,12 @@ test('normal: down after two ≤ 0.3 in a row', () => {
 test('window keeps only the last 5', () => expect(run(normal(5), [0, 0.6, 1, 1, 1, 1]).state).toEqual({ level: 6, window: [], calibrationLeft: 0 }));
 
 test('calibration: two 1.0s go up, one miss goes down', () => {
-  expect(run(initialOpState(), [1, 1]).state.level).toBe(5);
-  expect(run(initialOpState(), [1, 0.6]).state.level).toBe(4);
-  expect(run(initialOpState(), [0]).state.level).toBe(3);
+  expect(run(calibrating4, [1, 1]).state.level).toBe(5);
+  expect(run(calibrating4, [1, 0.6]).state.level).toBe(4);
+  expect(run(calibrating4, [0]).state.level).toBe(3);
 });
 test('calibration lasts exactly 10 current-level problems', () => {
-  const r = run(initialOpState(), Array(9).fill(0.6));
+  const r = run(calibrating4, Array(9).fill(0.6));
   expect(r.state.calibrationLeft).toBe(1);
   expect(update(r.state, 0).state.level).toBe(3); // 10th still calibration
   expect(run(r.state, [0.6, 0.2]).state.calibrationLeft).toBe(0);
@@ -51,6 +53,6 @@ test('pickLevel edges and calibration', () => {
   for (let i = 0; i < 500; i++) {
     expect(pickLevel(normal(1), rng)).toBeGreaterThanOrEqual(1);
     expect(pickLevel(normal(9), rng)).toBeLessThanOrEqual(9);
-    expect(pickLevel(initialOpState(), rng)).toBe(4);
+    expect(pickLevel(calibrating4, rng)).toBe(4);
   }
 });

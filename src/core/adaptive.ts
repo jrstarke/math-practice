@@ -9,7 +9,7 @@ const CALIBRATION_PROBLEMS = 10;
 const MISS = 0.3;
 
 export function initialOpState(): OpState {
-  return { level: 4, window: [], calibrationLeft: CALIBRATION_PROBLEMS };
+  return { level: 1, window: [], calibrationLeft: CALIBRATION_PROBLEMS };
 }
 
 /** Feed one current-level score into the ladder (spec §5). */

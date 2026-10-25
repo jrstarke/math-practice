@@ -32,3 +32,7 @@ export function defaultProgress(): Progress {
 export function opKey(op: Op): OpKey {
   return op === '+' ? 'addition' : 'subtraction';
 }
+
+export function opOf(key: OpKey): Op {
+  return key === 'addition' ? '+' : '-';
+}

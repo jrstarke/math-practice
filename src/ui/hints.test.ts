@@ -91,7 +91,7 @@ test('tapping the bubble during pass skips ahead', () => {
 });
 
 test('pass continues from hints already shown', () => {
-  const s = setup();
+  const s = setup(1, {}, { ...defaultProgress(), addition: { level: 6, window: [], calibrationLeft: 10 } }); // several steps to split
   s.tap('[data-action="hint"]');
   s.tap('[data-action="hint"]');
   const shown = bubble(s);

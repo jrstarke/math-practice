@@ -89,9 +89,9 @@ test('hardware keyboard works', () => {
 });
 
 test('tapping a scratch box routes digits there, not to the answer', () => {
-  const s = setup(7);
+  const s = setup(7, {}, { ...defaultProgress(), addition: { level: 4, window: [], calibrationLeft: 10 } });
   const box = s.q('[data-scratch]');
-  expect(box).not.toBeNull(); // first problem is always level 4 (calibration), which has boxes
+  expect(box).not.toBeNull(); // calibration always picks the current level; level 4 problems have boxes
   box!.dispatchEvent(new Event('pointerdown', { bubbles: true }));
   s.tap('[data-key="1"]');
   expect(s.q('[data-scratch]')!.textContent).toBe('1');
