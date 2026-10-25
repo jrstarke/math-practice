@@ -2,7 +2,7 @@ import { digitsOf } from '../arith';
 import type { Problem } from '../types';
 import type { Rng } from '../rng';
 import { randInt } from '../rng';
-import type { OpModule, PicturePart, PictureState, Step } from './types';
+import type { OpModule, PicturePart, PictureState, Place, Step } from './types';
 
 type Range = [number, number];
 const inRange = (n: number, [lo, hi]: Range) => n >= lo && n <= hi;
@@ -106,7 +106,7 @@ export function groupAssignment(a: number, b: number, level: number): { groupSiz
     groupSize = Math.min(a, b);
     totalGroups = Math.max(a, b);
   }
-  return { groupSize, totalGroups, needsTurnAround: level === 6 && a === groupSize };
+  return { groupSize, totalGroups, needsTurnAround: level === 6 && a === groupSize && a !== b };
 }
 
 const WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
@@ -145,27 +145,78 @@ function finalStep(p: Problem, picture: PictureState): Step {
 }
 
 /**
- * Two-step skip-counting hint (levels 1-3, and level 6's non-0/1 "otherwise"
- * case): all groups are already drawn (every group is shown in full on
- * levels 1-7), so the picture doesn't grow step to step — only the tally
- * does, and it always stops one count short of the total.
+ * "N groups of G. " — the opening words of every strategy's first step, or
+ * nothing when a level-6 turn-around step has just said exactly that.
  */
-function skipCountSteps(groupSize: number, totalGroups: number): Step[] {
+function naming(totalGroups: number, groupSize: number, alreadyNamed: boolean): string {
+  return alreadyNamed ? '' : `${totalGroups} groups of ${groupSize}. `;
+}
+
+type Strategy = { steps: Step[]; finalPicture: PictureState };
+
+/**
+ * Two-step skip-counting hint (levels 1-3, and level 6's 2/5/10 cases):
+ * all groups are already drawn (every group is shown in full on levels
+ * 1-7), so the picture doesn't grow step to step — only the tally does,
+ * and it always stops one count short of the total. The counting step
+ * highlights the n − 1 groups it counts; she adds the last one.
+ */
+function skipCountSteps(groupSize: number, totalGroups: number, alreadyNamed = false): Strategy {
   const counts = Array.from({ length: totalGroups - 1 }, (_, i) => (i + 1) * groupSize);
   const parts = singlePart(groupSize);
-  return [
+  const steps = [
     step(
-      `${totalGroups} groups of ${groupSize}. Count by ${groupSize}s.`,
+      `${naming(totalGroups, groupSize, alreadyNamed)}Count by ${groupSize}s.`,
       pic(totalGroups, groupSize, totalGroups, 0, parts, []),
     ),
     step(
       `${counts.join(', ')}… what comes next?`,
-      pic(totalGroups, groupSize, totalGroups, 0, parts, [counts.join(', ')]),
+      { ...pic(totalGroups, groupSize, totalGroups, 0, parts, [counts.join(', ')]), highlightGroups: totalGroups - 1 },
     ),
   ];
+  return { steps, finalPicture: pic(totalGroups, groupSize, totalGroups, 0, parts, []) };
 }
 
-function hintSteps(p: Problem): { steps: Step[]; finalPicture: PictureState } {
+/** Double, plus one more (level 4, and level 6's ×3 case): n groups of 3, each drawn 2 + 1. */
+function doublePlusOneSteps(n: number, alreadyNamed = false): Strategy {
+  const groupSize = 3;
+  const totalGroups = n;
+  const double = n * 2;
+  const parts: PicturePart[] = [{ label: 'pair', count: 2, revealed: false }, { label: 'one', count: 1, revealed: false }];
+  const steps = [
+    step(`${naming(totalGroups, groupSize, alreadyNamed)}Each ${groupSize} is a 2 and a 1.`,
+      pic(totalGroups, groupSize, totalGroups, 0, parts.map(x => ({ ...x })), [])),
+    step(`${totalGroups} groups of 2 is double ${totalGroups}: ${double}. How many in the ${totalGroups} ones?`,
+      pic(totalGroups, groupSize, totalGroups, 0, [{ ...parts[0], revealed: true }, { ...parts[1] }], [`${double}`])),
+    step(`${totalGroups} ones is ${totalGroups}. Now add ${double} + ${totalGroups}.`,
+      pic(totalGroups, groupSize, totalGroups, 0, parts.map(x => ({ ...x, revealed: true })), [`${double}`, `${totalGroups}`])),
+  ];
+  return { steps, finalPicture: pic(totalGroups, groupSize, totalGroups, 0, parts.map(x => ({ ...x, revealed: true })), []) };
+}
+
+/** Double, then double again (level 5, and level 6's ×4 case): n groups of 4, each drawn 2 + 2. */
+function doubleDoubleSteps(n: number, alreadyNamed = false): Strategy {
+  const groupSize = 4;
+  const totalGroups = n;
+  const double = n * 2;
+  const parts: PicturePart[] = [{ label: 'first two', count: 2, revealed: false }, { label: 'second two', count: 2, revealed: false }];
+  const steps = [
+    step(`${naming(totalGroups, groupSize, alreadyNamed)}Each ${groupSize} is two 2s.`,
+      pic(totalGroups, groupSize, totalGroups, 0, parts.map(x => ({ ...x })), [])),
+    step(`${totalGroups} groups of 2 is double ${totalGroups}: ${double}. The other 2s make ${double} too.`,
+      pic(totalGroups, groupSize, totalGroups, 0, [{ ...parts[0], revealed: true }, { ...parts[1] }], [`${double}`])),
+    step(`Now double ${double}: ${double} + ${double}.`,
+      pic(totalGroups, groupSize, totalGroups, 0, parts.map(x => ({ ...x, revealed: true })), [`${double}`, `${double}`])),
+  ];
+  return { steps, finalPicture: pic(totalGroups, groupSize, totalGroups, 0, parts.map(x => ({ ...x, revealed: true })), []) };
+}
+
+/** Levels 8-9: mark the place a step works on (that part of the drawn group, that digit of each outline label). */
+function withPlace(place: Place, picture: PictureState): PictureState {
+  return { ...picture, highlightPlace: place };
+}
+
+function hintSteps(p: Problem): Strategy {
   const { a, b, level } = p;
 
   switch (level) {
@@ -176,43 +227,12 @@ function hintSteps(p: Problem): { steps: Step[]; finalPicture: PictureState } {
       // the other operand's magnitude (spec table): 2, 10, 5.
       const groupSize = level === 1 ? 2 : level === 2 ? 10 : 5;
       const totalGroups = a === groupSize ? b : a;
-      return { steps: skipCountSteps(groupSize, totalGroups), finalPicture: pic(totalGroups, groupSize, totalGroups, 0, singlePart(groupSize), []) };
+      return skipCountSteps(groupSize, totalGroups);
     }
-    case 4: {
-      // Fixed group size 3, drawn as 2 + 1. totalGroups is always the other
-      // (non-3) operand, which is also the number doubled.
-      const groupSize = 3;
-      const n = a === 3 ? b : a;
-      const totalGroups = n;
-      const double = n * 2;
-      const parts: PicturePart[] = [{ label: 'pair', count: 2, revealed: false }, { label: 'one', count: 1, revealed: false }];
-      const steps = [
-        step(`${totalGroups} groups of ${groupSize}. Each ${groupSize} is a 2 and a 1.`,
-          pic(totalGroups, groupSize, totalGroups, 0, parts.map(x => ({ ...x })), [])),
-        step(`${totalGroups} groups of 2 is double ${totalGroups}: ${double}. How many in the ${totalGroups} ones?`,
-          pic(totalGroups, groupSize, totalGroups, 0, [{ ...parts[0], revealed: true }, { ...parts[1] }], [`${double}`])),
-        step(`${totalGroups} ones is ${totalGroups}. Now add ${double} + ${totalGroups}.`,
-          pic(totalGroups, groupSize, totalGroups, 0, parts.map(x => ({ ...x, revealed: true })), [`${double}`, `${totalGroups}`])),
-      ];
-      return { steps, finalPicture: pic(totalGroups, groupSize, totalGroups, 0, parts.map(x => ({ ...x, revealed: true })), []) };
-    }
-    case 5: {
-      // Fixed group size 4, drawn as 2 + 2.
-      const groupSize = 4;
-      const n = a === 4 ? b : a;
-      const totalGroups = n;
-      const double = n * 2;
-      const parts: PicturePart[] = [{ label: 'first two', count: 2, revealed: false }, { label: 'second two', count: 2, revealed: false }];
-      const steps = [
-        step(`${totalGroups} groups of ${groupSize}. Each ${groupSize} is two 2s.`,
-          pic(totalGroups, groupSize, totalGroups, 0, parts.map(x => ({ ...x })), [])),
-        step(`${totalGroups} groups of 2 is double ${totalGroups}: ${double}. The other 2s make ${double} too.`,
-          pic(totalGroups, groupSize, totalGroups, 0, [{ ...parts[0], revealed: true }, { ...parts[1] }], [`${double}`])),
-        step(`Now double ${double}: ${double} + ${double}.`,
-          pic(totalGroups, groupSize, totalGroups, 0, parts.map(x => ({ ...x, revealed: true })), [`${double}`, `${double}`])),
-      ];
-      return { steps, finalPicture: pic(totalGroups, groupSize, totalGroups, 0, parts.map(x => ({ ...x, revealed: true })), []) };
-    }
+    // Fixed group size 3 (level 4) / 4 (level 5); totalGroups is always the
+    // other operand, which is also the number doubled.
+    case 4: return doublePlusOneSteps(a === 3 ? b : a);
+    case 5: return doubleDoubleSteps(a === 4 ? b : a);
     case 6: {
       if (a === 0 || b === 0) {
         const { groupSize, totalGroups } = groupAssignment(a, b, 6);
@@ -230,21 +250,20 @@ function hintSteps(p: Problem): { steps: Step[]; finalPicture: PictureState } {
         const steps = [step(text, pic(totalGroups, groupSize, totalGroups, 0, parts, []))];
         return { steps, finalPicture: pic(totalGroups, groupSize, totalGroups, 0, parts, []) };
       }
-      // "Mixed review" at level 6 collapses every special value's own
-      // strategy down to plain skip-counting (brief's pinned 2(+1)-step
-      // table), rather than re-dispatching to levels 3/4/5's richer,
-      // differently-sized strategies for their own special values.
+      // Mixed review (spec): turn it around if needed, then that table's own
+      // strategy — skip counting for 2/5/10, level 4's double-plus-one for 3,
+      // level 5's double-then-double for 4. The turn-around step already
+      // names the groups, so the strategy's first step then doesn't repeat it.
       const { groupSize, totalGroups, needsTurnAround } = groupAssignment(a, b, 6);
-      const parts = singlePart(groupSize);
-      const steps: Step[] = [];
-      if (needsTurnAround) {
-        steps.push(step(
-          `${a} × ${b} is the same as ${b} × ${a}: ${totalGroups} groups of ${groupSize}.`,
-          pic(totalGroups, groupSize, totalGroups, 0, parts, []),
-        ));
-      }
-      steps.push(...skipCountSteps(groupSize, totalGroups));
-      return { steps, finalPicture: pic(totalGroups, groupSize, totalGroups, 0, parts, []) };
+      const strategy = groupSize === 3 ? doublePlusOneSteps(totalGroups, needsTurnAround)
+        : groupSize === 4 ? doubleDoubleSteps(totalGroups, needsTurnAround)
+        : skipCountSteps(groupSize, totalGroups, needsTurnAround);
+      if (!needsTurnAround) return strategy;
+      const turnAround = step(
+        `${a} × ${b} is the same as ${b} × ${a}: ${totalGroups} groups of ${groupSize}.`,
+        strategy.steps[0].picture,
+      );
+      return { steps: [turnAround, ...strategy.steps], finalPicture: strategy.finalPicture };
     }
     case 7: {
       // Group size is the *bigger* factor, split into 5 + the rest;
@@ -281,12 +300,13 @@ function hintSteps(p: Problem): { steps: Step[]; finalPicture: PictureState } {
       const steps = [
         step(`${totalGroups} groups of ${groupSize}. Break ${groupSize} into ${tensValue} and ${ones}.`,
           pic(totalGroups, groupSize, 1, outlined, parts.map(x => ({ ...x })), [])),
-        step(`The tens: ${totalGroups} groups of ${tens} tens is ${tensCount} tens = ${tensProduct}. How many ones?`,
-          pic(totalGroups, groupSize, 1, outlined, [{ ...parts[0], revealed: true }, { ...parts[1] }],
-            [`${tensCount} tens = ${tensProduct}`])),
+        // tens is 1 for 11-19 ("1 ten"); tensCount = tens × totalGroups is always ≥ 2.
+        step(`The tens: ${totalGroups} groups of ${tens} ${tens === 1 ? 'ten' : 'tens'} is ${tensCount} tens = ${tensProduct}. How many ones?`,
+          withPlace('tens', pic(totalGroups, groupSize, 1, outlined, [{ ...parts[0], revealed: true }, { ...parts[1] }],
+            [`${tensCount} tens = ${tensProduct}`]))),
         step(`${totalGroups} groups of ${ones} = ${onesProduct}. Now add ${tensProduct} + ${onesProduct}.`,
-          pic(totalGroups, groupSize, 1, outlined, parts.map(x => ({ ...x, revealed: true })),
-            [`${tensCount} tens = ${tensProduct}`, `${onesProduct}`])),
+          withPlace('ones', pic(totalGroups, groupSize, 1, outlined, parts.map(x => ({ ...x, revealed: true })),
+            [`${tensCount} tens = ${tensProduct}`, `${onesProduct}`]))),
       ];
       return { steps, finalPicture: pic(totalGroups, groupSize, 1, outlined, parts.map(x => ({ ...x, revealed: true })), []) };
     }
@@ -296,9 +316,9 @@ function hintSteps(p: Problem): { steps: Step[]; finalPicture: PictureState } {
       const h = Math.floor(groupSize / 100);
       const t = Math.floor(groupSize / 10) % 10;
       const o = groupSize % 10;
-      const contributions = [
+      const contributions: { name: Place; value: number; digit: number }[] = [
         { name: 'hundreds', value: h * 100, digit: h },
-        ...(t !== 0 ? [{ name: 'tens', value: t * 10, digit: t }] : []),
+        ...(t !== 0 ? [{ name: 'tens' as const, value: t * 10, digit: t }] : []),
         { name: 'ones', value: o, digit: o },
       ];
       const parts: PicturePart[] = contributions.map(c => ({ label: c.name, count: c.digit, revealed: false }));
@@ -311,7 +331,7 @@ function hintSteps(p: Problem): { steps: Step[]; finalPicture: PictureState } {
         tallySoFar.push(`${c.digit * totalGroups} ${c.name} = ${product}`);
         steps.push(step(
           `${lead} ${c.name}: ${totalGroups} groups of ${c.value} = ${product}.`,
-          pic(totalGroups, groupSize, 1, outlined, parts.map((part, j) => ({ ...part, revealed: j <= i })), [...tallySoFar]),
+          withPlace(c.name, pic(totalGroups, groupSize, 1, outlined, parts.map((part, j) => ({ ...part, revealed: j <= i })), [...tallySoFar])),
         ));
       });
       // Stop-short add: list every nonzero place's product, unsummed

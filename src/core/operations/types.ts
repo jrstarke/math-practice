@@ -37,7 +37,11 @@ export interface PictureState {
   groupsOutlined: number;  // remaining groups shown as labelled outline circles (0 on levels 1–7)
   parts: PicturePart[];    // the one drawn group's breakdown, revealed left-to-right as hints progress
   tally: string[];         // running-total lines under the picture, e.g. ["6 tens = 60"]
+  highlightGroups?: number; // levels 1–3/6 skip counting: the first n drawn groups are the ones being counted
+  highlightPlace?: Place;   // levels 8–9: the place being worked on — that part of the drawn group, and that digit of each outline label
 }
+
+export type Place = 'hundreds' | 'tens' | 'ones';
 
 export interface OpModule {
   matchesLevel(p: Problem): boolean;

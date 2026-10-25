@@ -185,3 +185,75 @@ test('multiplicationModule implements the full OpModule interface', () => {
   expect(multiplicationModule.maxAnswerLen(p)).toBe(2);
   expect(multiplicationModule.solve(p).length).toBeGreaterThan(0);
 });
+
+const hintTexts = (a: number, b: number, level: number) => solve({ op: '×', a, b, level }).slice(0, -1).map(s => s.text);
+
+test('level 6 with group size 3 reuses level 4\'s double-plus-one strategy', () => {
+  expect(hintTexts(7, 3, 6)).toEqual(hintTexts(7, 3, 4));
+  expect(hintTexts(7, 3, 6)).toEqual([
+    '7 groups of 3. Each 3 is a 2 and a 1.',
+    '7 groups of 2 is double 7: 14. How many in the 7 ones?',
+    '7 ones is 7. Now add 14 + 7.',
+  ]);
+});
+
+test('level 6 with group size 4 reuses level 5\'s double-then-double strategy', () => {
+  expect(hintTexts(8, 4, 6)).toEqual(hintTexts(8, 4, 5));
+  expect(hintTexts(8, 4, 6)[0]).toBe('8 groups of 4. Each 4 is two 2s.');
+});
+
+test('level 6 turn-around comes first and the next step does not repeat the groups', () => {
+  expect(hintTexts(3, 7, 6)).toEqual([
+    '3 × 7 is the same as 7 × 3: 7 groups of 3.',
+    'Each 3 is a 2 and a 1.',
+    '7 groups of 2 is double 7: 14. How many in the 7 ones?',
+    '7 ones is 7. Now add 14 + 7.',
+  ]);
+  expect(hintTexts(4, 8, 6)).toEqual([
+    '4 × 8 is the same as 8 × 4: 8 groups of 4.',
+    'Each 4 is two 2s.',
+    '8 groups of 2 is double 8: 16. The other 2s make 16 too.',
+    'Now double 16: 16 + 16.',
+  ]);
+  expect(hintTexts(2, 6, 6)).toEqual([
+    '2 × 6 is the same as 6 × 2: 6 groups of 2.',
+    'Count by 2s.',
+    '2, 4, 6, 8, 10… what comes next?',
+  ]);
+});
+
+test('level 6 square facts never turn around (3 × 3 is not "the same as 3 × 3")', () => {
+  expect(groupAssignment(3, 3, 6).needsTurnAround).toBe(false);
+  expect(hintTexts(3, 3, 6)[0]).toBe('3 groups of 3. Each 3 is a 2 and a 1.');
+  expect(hintTexts(5, 5, 6)[0]).toBe('5 groups of 5. Count by 5s.');
+});
+
+test('level 6 keeps the 2/5/10 cases as skip counting and 0/1 as one question', () => {
+  expect(hintTexts(7, 5, 6)).toEqual(['7 groups of 5. Count by 5s.', '5, 10, 15, 20, 25, 30… what comes next?']);
+  expect(hintTexts(9, 10, 6)[0]).toBe('9 groups of 10. Count by 10s.');
+  expect(hintTexts(3, 0, 6)).toHaveLength(1);
+  expect(hintTexts(1, 4, 6)).toHaveLength(1);
+});
+
+test('level 8 says "1 ten" (singular) for factors 11-19', () => {
+  expect(hintTexts(14, 3, 8)[1]).toBe('The tens: 3 groups of 1 ten is 3 tens = 30. How many ones?');
+  expect(hintTexts(24, 3, 8)[1]).toBe('The tens: 3 groups of 2 tens is 6 tens = 60. How many ones?');
+});
+
+test('skip-count hints highlight the n − 1 counted groups on the counting step only', () => {
+  for (const [a, b, level] of [[2, 6, 1], [10, 4, 2], [5, 7, 3], [7, 5, 6]] as const) {
+    const steps = solve({ op: '×', a, b, level });
+    const total = steps[0].picture!.totalGroups;
+    const counting = steps.at(-2)!;
+    expect(counting.text).toMatch(/what comes next\?$/);
+    expect(counting.picture!.highlightGroups).toBe(total - 1);
+    for (const s of steps) if (s !== counting) expect(s.picture?.highlightGroups ?? 0).toBe(0);
+  }
+});
+
+test('level 8-9 hints highlight the place being worked on', () => {
+  const places = (a: number, b: number, level: number) => solve({ op: '×', a, b, level }).map(s => s.picture?.highlightPlace);
+  expect(places(24, 3, 8)).toEqual([undefined, 'tens', 'ones', undefined]);
+  expect(places(214, 5, 9)).toEqual(['hundreds', 'tens', 'ones', undefined, undefined]);
+  expect(places(305, 3, 9)).toEqual(['hundreds', 'ones', undefined, undefined]);
+});
