@@ -53,7 +53,7 @@ for (const [name, w, h] of views) {
       const page = await ctx.newPage();
       page.on('pageerror', e => agg.issues.add('PAGEERROR ' + e.message));
       await page.addInitScript(([p, tip, seed]) => {
-        localStorage.setItem('math-practice-progress', JSON.stringify(p));
+        localStorage.setItem('math-practice-progress-v2', JSON.stringify(p));
         if (tip) Object.defineProperty(navigator, 'standalone', { value: false });
         let first = true; const real = Date.now;
         Date.now = () => (first ? (first = false, seed * 7919) : real());

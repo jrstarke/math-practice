@@ -1,5 +1,5 @@
 import { defaultProgress } from './core/progress';
-import { createStore, STORAGE_KEY } from './storage';
+import { createStore, LEGACY_STORAGE_KEY, STORAGE_KEY } from './storage';
 
 const mem = () => {
   const m = new Map<string, string>();
@@ -17,24 +17,40 @@ test('defaults are v2 with total 0', () => {
   expect(defaultProgress()).toMatchObject({ version: 2, total: 0 });
 });
 
+test('v2 is stored under its own key so older builds never read it', () => {
+  expect(STORAGE_KEY).toBe('math-practice-progress-v2');
+  expect(LEGACY_STORAGE_KEY).toBe('math-practice-progress');
+});
+
 test('migrates a realistic v1 record', () => {
   const s = mem();
-  s.m.set(STORAGE_KEY, JSON.stringify(v1));
+  s.m.set(LEGACY_STORAGE_KEY, JSON.stringify(v1));
   expect(createStore(s).load()).toEqual({ ...v1, version: 2, total: 61 });
 });
 
-test('migration is stable across reloads before a save', () => {
+test('migration is stable across reloads before a save, and loading writes nothing', () => {
   const s = mem();
-  s.m.set(STORAGE_KEY, JSON.stringify(v1));
+  s.m.set(LEGACY_STORAGE_KEY, JSON.stringify(v1));
   expect(createStore(s).load()).toEqual(createStore(s).load());
+  expect([...s.m.keys()]).toEqual([LEGACY_STORAGE_KEY]);
+  expect(JSON.parse(s.m.get(LEGACY_STORAGE_KEY)!)).toEqual(v1);
 });
 
-test('saving a migrated record writes v2', () => {
+test('saving a migrated record writes v2 to the new key and leaves the v1 record for rollback', () => {
   const s = mem();
-  s.m.set(STORAGE_KEY, JSON.stringify(v1));
+  s.m.set(LEGACY_STORAGE_KEY, JSON.stringify(v1));
   const store = createStore(s);
-  store.save(store.load());
-  expect(JSON.parse(s.m.get(STORAGE_KEY)!)).toMatchObject({ version: 2, total: 61, streak: 58 });
+  store.save({ ...store.load(), streak: 59, bestStreak: 61, total: 62 });
+  expect(JSON.parse(s.m.get(STORAGE_KEY)!)).toMatchObject({ version: 2, total: 62, streak: 59 });
+  expect(JSON.parse(s.m.get(LEGACY_STORAGE_KEY)!)).toEqual(v1);
+  expect(createStore(s).load()).toMatchObject({ total: 62, streak: 59 });
+});
+
+test('an invalid v2 record falls back to the v1 record rather than defaults', () => {
+  const s = mem();
+  s.m.set(LEGACY_STORAGE_KEY, JSON.stringify(v1));
+  s.m.set(STORAGE_KEY, 'not json');
+  expect(createStore(s).load()).toEqual({ ...v1, version: 2, total: 61 });
 });
 
 test('round-trips', () => {

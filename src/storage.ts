@@ -1,6 +1,9 @@
 import { defaultProgress, type Progress } from './core/progress';
 
-export const STORAGE_KEY = 'math-practice-progress';
+/** v2+ lives under its own key, so an older build (which only knows v1) never reads it and resets her progress. */
+export const STORAGE_KEY = 'math-practice-progress-v2';
+/** Where v1 was saved. Read once to migrate, never written, so a rollback still finds the last v1 save. */
+export const LEGACY_STORAGE_KEY = 'math-practice-progress';
 
 export interface ProgressStore {
   load(): Progress;
@@ -46,10 +49,10 @@ function upgradeV1(p: ProgressV1): Progress {
   return { ...p, version: 2, total: p.bestStreak };
 }
 
-function fromStored(x: unknown): Progress {
-  if (isValidProgress(x)) return x;
-  if (isValidProgressV1(x)) return upgradeV1(x);
-  return defaultProgress();
+function readJson(storage: KV, key: string): unknown {
+  const raw = storage.getItem(key);
+  if (raw === null) return null;
+  try { return JSON.parse(raw); } catch { return null; }
 }
 
 /** Progress persistence that never throws; falls back to memory when storage is unavailable. */
@@ -59,9 +62,10 @@ export function createStore(storage: KV | null): ProgressStore {
     load() {
       if (!storage) return memory ?? defaultProgress();
       try {
-        const raw = storage.getItem(STORAGE_KEY);
-        const parsed: unknown = raw === null ? null : JSON.parse(raw);
-        return fromStored(parsed);
+        const current = readJson(storage, STORAGE_KEY);
+        if (isValidProgress(current)) return current;
+        const legacy = readJson(storage, LEGACY_STORAGE_KEY);
+        return isValidProgressV1(legacy) ? upgradeV1(legacy) : defaultProgress();
       } catch {
         return defaultProgress();
       }
