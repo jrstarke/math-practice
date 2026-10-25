@@ -1,8 +1,11 @@
-import { defaultProgress, type Progress } from './core/progress';
+import { defaultProgress, type OpKey, type Progress } from './core/progress';
 
-/** v2+ lives under its own key, so an older build (which only knows v1) never reads it and resets her progress. */
-export const STORAGE_KEY = 'math-practice-progress-v2';
-/** Where v1 was saved. Read once to migrate, never written, so a rollback still finds the last v1 save. */
+/**
+ * Each version lives under its own key, so an older build never reads a newer record and resets her progress.
+ * Older keys are read once to migrate and never written, so a rollback still finds the last save it understands.
+ */
+export const STORAGE_KEY = 'math-practice-progress-v3';
+export const V2_STORAGE_KEY = 'math-practice-progress-v2';
 export const LEGACY_STORAGE_KEY = 'math-practice-progress';
 
 export interface ProgressStore {
@@ -34,19 +37,38 @@ function hasValidCommonFields(x: Record<string, unknown>): boolean {
     && typeof x.installTipShown === 'boolean';
 }
 
-type ProgressV1 = Omit<Progress, 'version' | 'total'> & { version: 1 };
+type ProgressV2 = Omit<Progress, 'version' | 'unlocked'> & { version: 2 };
+type ProgressV1 = Omit<ProgressV2, 'version' | 'total'> & { version: 1 };
+const OP_KEYS: readonly OpKey[] = ['addition', 'subtraction'];
 
 function isValidProgressV1(x: unknown): x is ProgressV1 {
   return isObj(x) && x.version === 1 && hasValidCommonFields(x);
 }
 
-export function isValidProgress(x: unknown): x is Progress {
+function isValidProgressV2(x: unknown): x is ProgressV2 {
   return isObj(x) && x.version === 2 && hasValidCommonFields(x) && isIntIn(x.total, 0, Number.MAX_SAFE_INTEGER);
 }
 
+function isValidUnlocked(x: unknown): boolean {
+  return Array.isArray(x)
+    && x.includes('addition')
+    && x.every(k => (OP_KEYS as readonly unknown[]).includes(k))
+    && new Set(x).size === x.length;
+}
+
+export function isValidProgress(x: unknown): x is Progress {
+  return isObj(x) && x.version === 3 && hasValidCommonFields(x)
+    && isIntIn(x.total, 0, Number.MAX_SAFE_INTEGER) && isValidUnlocked(x.unlocked);
+}
+
 /** v1 had no running total: start it at the best streak, as credit for work already done. */
-function upgradeV1(p: ProgressV1): Progress {
+function upgradeV1(p: ProgressV1): ProgressV2 {
   return { ...p, version: 2, total: p.bestStreak };
+}
+
+/** v2 players already practised both operations, so both stay unlocked (never re-locked by an upgrade). */
+function upgradeV2(p: ProgressV2): Progress {
+  return { ...p, version: 3, unlocked: ['addition', 'subtraction'] };
 }
 
 function readJson(storage: KV, key: string): unknown {
@@ -64,8 +86,10 @@ export function createStore(storage: KV | null): ProgressStore {
       try {
         const current = readJson(storage, STORAGE_KEY);
         if (isValidProgress(current)) return current;
-        const legacy = readJson(storage, LEGACY_STORAGE_KEY);
-        return isValidProgressV1(legacy) ? upgradeV1(legacy) : defaultProgress();
+        const v2 = readJson(storage, V2_STORAGE_KEY);
+        if (isValidProgressV2(v2)) return upgradeV2(v2);
+        const v1 = readJson(storage, LEGACY_STORAGE_KEY);
+        return isValidProgressV1(v1) ? upgradeV2(upgradeV1(v1)) : defaultProgress();
       } catch {
         return defaultProgress();
       }

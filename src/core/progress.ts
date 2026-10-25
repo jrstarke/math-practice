@@ -1,8 +1,11 @@
 import { initialOpState, type OpState } from './adaptive';
 import type { Op } from './types';
 
+export type OpKey = 'addition' | 'subtraction';
+
 export interface Progress {
-  version: 2;
+  version: 3;
+  unlocked: OpKey[]; // operations in the mix; once unlocked, always unlocked
   addition: OpState;
   subtraction: OpState;
   streak: number;
@@ -14,7 +17,8 @@ export interface Progress {
 
 export function defaultProgress(): Progress {
   return {
-    version: 2,
+    version: 3,
+    unlocked: ['addition'],
     addition: initialOpState(),
     subtraction: initialOpState(),
     streak: 0,
@@ -25,6 +29,6 @@ export function defaultProgress(): Progress {
   };
 }
 
-export function opKey(op: Op): 'addition' | 'subtraction' {
+export function opKey(op: Op): OpKey {
   return op === '+' ? 'addition' : 'subtraction';
 }
