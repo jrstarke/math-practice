@@ -14,7 +14,7 @@
 - dist/ (ngrok) still serves the pre-total build until someone runs `npm run build` on main.
 
 ## Device testing
-- $PUBLISH_PORT is set on newer container runs (was 64181). Daughter uses the app via ngrok https://slate-washer-unreal.ngrok-free.dev (see running.md); her progress (streak 58+) lives in that origin's localStorage.
+- $PUBLISH_PORT is set on newer container runs (was 64181). ngrok tunnel stopped 2026-10-25 (she moves to math-practice.jamiestarke.com). Steps to restart it are in running.md.
 
 ## Final-review fixes (done)
 - #2 double-tap Next→Pass + #3 iOS audio unlock: 9f29593. #1 iPhone SE overflow + #4 iPhone landscape: dde6403.
