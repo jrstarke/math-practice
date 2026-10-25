@@ -21,15 +21,35 @@ function isValidOpState(x: unknown): boolean {
     && isIntIn(x.calibrationLeft, 0, 10);
 }
 
-export function isValidProgress(x: unknown): x is Progress {
-  return isObj(x)
-    && x.version === 1
-    && isValidOpState(x.addition)
+/** Fields shared by every saved version. */
+function hasValidCommonFields(x: Record<string, unknown>): boolean {
+  return isValidOpState(x.addition)
     && isValidOpState(x.subtraction)
     && isIntIn(x.streak, 0, Number.MAX_SAFE_INTEGER)
     && isIntIn(x.bestStreak, 0, Number.MAX_SAFE_INTEGER)
     && typeof x.muted === 'boolean'
     && typeof x.installTipShown === 'boolean';
+}
+
+type ProgressV1 = Omit<Progress, 'version' | 'total'> & { version: 1 };
+
+function isValidProgressV1(x: unknown): x is ProgressV1 {
+  return isObj(x) && x.version === 1 && hasValidCommonFields(x);
+}
+
+export function isValidProgress(x: unknown): x is Progress {
+  return isObj(x) && x.version === 2 && hasValidCommonFields(x) && isIntIn(x.total, 0, Number.MAX_SAFE_INTEGER);
+}
+
+/** v1 had no running total: start it at the best streak, as credit for work already done. */
+function upgradeV1(p: ProgressV1): Progress {
+  return { ...p, version: 2, total: p.bestStreak };
+}
+
+function fromStored(x: unknown): Progress {
+  if (isValidProgress(x)) return x;
+  if (isValidProgressV1(x)) return upgradeV1(x);
+  return defaultProgress();
 }
 
 /** Progress persistence that never throws; falls back to memory when storage is unavailable. */
@@ -41,7 +61,7 @@ export function createStore(storage: KV | null): ProgressStore {
       try {
         const raw = storage.getItem(STORAGE_KEY);
         const parsed: unknown = raw === null ? null : JSON.parse(raw);
-        return isValidProgress(parsed) ? parsed : defaultProgress();
+        return fromStored(parsed);
       } catch {
         return defaultProgress();
       }
