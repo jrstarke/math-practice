@@ -123,7 +123,7 @@
   ```
 - Produces (`operations/multiplication.ts`): `export const multiplicationModule: OpModule`, plus these exported for direct testing:
   - `matchesLevel(p: Problem): boolean` — per the level table below.
-  - `generate(level: number, rng: Rng): Problem`.
+  - `generate(level: number, rng: Rng): Problem` — builds and returns **one raw candidate**, same convention Task 1 established for addition/subtraction after its fix round: no internal retry loop and no `matchesLevel` call inside this function. `generator.ts`'s dispatcher (unchanged by this task) already retries up to 1000 times and checks `matchesLevel` itself, throwing if none match. Multiplication's construction is deterministic (pick the constrained factor(s) per the level table directly), so in practice it should match on the first try every time — but the function signature and responsibility split must still match addition/subtraction's.
   - `targetMs(p: Problem): number` — flat per level (table below), not the `answerColumns` formula.
   - `maxAnswerLen(p: Problem): number` — 2 (levels 1–7), 3 (level 8), 4 (level 9).
   - `solve(p: Problem): Step[]` — always ends with exactly one `{ passOnly: true, ghosts: <answer's digits>, text: "<a> × <b> = <answer>.", picture: <final picture>, column: null, scratch: {} }` step; every earlier step has `passOnly` absent/false and never carries the answer in `ghosts`, text, or picture.
