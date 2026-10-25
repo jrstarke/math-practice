@@ -1,6 +1,9 @@
 # WIP (updated 2026-10-25)
 
-## Multiplication (branch feat/multiplication, 2026-10-25) — DONE, awaiting merge decision
+## Multiplication — MERGED to main 2026-10-25 (HEAD 741e566), not yet pushed to dev/prod
+- Also added (741e566): service worker update check on visibilitychange (home-screen iPad apps resume rather than
+  relaunch), and a small build-time label "YYYY-MM-DD HH:MM UTC" under the mute button (__APP_VERSION__ via vite define).
+  Branch + worktree + SDD workspace deleted.
 - Spec docs/superpowers/specs/2026-10-25-multiplication-design.md, plan docs/superpowers/plans/2026-10-25-multiplication.md.
   All 6 tasks done + task-reviewed; final whole-branch review (With fixes) → one fix wave → scoped re-review clean.
   325 tests, tsc clean, Playwright: only the accepted se-tab 34px-cell exception at every level.
