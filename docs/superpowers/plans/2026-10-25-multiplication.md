@@ -115,9 +115,9 @@
   export interface PictureState {
     totalGroups: number;     // the N in "N groups of G"
     groupSize: number;       // the G in "N groups of G" (e.g. 24, or 3)
-    groupsShown: number;     // groups drawn in full so far: grows 0→totalGroups on levels 1–7; 0 or 1 on levels 8–9
+    groupsShown: number;     // levels 1–7: equals totalGroups from the first hint (every group is drawn at once — the spec's own step-1 example shows all N groups immediately; what grows across hints is `tally`/`parts.revealed`, not this count). Levels 8–9: 0 or 1 (the one drawn group).
     groupsOutlined: number;  // remaining groups shown as labelled outline circles (0 on levels 1–7)
-    parts: PicturePart[];    // the one drawn group's breakdown, revealed left-to-right as hints progress
+    parts: PicturePart[];    // the one drawn group's breakdown, revealed left-to-right as hints progress. Label vocabulary the renderer (Task 5) must honor: 'hundreds'/'tens'/'ones' mean place-value blocks (flats/rods/squares) and `count` is the DIGIT at that place, not the place value — actual block count = count × placeValue(label) (100/10/1). Any other label (a bare number, 'pair', 'one', 'first two', 'second two', 'five', 'rest', ...) means `count` plain unit squares.
     tally: string[];         // running-total lines under the picture, e.g. ["6 tens = 60"]
   }
   ```
@@ -127,7 +127,7 @@
   - `targetMs(p: Problem): number` — flat per level (table below), not the `answerColumns` formula.
   - `maxAnswerLen(p: Problem): number` — 2 (levels 1–7), 3 (level 8), 4 (level 9).
   - `solve(p: Problem): Step[]` — always ends with exactly one `{ passOnly: true, ghosts: <answer's digits>, text: "<a> × <b> = <answer>.", picture: <final picture>, column: null, scratch: {} }` step; every earlier step has `passOnly` absent/false and never carries the answer in `ghosts`, text, or picture.
-  - `groupAssignment(a: number, b: number, level: number): { groupSize: number; totalGroups: number; needsTurnAround: boolean }` — the level-6 tie-break and turn-around logic, exported so Task-5's picture tests and Task-2's own tests can both exercise it directly (see rule below).
+  - `groupAssignment(a: number, b: number, level: number): { groupSize: number; totalGroups: number; needsTurnAround: boolean }` — used **only for levels 6, 8, and 9**, where which factor plays which role genuinely needs a rule (level 6's mixed review, and levels 8–9's trivial "the multi-digit factor is always `groupSize`"). Levels 1–5 and 7 do **not** go through this function: each has its own *fixed* group size from the level table above (2, 10, 5, 3, 4; or "the bigger factor, split 5+rest" at level 7) regardless of which operand is numerically bigger — applying `groupAssignment`'s rule 4 ("smaller wins") to those levels would be wrong whenever the non-fixed operand is smaller than the fixed one (e.g. level 5 is always ×4, even for `4 × 2` where 2 is smaller). Exported so Task-2's own tests can exercise it directly (see rule below); Task 5 never calls it (it consumes `PictureState` directly).
 - Produces (`registry.ts`): `OPS` now `Record<'+' | '-' | '×', OpModule>`.
 
 **Level table (value constraints for `matchesLevel`; `generate` must only ever produce matches):**
@@ -146,15 +146,15 @@
 
 **Target times (flat, per level):** 1–7 → `8000`; 8 → `20000`; 9 → `30000`.
 
-**`groupAssignment` rule (deterministic, in priority order — first match wins):**
+**`groupAssignment` rule (deterministic, in priority order — first match wins; applies at levels 6, 8, 9 only, per the scope note above):**
 1. If either factor is `0`: that `0` is `groupSize`; the other factor is `totalGroups`.
 2. Else if either factor is `1`: that `1` is `totalGroups`; the other factor is `groupSize`.
 3. Else if either factor is `10`: `10` is `groupSize`; the other factor is `totalGroups`.
-4. Else (levels 1–5, and level-6 pairs outside the above): the smaller factor is `groupSize`; the larger is `totalGroups`.
+4. Else (level-6 pairs outside the above, i.e. both factors in `{2,3,4,5}`): the smaller factor is `groupSize`; the larger is `totalGroups`.
 5. Levels 8–9: `groupSize = a` (the multi-digit factor), `totalGroups = b`, always — rules 1–4 don't apply (b is 2–9 or 2–5, never 0/1/10/tied).
 6. `needsTurnAround` (level 6 only, used by the first hint step) is `true` iff `a === groupSize` — i.e. the written equation states the group size before the group count, so the groups-of reading has to flip it (`"3 × 7 is the same as 7 × 3: 7 groups of 3"`).
 
-This rule keeps `totalGroups ≤ 9` always (bounded by the `[0,9]`/`[2,9]` "other" factor) and agrees with every lower level's own fixed group-size (2, 3, 4, 5) whenever a level-6 pair overlaps one.
+This rule keeps `totalGroups ≤ 9` for every pair rule 4 or 5 resolves, and rule 4 agrees with levels 3/4/5's own fixed group-size (5, 3, 4) for every pair it covers (both factors in `{2,3,4,5}`, where "smaller wins" and "the fixed value wins" are the same factor by construction). **Known accepted edge case:** `(10, 0)` / `(0, 10)` hits rule 1 before rule 3, giving `groupSize: 0, totalGroups: 10` — the one pair where `totalGroups` exceeds 9. Accepted as-is: the 10 "groups" are empty (size 0), so the picture is 10 trivial/degenerate circles, not a rendering or correctness problem, and patching this one pair isn't worth complicating the priority order. Also accepted: when `a === b` at level 6 (e.g. `2×2`), `needsTurnAround` is trivially true, producing a redundant-but-harmless "2 × 2 is the same as 2 × 2" sentence.
 
 **Hint-step counts (excluding the trailing `passOnly` step, which always adds one more):**
 
