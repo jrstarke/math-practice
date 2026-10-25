@@ -224,9 +224,11 @@ Exact hint copy is the implementer's call (follow the spec's example wording and
 
   Level-9 zero-tens case (Review Focus): `solve({ op: '×', a: 305, b: 3, level: 9 })` — assert no step's `text` contains `"0 tens"` or a bare `"+ 0"`, and `parts` for the tens place is simply omitted (not a zero-count part) wherever Task 2's step building reaches that place.
 
+  `arith.test.ts`: add `expect(answerOf({ op: '×', a: 6, b: 7, level: 1 })).toBe(42);` and `expect(answerColumns({ op: '×', a: 24, b: 3, level: 8 })).toBe(2);` (this is the file listed under Test above, and Step 5 commits it — don't skip it).
+
 - [ ] **Step 2: Run to verify they fail**
 
-  Run: `npx vitest run src/core/operations/multiplication.test.ts`
+  Run: `npx vitest run src/core/operations/multiplication.test.ts src/core/arith.test.ts`
   Expected: FAIL — `multiplicationModule` doesn't exist yet.
 
 - [ ] **Step 3: Implement** `multiplication.ts` per the Interfaces, level table, target times, `groupAssignment` rule, and hint-step counts above; widen `Op` in `types.ts`; extend `answerOf`; register in `registry.ts`.
@@ -319,7 +321,7 @@ Exact hint copy is the implementer's call (follow the spec's example wording and
 - Test: `src/core/entry.test.ts`, `src/ui/app.test.ts`, new `src/ui/horizontalProblemView.test.ts`
 
 **Interfaces:**
-- Consumes: `maxAnswerLength(p)` (Task 2), `hintLimit(steps)` (Task 1), `Step`/`RevealState` with `picture`/`passOnly` (Tasks 1–2).
+- Consumes: `maxAnswerLength(p)` (the dispatcher from Task 1, returning multiplication's 2/3/4-digit numbers supplied by Task 2's `maxAnswerLen`), `hintLimit(steps)` (Task 1), `Step`/`RevealState` with `picture`/`passOnly` (Tasks 1–2).
 - Produces (`entry.ts`): `pressKey(s: EntryState, key: Key, maxLen: number = MAX_ANSWER)` — same body, `MAX_ANSWER` replaced by the parameter. Every existing call site that doesn't pass a third argument is unaffected.
 - Produces (`problemView.ts`): today's `renderProblem` renamed `renderColumnProblem` (same signature/behaviour); `scratchColumns` unchanged.
 - Produces (`horizontalProblemView.ts`): `export function renderHorizontalProblem(container: HTMLElement, vm: ProblemViewModel): void` — DOM shape: an equation line with `data-role="top"` (= `String(p.a)`), `data-role="op"` (`'×'`), `data-role="bottom"` (= `String(p.b)`), a plain `=` span, then an **answer row reusing the existing cell-grid pattern** (same `row()`-style helper, `cols = maxAnswerLength(p)`, `data-role="answer"` with per-column cells, a `data-ghost=<col>` ghost row overlay) — so `data-ghost`, `shake(...[data-role="answer"])`, and the `faded`/`correct`/`focused` classes all work exactly as the column view's. No scratch row.
@@ -400,7 +402,7 @@ Exact hint copy is the implementer's call (follow the spec's example wording and
 ### Task 6: Playwright layout check and cross-viewport fit
 
 **Files:**
-- Modify: `.context/playwright/shots.mjs`
+- Modify: `.context/playwright/shots.mjs`, `src/styles.css` (only if Step 3 finds overflow to fix)
 
 **Interfaces:**
 - Consumes: the finished app (Tasks 1–5).
