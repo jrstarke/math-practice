@@ -1,4 +1,4 @@
-export type Op = '+' | '-';
+export type Op = '+' | '-' | '×';
 
 /** A single practice problem. `a` is the top operand in the column layout. */
 export interface Problem {

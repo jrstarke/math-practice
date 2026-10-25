@@ -25,4 +25,6 @@ test('answerOf / answerColumns', () => {
   expect(answerOf({ op: '+', a: 47, b: 38, level: 6 })).toBe(85);
   expect(answerColumns({ op: '-', a: 5, b: 5, level: 1 })).toBe(1);
   expect(answerColumns({ op: '+', a: 68, b: 57, level: 7 })).toBe(3);
+  expect(answerOf({ op: '×', a: 6, b: 7, level: 1 })).toBe(42);
+  expect(answerColumns({ op: '×', a: 24, b: 3, level: 8 })).toBe(2);
 });

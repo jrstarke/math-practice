@@ -11,7 +11,7 @@ export function digitsOf(n: number): number[] {
 }
 
 export function answerOf(p: Problem): number {
-  return p.op === '+' ? p.a + p.b : p.a - p.b;
+  return p.op === '×' ? p.a * p.b : p.op === '+' ? p.a + p.b : p.a - p.b;
 }
 
 /** Number of digits in the answer (at least 1). */
