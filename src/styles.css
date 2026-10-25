@@ -12,6 +12,7 @@
   --key-shadow: #e6dccb;
   --cell: clamp(44px, 13vw, 84px);
   --bubble-room: 4rem; /* space kept above the problem for a one-line hint bubble */
+  --picture-cell: var(--cell); /* fallback for browsers without container-query sizing; see @supports below */
   font-family: ui-rounded, "SF Pro Rounded", "Nunito", system-ui, sans-serif;
   color: var(--ink);
   background: var(--bg);
@@ -72,6 +73,30 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 @supports (container-type: size) {
   .problem-area { container-type: size; }
   .problem-anchor, .picture-host { --cell: min(84px, 100cqw / 5.8, (100cqh - var(--bubble-room) - 22px) / 3.46); }
+  /* The multiplication picture (mounted below the equation) needs its own vertical
+     budget: the horizontal equation + answer row need far less of --cell's height
+     allowance than the column problem this formula was tuned for, so --cell is
+     usually sized much larger than the picture can actually afford once drawn at
+     that scale. --picture-budget is the real height left after the equation, the
+     bubble room, and a safety margin, and caps the picture box via max-height so a
+     mis-sized content wrap scrolls internally as a last resort rather than painting
+     over the message or controls. --picture-cell itself starts equal to --cell (the
+     picture looks as big as the equation whenever there's room) — pictureView.ts
+     measures the actual rendered content against --picture-budget after each render
+     and, only when it doesn't fit, scales --picture-cell down by the exact ratio
+     needed (every picture dimension is `calc(var(--picture-cell) * k)`, so this is a
+     precise fit, not a guessed divisor — a guessed constant either clips content
+     silently inside the scrollable box or over-shrinks pictures that had room to
+     spare). */
+  .picture-host {
+    --picture-budget: max(56px, calc(100cqh - var(--bubble-room) - (var(--cell) * 1.84) - 16px));
+    /* Re-declare on .picture-host itself (not just inherited from :root's plain --picture-cell
+       fallback): custom-property var() substitution resolves against the SAME element's own
+       --cell at computed-value time, so without this, descendants would inherit :root's --cell
+       (a vw/vh-based clamp()) instead of the container-query-local --cell this selector sets
+       above — the wrong, viewport-relative size instead of the actual room in .problem-area. */
+    --picture-cell: var(--cell);
+  }
 }
 .controls { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 460px; align-self: center; }
 
@@ -193,34 +218,61 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 .action.pass { color: var(--muted); }
 .action.next { grid-column: 1 / -1; background: var(--accent); color: #fff; box-shadow: 0 4px 0 #c97300; }
 
-/* Multiplication "groups of" picture, shown below the equation once the first Hint is tapped. */
+/* Multiplication "groups of" picture, shown below the equation once the first Hint is tapped.
+   Everything in here scales off --picture-cell (see the --picture-budget comment above), not
+   --cell, so the picture shrinks on its own rather than inheriting the equation's size budget.
+   max-height/overflow is a last-resort safety net only — pictureView.ts's fitPicture() measures
+   and scales --picture-cell so content fits without clipping in all but the most extreme cases. */
 .picture-host:empty { display: none; }
-.picture { display: flex; flex-direction: column; align-items: center; gap: calc(var(--cell) * 0.12); margin-top: calc(var(--cell) * 0.1); }
-.groups { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: calc(var(--cell) * 0.2); }
+.picture-host {
+  max-height: var(--picture-budget, none);
+  overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
+}
+.picture { display: flex; flex-direction: column; align-items: center; gap: calc(var(--picture-cell) * 0.12); margin-top: calc(var(--picture-cell) * 0.1); }
+/* Applied by fitPicture() (pictureView.ts) only when stacking the tally under the groups would
+   need the picture shrunk below a legibility-floor-dominated scale: putting them side by side
+   trades the stage's spare width (phones are narrow but the controls column still leaves some)
+   for vertical room, which is the scarce dimension once the floors stop letting content shrink. */
+.picture.side { flex-direction: row; align-items: center; justify-content: center; gap: calc(var(--picture-cell) * 0.3); }
+.picture.side .tally { align-items: flex-start; text-align: left; }
+.groups { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: calc(var(--picture-cell) * 0.2); }
 .group {
-  display: flex; align-items: flex-end; flex-wrap: wrap; gap: calc(var(--cell) * 0.05);
-  padding: calc(var(--cell) * 0.1); max-width: calc(var(--cell) * 2.6);
+  display: flex; align-items: flex-end; flex-wrap: wrap; gap: calc(var(--picture-cell) * 0.05);
+  padding: calc(var(--picture-cell) * 0.1);
+  /* Floored, not just scaled: once blocks hit their own floors (above), letting this keep
+     shrinking too would squeeze fewer floored blocks onto each row, adding MORE wrapped rows
+     and making the picture taller as --picture-cell keeps dropping — the opposite of fitting. */
+  max-width: max(calc(var(--picture-cell) * 4.2), 112px);
   background: var(--card); border-radius: 10px; box-shadow: 0 2px 0 var(--key-shadow);
 }
-.part { display: flex; flex-wrap: wrap; align-items: flex-end; gap: calc(var(--cell) * 0.03); }
+.part { display: flex; flex-wrap: wrap; align-items: flex-end; gap: calc(var(--picture-cell) * 0.03); }
 .block { background: var(--accent); border-radius: 3px; }
 .block.pending { background: var(--muted); opacity: 0.4; }
 .block.color-a { background: var(--accent); }
 .block.color-b { background: var(--good); }
-.block.square { width: calc(var(--cell) * 0.15); height: calc(var(--cell) * 0.15); }
-.block.rod { width: calc(var(--cell) * 0.15); height: calc(var(--cell) * 0.75); }
-.block.flat { width: calc(var(--cell) * 0.75); height: calc(var(--cell) * 0.75); }
+/* Floor every block's own size too (not just text), so a single countable square or rod stays
+   visible even once a very tall picture has scaled --picture-cell far down — the ratio between
+   a rod's width and height floor (6px : 30px) matches its unscaled 0.15 : 0.75 aspect. */
+.block.square { width: max(6px, calc(var(--picture-cell) * 0.15)); height: max(6px, calc(var(--picture-cell) * 0.15)); }
+.block.rod { width: max(6px, calc(var(--picture-cell) * 0.15)); height: max(30px, calc(var(--picture-cell) * 0.75)); }
+.block.flat { width: max(10px, calc(var(--picture-cell) * 0.75)); height: max(10px, calc(var(--picture-cell) * 0.75)); }
 .group-outline {
   display: flex; align-items: center; justify-content: center;
-  width: calc(var(--cell) * 0.85); height: calc(var(--cell) * 0.85);
+  /* Size the circle off its own (already-floored) font via em, not a flat px floor: a floored
+     px size large enough for "995" would be oversized at full scale, while a size that's right
+     at full scale is too small to hold a floored 3-digit label without the text overflowing the
+     dashed ring once --picture-cell has shrunk past where the 0.85 term stops dominating. */
+  width: max(calc(var(--picture-cell) * 0.85), 2.7em); height: max(calc(var(--picture-cell) * 0.85), 2.7em);
   border: 3px dashed var(--muted); border-radius: 50%;
-  font-weight: 800; color: var(--muted); font-size: calc(var(--cell) * 0.3);
+  font-weight: 800; color: var(--muted); font-size: max(0.7rem, calc(var(--picture-cell) * 0.3));
   font-variant-numeric: tabular-nums;
 }
 .tally {
   list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column;
   align-items: center; gap: 2px; font-weight: 700; color: var(--ink);
-  font-size: calc(var(--cell) * 0.28); font-variant-numeric: tabular-nums;
+  /* Never shrink the tally numerals below a legible floor, even once a very tall
+     picture has scaled --picture-cell far down (see fitPicture() in pictureView.ts). */
+  font-size: max(0.8rem, calc(var(--picture-cell) * 0.28)); font-variant-numeric: tabular-nums;
 }
 
 /* Install tip */

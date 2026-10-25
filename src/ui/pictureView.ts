@@ -49,10 +49,55 @@ function renderOutline(groupSize: number): HTMLElement {
   return el('div', { class: 'group-outline' }, String(groupSize));
 }
 
+/**
+ * Shrink --picture-cell (as a `calc(var(--cell) * ratio)` override on the container) just enough
+ * that the picture's rendered content fits the vertical budget CSS reserves for it
+ * (--picture-budget — see styles.css). The container's `max-height: var(--picture-budget)` means
+ * `clientHeight` reads as the true budget in px whenever content overflows it (`scrollHeight` always
+ * reads the full, unclipped content height, budget or not) — no guessed divisor is involved, and
+ * every picture dimension is `calc(var(--picture-cell) * <constant>)`, so content height scales
+ * linearly with --picture-cell: one measurement gives an exact ratio, not an estimate. A couple of
+ * correction passes account for text/line-height not scaling perfectly linearly at small sizes; if
+ * it still doesn't fit after that (only possible at the most extreme content + smallest viewports),
+ * the CSS `overflow-y: auto` on .picture-host is the last-resort fallback so nothing paints over the
+ * message or controls — it just scrolls internally instead.
+ */
+export function fitPicture(container: HTMLElement): void {
+  container.style.removeProperty('--picture-cell'); // start from the full-size (--cell) baseline
+  const pic = container.querySelector<HTMLElement>('.picture');
+  pic?.classList.remove('side');
+  let natural = container.scrollHeight;
+  const budget = container.clientHeight;
+  if (natural === 0) return;
+  if (natural > budget + 1 && pic?.querySelector('.tally')?.childElementCount) {
+    // Stacked (groups above tally) doesn't fit even at full scale: try the side-by-side layout
+    // instead — if it measures shorter, keep it; a wrapping-width regression (narrow viewport)
+    // would make it measure the same or taller, so this is a measured trade, not a guess.
+    pic!.classList.add('side');
+    const sideNatural = container.scrollHeight;
+    if (sideNatural < natural) natural = sideNatural;
+    else pic!.classList.remove('side');
+  }
+  if (natural <= budget + 1) return; // already fits at full size
+  let scale = Math.max(0.2, (budget / natural) * 0.96);
+  container.style.setProperty('--picture-cell', `calc(var(--cell) * ${scale.toFixed(4)})`);
+  // Several elements inside the picture (borders, box-shadows, gaps) use fixed px values rather
+  // than scaling with --picture-cell, so content height isn't *exactly* proportional to scale —
+  // it's height = fixedOverhead + K*scale, not K*scale alone. A single ratio therefore slightly
+  // under-shrinks; a few more passes converge geometrically onto the exact fit.
+  for (let pass = 0; pass < 5; pass++) {
+    const h = container.scrollHeight;
+    if (h <= budget + 1) return;
+    scale = Math.max(0.15, scale * (budget / h) * 0.97);
+    container.style.setProperty('--picture-cell', `calc(var(--cell) * ${scale.toFixed(4)})`);
+  }
+}
+
 /** Draw a PictureState's groups-of picture, or clear the container when there's nothing to show yet. */
 export function renderPicture(container: HTMLElement, state: PictureState | null): void {
   if (!state) {
     container.replaceChildren();
+    container.style.removeProperty('--picture-cell');
     return;
   }
   const groups = Array.from({ length: state.groupsShown }, () => renderGroup(state.parts));
@@ -63,4 +108,5 @@ export function renderPicture(container: HTMLElement, state: PictureState | null
       el('div', { class: 'groups' }, ...groups, ...outlines),
       tally),
   );
+  fitPicture(container);
 }

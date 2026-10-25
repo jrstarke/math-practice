@@ -13,7 +13,7 @@ import { createHintBubble } from './hintBubble';
 import { renderHorizontalProblem } from './horizontalProblemView';
 import { createInstallTip, shouldShowInstallTip } from './installTip';
 import { createNumberPad, keyFromKeyboard } from './numberPad';
-import { renderPicture } from './pictureView';
+import { fitPicture, renderPicture } from './pictureView';
 import { renderColumnProblem, type Phase } from './problemView';
 import type { SoundPlayer } from './sound';
 
@@ -246,11 +246,28 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   sound.setMuted(progress.muted);
   showNext();
 
+  // Re-fit the multiplication picture when .problem-area's own box changes size (rotation, the
+  // browser chrome collapsing/expanding, the install tip being dismissed, ...), not just on the
+  // next render(): --picture-budget tracks .problem-area's height live via container queries, but
+  // the --picture-cell scale fitPicture() picks is a one-off snapshot, so without this it can go
+  // stale (too small after the box grows, or still overflowing after it shrinks) until the next
+  // unrelated re-render happens to call renderPicture() again. .problem-area is a size container
+  // (container-type: size), so its own size never depends on its content — observing it, rather
+  // than .picture-host itself, can't create a resize feedback loop.
+  let resizeObserver: ResizeObserver | undefined;
+  if (typeof ResizeObserver !== 'undefined') {
+    resizeObserver = new ResizeObserver(() => {
+      if (pictureHost.childElementCount > 0) fitPicture(pictureHost);
+    });
+    resizeObserver.observe(problemArea);
+  }
+
   return {
     destroy() {
       root.removeEventListener('pointerdown', onPointerDown);
       root.removeEventListener('pointerup', unlockSound);
       window.removeEventListener('keydown', onKeyDown);
+      resizeObserver?.disconnect();
       timers.forEach(clearTimeout);
       timers.clear();
     },
