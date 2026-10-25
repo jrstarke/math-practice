@@ -25,6 +25,8 @@ export interface AppDeps {
   sound: SoundPlayer;
   /** iOS exposes navigator.standalone; injectable for tests. */
   nav?: { standalone?: boolean };
+  /** Build label shown small under the mute button, so a parent can tell which version is running. */
+  version?: string;
 }
 
 export const ADVANCE_MS = 1000;
@@ -71,7 +73,9 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   const passBtn = el('button', { type: 'button', class: 'action pass', 'data-action': 'pass' }, 'Pass');
   const actions = el('div', { class: 'actions' });
   const appEl = el('div', { class: 'app' },
-      el('header', { class: 'topbar' }, el('div', { class: 'badges' }, totalEl, streakEl), muteBtn),
+      el('header', { class: 'topbar' }, el('div', { class: 'badges' }, totalEl, streakEl),
+        el('div', { class: 'topbar-end' }, muteBtn,
+          ...(deps.version ? [el('span', { class: 'version', 'data-role': 'version' }, deps.version)] : []))),
       el('main', { class: 'play' },
         el('section', { class: 'stage' }, problemArea, messageEl),
         el('section', { class: 'controls' }, actions, createNumberPad())));

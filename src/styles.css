@@ -60,6 +60,12 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
   font-size: 1.5rem; width: 48px; height: 48px; border-radius: 50%;
   background: var(--card); box-shadow: 0 2px 0 var(--key-shadow);
 }
+/* The build label hangs under the mute button without adding to the top bar's height. */
+.topbar-end { position: relative; }
+.version {
+  position: absolute; top: 100%; right: 0; margin-top: 2px;
+  font-size: 0.6rem; white-space: nowrap; color: var(--muted); opacity: 0.7; pointer-events: none;
+}
 
 .play { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; }
 .stage { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }

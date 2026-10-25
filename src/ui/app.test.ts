@@ -9,6 +9,16 @@ test('renders a problem and number pad', () => {
   for (const k of ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'back', 'submit']) expect(s.q(`[data-key="${k}"]`)).not.toBeNull();
 });
 
+test('shows the build version under the mute button when given one', () => {
+  const s = setup(1, { version: '2026-10-25 · b5fa147' });
+  expect(s.q('[data-role="version"]')!.textContent).toBe('2026-10-25 · b5fa147');
+});
+
+test('shows no version label without one', () => {
+  const s = setup();
+  expect(s.q('[data-role="version"]')).toBeNull();
+});
+
 test('correct answer records once, plays sound, advances after 1s', () => {
   const s = setup();
   const first = s.current();

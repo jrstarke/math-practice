@@ -1,7 +1,11 @@
 import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig } from 'vitest/config';
 
+/** "2026-10-25 18:42 UTC": when this build was made, shown under the mute button. */
+const appVersion = `${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC`;
+
 export default defineConfig({
+  define: { __APP_VERSION__: JSON.stringify(appVersion) },
   plugins: [
     VitePWA({
       registerType: 'autoUpdate',
