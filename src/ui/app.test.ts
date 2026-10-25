@@ -165,6 +165,29 @@ test('unlocking subtraction plays the level-up sound and shows a friendly messag
   expect(s.saved[0].unlocked).toEqual(['addition', 'subtraction']);
 });
 
+// Addition 6 / subtraction 5 meets multiplication's unlock rule; calibrating (calibrationLeft > 0)
+// keeps each op at its own level, so whichever op is drawn, finish() checks unlocks on this answer.
+const nearMultiplication = (): Progress => ({
+  ...defaultProgress(),
+  unlocked: ['addition', 'subtraction'],
+  addition: { level: 6, window: [], calibrationLeft: 9 },
+  subtraction: { level: 5, window: [], calibrationLeft: 9 },
+});
+
+test('reaching addition 6 / subtraction 5 shows exactly one "New: multiplication!"', () => {
+  const s = setup(1, {}, nearMultiplication());
+  s.typeAnswer(s.correctAnswer());
+  s.tap('[data-key="submit"]');
+  expect(s.sound.levelUp).toHaveBeenCalledOnce();
+  expect(s.q('[data-role="message"]')!.textContent).toBe('New: multiplication!');
+  expect(s.saved[0].unlocked).toEqual(['addition', 'subtraction', 'multiplication']);
+  s.advance(1000);
+  s.typeAnswer(s.correctAnswer());
+  s.tap('[data-key="submit"]');
+  expect(s.q('[data-role="message"]')!.textContent).not.toContain('New:');
+  expect(s.saved[1].unlocked).toEqual(['addition', 'subtraction', 'multiplication']);
+});
+
 // Only multiplication unlocked, calibrating at level 1, so every problem is multiplication
 // at a known level — bypasses storage validation entirely via testUtil's raw `initial` override.
 const multiplicationOnly = (level = 1): Progress => ({

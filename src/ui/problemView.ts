@@ -1,6 +1,6 @@
 import { digitsOf } from '../core/arith';
 import type { EntryState } from '../core/entry';
-import type { Problem } from '../core/types';
+import type { Op, Problem } from '../core/types';
 import { el } from './dom';
 
 export type Phase = 'answering' | 'correct' | 'passing' | 'passed';
@@ -13,12 +13,24 @@ export interface ProblemViewModel {
   phase: Phase;
 }
 
+/** How each operation is written in the operator cell. */
+const OP_SYMBOL: Record<Op, string> = { '+': '+', '-': '−', '×': '×' };
+
+/** Whether column c of the top operand gets a scratch box (spec §7). */
+function hasScratchBox(p: Problem, c: number): boolean {
+  switch (p.op) {
+    case '-': return c < digitsOf(p.a).length; // borrows
+    case '+': return c >= 1;                   // carries
+    case '×': return false;                    // multiplication uses the horizontal layout, no scratch boxes
+  }
+}
+
 /** Columns of the top operand that get a scratch box (spec §7). */
 export function scratchColumns(p: Problem): number[] {
   const operandCols = Math.max(digitsOf(p.a).length, digitsOf(p.b).length);
   const cols = [];
   for (let c = 0; c < operandCols; c++) {
-    if (p.op === '-' ? c < digitsOf(p.a).length : c >= 1) cols.push(c);
+    if (hasScratchBox(p, c)) cols.push(c);
   }
   return cols;
 }
@@ -56,7 +68,7 @@ export function renderColumnProblem(container: HTMLElement, vm: ProblemViewModel
 
   const bottom = row({ 'data-role': 'bottom' },
     c => el('span', {}, c < bDigits.length ? String(bDigits[c]) : ''),
-    el('span', { class: 'cell op', 'data-role': 'op' }, p.op === '+' ? '+' : '−'));
+    el('span', { class: 'cell op', 'data-role': 'op' }, OP_SYMBOL[p.op]));
 
   const ghostRow = row({ 'data-role': 'ghosts', class: 'ghost-row' },
     c => (c in ghosts ? el('span', { class: 'ghost', 'data-ghost': c }, String(ghosts[c])) : el('span')));
