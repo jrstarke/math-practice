@@ -29,11 +29,11 @@ export function nextProblem(p: Progress, recent: Problem[], rng: Rng): Problem {
   return problem;
 }
 
-/** Apply a finished problem to progress: streak, and adaptation if it was at the current level. */
+/** Apply a finished problem to progress: streak and total, and adaptation if it was at the current level. */
 export function recordResult(p: Progress, problem: Problem, a: AttemptInput): { progress: Progress; levelChange: LevelChange } {
   const clean = a.wrongSubmits === 0 && a.hintsUsed === 0 && !a.passed;
   const streak = clean ? p.streak + 1 : 0;
-  const progress: Progress = { ...p, streak, bestStreak: Math.max(p.bestStreak, streak) };
+  const progress: Progress = { ...p, streak, bestStreak: Math.max(p.bestStreak, streak), total: p.total + (clean ? 1 : 0) };
 
   const key = opKey(problem.op);
   if (problem.level !== p[key].level) return { progress, levelChange: 0 };

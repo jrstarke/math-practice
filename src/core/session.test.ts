@@ -29,15 +29,24 @@ test('nextProblem mixes operations', () => {
 });
 
 test('recordResult: clean answer extends streak and best', () => {
-  const r = recordResult({ ...defaultProgress(), streak: 4, bestStreak: 4 }, { op: '+', a: 34, b: 25, level: 4 }, clean);
+  const r = recordResult({ ...defaultProgress(), streak: 4, bestStreak: 4, total: 10 }, { op: '+', a: 34, b: 25, level: 4 }, clean);
   expect(r.progress.streak).toBe(5);
   expect(r.progress.bestStreak).toBe(5);
+  expect(r.progress.total).toBe(11);
 });
 
 test.each([{ wrongSubmits: 1 }, { hintsUsed: 1 }, { passed: true }])('recordResult %o resets streak, keeps best', over => {
-  const r = recordResult({ ...defaultProgress(), streak: 4, bestStreak: 9 }, { op: '+', a: 34, b: 25, level: 4 }, { ...clean, ...over });
+  const r = recordResult({ ...defaultProgress(), streak: 4, bestStreak: 9, total: 10 }, { op: '+', a: 34, b: 25, level: 4 }, { ...clean, ...over });
   expect(r.progress.streak).toBe(0);
   expect(r.progress.bestStreak).toBe(9);
+  expect(r.progress.total).toBe(10);
+});
+
+test('clean off-level answer still counts toward the total', () => {
+  const start = { ...defaultProgress(), total: 7 }; // current addition level is 4
+  const r = recordResult(start, { op: '+', a: 23, b: 4, level: 3 }, clean);
+  expect(r.progress.total).toBe(8);
+  expect(r.progress.addition).toEqual(start.addition);
 });
 
 test('recordResult only adapts on current-level problems', () => {
