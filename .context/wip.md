@@ -1,8 +1,28 @@
-# WIP (updated 2026-10-24)
+# WIP (updated 2026-10-25)
+
+## >>> RESUME HERE (stashed 2026-10-25)
+- **Waiting on user:** approval of the multiplication design
+  docs/superpowers/specs/2026-10-25-multiplication-design.md (commit caf14f5; mockup in docs/superpowers/specs/assets/).
+  Builder check done; its answers folded in. Last user decision: levels 8–9 draw one full group + outlines (option A).
+- **Calls I made, listed to user for review:** level 9 single digit 2–5; levels 8–9 skip multiples of 10; ×3 drawn 2+1,
+  ×4 drawn 2+2; ×1/×0 only in level 6 (single question hint); levels 1–5 other factor 2–9; answer boxes don't reveal
+  answer length (fixed width per level); facts both orders, multi-digit first for 8–9; target times 8 s / 20 s / 30 s;
+  level-6 tie-break picks one consistently.
+- **After approval:** invoke superpowers:writing-plans for multiplication. Plan starts by refactoring add/sub into
+  per-operation modules (approach A, no behaviour change, existing tests unchanged), then the × module, picture, hints,
+  Progress v4 (key math-practice-progress-v4, chain v4→v3→v2→v1), unlock rule multiplication {addition:6, subtraction:5}.
+  User chose **native** execution (executing-plans + one fresh opus reviewer) for the last two plans.
+- **Git (2026-10-25):** on main. dev/main = 94d8e59 (learning path deployed to dev; main is 1 docs commit ahead).
+  prod/main = f4372d6 (no learning path yet). User pushes manually from the host; container has no GitHub/SSH auth.
+- **Dev site** math-practice-dev.jamiestarke.com verified working (custom domain reachable from container). User was
+  testing the learning path there (their record: add 6, sub 6, both unlocked).
+- **Open on user's side:** Enforce HTTPS on dev/prod Pages; Cloudflare SSL mode Full / DNS-only.
+- **Mockups (private artifacts):** tally https://claude.ai/artifact/SQ1J9geaxxQDMbBBnkx9CG, layout options
+  https://claude.ai/artifact/9LVRQ34AREHq9ZmyUXfXSg, three ways https://claude.ai/artifact/HwMdCMBqV5GsZEKuXiaPq3.
 
 ## Status
-- On main (renamed from master; no remote). 145 tests pass, build OK. Ledger in .superpowers/sdd deleted after merge.
-- Plan: docs/superpowers/plans/2026-10-24-math-practice.md; Spec: docs/superpowers/specs/2026-10-24-math-practice-design.md
+- On main. 179 tests pass. Running total + learning path merged. Two Pages sites (see running.md).
+- Specs/plans: docs/superpowers/specs/*, docs/superpowers/plans/*.
 
 ## Merged (2026-10-24)
 - feat/math-practice fast-forwarded into master (HEAD 4d9b6a5), then master renamed to main; branch + .superpowers/sdd ledger deleted. No git remote yet.
