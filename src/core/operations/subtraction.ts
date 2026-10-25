@@ -141,13 +141,9 @@ export const subtractionModule: OpModule = {
     return matchesSubtraction(p);
   },
   generate(level: number, rng: Rng): Problem {
-    for (let tries = 0; tries < 1000; tries++) {
-      const shape = subtractionCols(level, rng);
-      const { a, b } = Array.isArray(shape) ? build(shape, rng) : shape;
-      const p: Problem = { op: '-', a, b, level };
-      if (matchesSubtraction(p)) return p;
-    }
-    throw new Error(`Could not generate - level ${level}`);
+    const shape = subtractionCols(level, rng);
+    const { a, b } = Array.isArray(shape) ? build(shape, rng) : shape;
+    return { op: '-', a, b, level };
   },
   targetMs(p: Problem): number {
     return 4000 + 4000 * answerColumns(p);
