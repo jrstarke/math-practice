@@ -10,7 +10,7 @@
 
 ## Running total (branch feat/running-total, 2026-10-25)
 - Spec docs/superpowers/specs/2026-10-25-running-total-design.md, plan docs/superpowers/plans/2026-10-25-running-total.md. Done + reviewed, 160 tests.
-- Progress is now v2 under localStorage key `math-practice-progress-v2`; v1 key `math-practice-progress` is read once to migrate (total = bestStreak) and never written. NEVER serve a build older than this branch over ngrok/Pages after she has used it? — safe now: older build reads the untouched v1 key (loses only progress since upgrade).
+- Progress is now v2 under localStorage key `math-practice-progress-v2`; v1 key `math-practice-progress` is read once to migrate (total = bestStreak) and never written. Rolling back to an older build is safe: it reads the untouched v1 key (losing only progress made since the upgrade).
 - dist/ (ngrok) still serves the pre-total build until someone runs `npm run build` on main.
 
 ## Device testing
