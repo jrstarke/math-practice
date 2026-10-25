@@ -6,9 +6,10 @@ const LONG = "1 + 1 + 8 = 10. That's more than 9, so 0 goes in the answer and th
 const views = process.env.VIEWS ? JSON.parse(process.env.VIEWS) : [
   ['se-tab', 375, 553], ['se-standalone', 375, 647], ['ip15-tab', 393, 659], ['ip15', 393, 852],
   ['ipad-p', 820, 1180], ['ipad-l', 1180, 820], ['ipad-l-tab', 1180, 745], ['ipad102-l-tab', 1080, 740], ['ipad102-p', 810, 1080], ['ipad102-p-tab', 810, 1005], ['se-land', 667, 375], ['ip15-land', 852, 393], ['ip15-land-notch', 852, 393],
+  ['ipad6-l', 1024, 768], ['ipad6-l-tabs', 1024, 665], ['ipad102-l-tabs', 1080, 707], ['ipad6-p-tabs', 768, 918],
 ];
 const lvl = { level: 9, window: [], calibrationLeft: 0 };
-const progress = { version: 1, addition: lvl, subtraction: lvl, streak: 12, bestStreak: 12, muted: false, installTipShown: false };
+const progress = { version: 2, addition: lvl, subtraction: lvl, streak: 12, bestStreak: 12, total: +(process.env.TOTAL ?? 12), muted: false, installTipShown: false };
 const browser = await chromium.launch({ channel: 'chromium' });
 let failures = 0;
 

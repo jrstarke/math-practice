@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { defaultProgress } from '../core/progress';
 import { setup } from './testUtil';
 
 test('renders a problem and number pad', () => {
@@ -19,6 +20,26 @@ test('correct answer records once, plays sound, advances after 1s', () => {
   s.advance(1000);
   expect(s.current()).not.toEqual(first);
   expect(s.answerText()).toBe('');
+});
+
+test('total badge shows the saved total and goes up on a clean answer', () => {
+  const s = setup(1, {}, { ...defaultProgress(), total: 41, streak: 3 });
+  expect(s.q('[data-role="total"]')!.textContent).toBe('⭐ 41');
+  expect(s.q('[data-role="streak"]')!.textContent).toBe('🔥 3');
+  s.typeAnswer(s.correctAnswer());
+  s.tap('[data-key="submit"]');
+  expect(s.q('[data-role="total"]')!.textContent).toBe('⭐ 42');
+  expect(s.saved[0].total).toBe(42);
+});
+
+test('a wrong first try resets the streak but keeps the total', () => {
+  const s = setup(1, {}, { ...defaultProgress(), total: 41, streak: 3 });
+  s.typeAnswer(s.correctAnswer() + 1);
+  s.tap('[data-key="submit"]');
+  s.typeAnswer(s.correctAnswer());
+  s.tap('[data-key="submit"]');
+  expect(s.q('[data-role="total"]')!.textContent).toBe('⭐ 41');
+  expect(s.q('[data-role="streak"]')!.textContent).toBe('🔥 0');
 });
 
 test('double-tapping submit on a correct answer records only once', () => {

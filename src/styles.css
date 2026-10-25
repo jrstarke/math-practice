@@ -47,11 +47,14 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 }
 
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; }
-.streak {
-  font-size: 1.5rem; font-weight: 800;
-  background: var(--card); border-radius: 999px; padding: 4px 16px;
-  box-shadow: 0 2px 0 var(--key-shadow);
+/* Running total is the main badge; the streak sits smaller underneath it. */
+.badges { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.total, .streak {
+  font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums;
+  background: var(--card); border-radius: 999px; box-shadow: 0 2px 0 var(--key-shadow);
 }
+.total { font-size: 1.35rem; padding: 2px 14px; }
+.streak { font-size: 0.95rem; padding: 0 10px; }
 .icon-button {
   font-size: 1.5rem; width: 48px; height: 48px; border-radius: 50%;
   background: var(--card); box-shadow: 0 2px 0 var(--key-shadow);
@@ -198,7 +201,9 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
     gap: 6px;
   }
   .topbar { min-height: 40px; }
-  .streak { font-size: 1.2rem; padding: 2px 12px; }
+  .badges { gap: 3px; }
+  .total { font-size: 1.1rem; padding: 1px 12px; }
+  .streak { font-size: 0.85rem; padding: 0 10px; }
   .icon-button { width: 40px; height: 40px; font-size: 1.25rem; }
   .play, .controls, .pad { gap: 8px; }
   .stage { gap: 4px; }
@@ -221,6 +226,7 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 @media (orientation: landscape) and (max-height: 500px) {
   .play { flex-direction: row; align-items: stretch; }
   .controls { width: 46%; max-width: 420px; align-self: stretch; }
+  .badges { flex-direction: row; align-items: center; gap: 6px; }
   .pad { flex: 1; min-height: 0; grid-auto-rows: 1fr; }
   .key { height: auto; min-height: 0; }
 }

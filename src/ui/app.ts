@@ -53,6 +53,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   const timers = new Set<ReturnType<typeof setTimeout>>();
 
   // Static shell
+  const totalEl = el('span', { class: 'total', 'data-role': 'total' });
   const streakEl = el('span', { class: 'streak', 'data-role': 'streak' });
   const muteBtn = el('button', { type: 'button', class: 'icon-button', 'data-action': 'mute', 'aria-label': 'Sound on or off' });
   const problemHost = el('div');
@@ -65,7 +66,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   const passBtn = el('button', { type: 'button', class: 'action pass', 'data-action': 'pass' }, 'Pass');
   const actions = el('div', { class: 'actions' });
   const appEl = el('div', { class: 'app' },
-      el('header', { class: 'topbar' }, streakEl, muteBtn),
+      el('header', { class: 'topbar' }, el('div', { class: 'badges' }, totalEl, streakEl), muteBtn),
       el('main', { class: 'play' },
         el('section', { class: 'stage' }, problemArea, messageEl),
         el('section', { class: 'controls' }, actions, createNumberPad())));
@@ -79,6 +80,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
 
   function render() {
     renderProblem(problemHost, { problem, entry, ghosts: reveal.ghosts, highlight: reveal.column, phase });
+    totalEl.textContent = `⭐ ${progress.total}`;
     streakEl.textContent = `🔥 ${progress.streak}`;
     messageEl.textContent = message;
     muteBtn.textContent = progress.muted ? '🔇' : '🔊';
