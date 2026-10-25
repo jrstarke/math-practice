@@ -61,6 +61,10 @@ function measure(longHint) {
     // spill past it and paint over the message line even when nothing scrolls and controls look fine
     // (this is the overflow risk the Task 5 reviewer flagged for level 7-9's worst-case block counts).
     if (pic.bottom > msg.top + 1) issues.push(`picture over message ${Math.round(pic.bottom - msg.top)}`);
+    // .picture-host clips (overflow-x: hidden) or scrolls (overflow-y: auto) anything fitPicture() didn't
+    // fit — the rects above can't see that, since the host's own box stays within budget either way.
+    const { scrollHeight: sh, clientHeight: ch, scrollWidth: sw, clientWidth: cw } = pictureEl;
+    if (sh > ch + 1 || sw > cw + 1) issues.push(`picture clipped ${sh}x${sw} > ${ch}x${cw}`);
   }
   if (bub) {
     if (bub.top < 0) issues.push(`bubble off top ${Math.round(-bub.top)}`);
