@@ -6,7 +6,7 @@
 
 ## Merged (2026-10-24)
 - feat/math-practice fast-forwarded into master (HEAD 4d9b6a5), then master renamed to main; branch + .superpowers/sdd ledger deleted. No git remote yet.
-- Next ideas: GitHub Pages deploy (needs remote + Vite base path; streak lives per-origin, so moving off ngrok loses it unless we add a transfer), then multiplication (brainstorm started: times tables vs multi-digit undecided).
+- Next ideas: GitHub Pages deploy (needs remote + Vite base path; decided 2026-10-25: no transfer, she starts fresh on the new domain), then multiplication (brainstorm started: times tables vs multi-digit undecided).
 
 ## Running total (branch feat/running-total, 2026-10-25)
 - Spec docs/superpowers/specs/2026-10-25-running-total-design.md, plan docs/superpowers/plans/2026-10-25-running-total.md. Done + reviewed, 160 tests.
