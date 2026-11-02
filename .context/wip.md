@@ -1,4 +1,29 @@
-# WIP (updated 2026-10-25)
+# WIP (updated 2026-11-01)
+
+## >>> RESUME HERE (stashed 2026-11-01)
+- **Branch:** on `feat/mult-reorder` in the main checkout (/workspace, no worktree). One feature commit 91046cf on top
+  of main (55eea89) + this stash commit. Working tree clean. **Waiting on user:** "merge feat/mult-reorder into main?"
+  (fast-forward). After merge: user pushes dev, then prod. Don't merge/push without asking.
+- **What the branch does:** multiplication levels 7 = 2-digit × 2–5, 8 = 3-digit × 2–5, 9 = facts 6–9; progress v5
+  (key math-practice-progress-v5; v4 mult level 7→7, 8→7, 9→8, moved levels clear window). Spec table updated with a
+  dated note. Verified: 345 vitest, tsc clean, Playwright SEEDS=8 only se-tab/se-tab-tip FAIL (cell 31px < 38).
+  No subagent review was run on this change (user said "just dive in"); consider one before merge if asked.
+- **Deployed (last seen 2026-10-25):** dev/main = 6dce415 (multiplication + update-on-resume + build label, old level
+  order, progress v4). prod/main = 89d0e75 — a mid-fix-wave commit, lacks the L9 picture-fit fix, update-on-resume and
+  build label. Suggested user push main to prod. Both are live with v4 saves → the v5 migration matters.
+- **Open product questions (asked, unanswered):** tiny blocks for 968×5 on iPhone SE Safari tab (now level 8);
+  2-digit level (now 7) pictures scaled smaller than room allows; 2-digit tally ones line is bare "18" vs 3-digit
+  "40 ones = 40"; pale-yellow .part.hl highlight may be too subtle.
+- **Curriculum findings (BC, curriculum.gov.bc.ca, reported to user):** add/sub levels map cleanly to Grades 1–3.
+  Suggestions not yet acted on: unlock subtraction at addition 2 instead of 3 (BC teaches both from Grade 1);
+  add/sub hints teach column carry/borrow but BC Grade 2 teaches mental strategies (bridging 10, decomposing into
+  tens and ones, friendly numbers, compensating) — a possible hint redesign project; division is the natural next
+  operation (BC Grade 3 concepts, Grade 4 2–3-digit ÷ 1-digit, Grade 5 remainders); add/sub ceiling is 3-digit
+  (Grade 4 goes to 10 000). Grades 6–8 add decimals, fractions, integers, ratios/percents, equations — out of scope.
+- **Network:** curriculum.gov.bc.ca + www2.gov.bc.ca now in allowed-domains (commits 3b2e886, 55eea89). Global
+  CLAUDE.md now says temporary grants use `docker exec --user root <container-id> allow-domain <domain>` (handles
+  rotating CDN IPs) — use that instead of the old ipset loop. Chromium + playwright in /tmp/claude-1000/pw (lost on restart).
+- **Shell quirk:** PATH lost asdf shims mid-session — prefix commands with PATH="$HOME/.asdf/shims:$PATH".
 
 ## Multiplication reorder (branch feat/mult-reorder, 2026-10-25)
 - Levels now 7 = 2-digit × 2–5, 8 = 3-digit × 2–5, 9 = facts 6–9 (BC: multi-digit × 1-digit is Grade 4, 6–9 fact
@@ -8,7 +33,7 @@
   update-on-resume, build label) — told user.
 - Shell PATH lost asdf shims mid-session: prefix commands with PATH="$HOME/.asdf/shims:$PATH".
 
-## Multiplication — MERGED to main 2026-10-25 (HEAD 741e566), not yet pushed to dev/prod
+## Multiplication — MERGED to main 2026-10-25 (HEAD 741e566); user pushed to dev and prod afterwards
 - Also added (741e566): service worker update check on visibilitychange (home-screen iPad apps resume rather than
   relaunch), and a small build-time label "YYYY-MM-DD HH:MM UTC" under the mute button (__APP_VERSION__ via vite define).
   Branch + worktree + SDD workspace deleted.
