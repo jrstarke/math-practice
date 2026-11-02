@@ -43,7 +43,7 @@ test('migrates a v2 record, keeping everything and unlocking both', () => {
 
 test('v2 player below the threshold keeps subtraction', () => {
   const s = mem();
-  s.m.set(V2_STORAGE_KEY, JSON.stringify({ ...v2, addition: { level: 2, window: [], calibrationLeft: 0 } }));
+  s.m.set(V2_STORAGE_KEY, JSON.stringify({ ...v2, addition: { level: 1, window: [], calibrationLeft: 0 } }));
   expect(createStore(s).load().unlocked).toEqual(both);
 });
 

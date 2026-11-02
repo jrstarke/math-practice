@@ -7,7 +7,7 @@ import type { Op } from './types';
 /** What each operation needs before it joins the mix: the minimum current level of other operations. */
 export const UNLOCK_RULES: Record<OpKey, Partial<Record<OpKey, number>>> = {
   addition: {},
-  subtraction: { addition: 3 },
+  subtraction: { addition: 2 },
   multiplication: { addition: 6, subtraction: 5 },
 };
 

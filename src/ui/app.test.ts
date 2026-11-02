@@ -162,8 +162,8 @@ test('sound unlock is retried on every pointerup and keydown (iOS gesture rules)
   expect(s.sound.unlock).toHaveBeenCalledTimes(3);
 });
 
-// One clean, quick answer at level 2 during calibration, after a perfect one, moves addition to 3 and unlocks subtraction.
-const nearUnlock = () => ({ ...defaultProgress(), addition: { level: 2, window: [1], calibrationLeft: 9 } });
+// One clean, quick answer at level 1 during calibration, after a perfect one, moves addition to 2 and unlocks subtraction.
+const nearUnlock = () => ({ ...defaultProgress(), addition: { level: 1, window: [1], calibrationLeft: 9 } });
 
 test('unlocking subtraction plays the level-up sound and shows a friendly message', () => {
   const s = setup(1, {}, nearUnlock());

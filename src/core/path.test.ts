@@ -3,12 +3,12 @@ import { defaultProgress, type OpKey } from './progress';
 import { mulberry32 } from './rng';
 
 const at = (level: number) => ({ level, window: [], calibrationLeft: 0 });
-const base = { ...defaultProgress(), addition: at(2) };
+const base = { ...defaultProgress(), addition: at(1) };
 const both: OpKey[] = ['addition', 'subtraction'];
 const all: OpKey[] = ['addition', 'subtraction', 'multiplication'];
 
-test('subtraction unlocks when addition reaches level 3, starting at level 1 with calibration', () => {
-  const r = applyUnlocks({ ...base, addition: at(3), subtraction: at(7) });
+test('subtraction unlocks when addition reaches level 2, starting at level 1 with calibration', () => {
+  const r = applyUnlocks({ ...base, addition: at(2), subtraction: at(7) });
   expect(r.unlocked).toEqual(['subtraction']);
   expect(r.progress.unlocked).toEqual(both);
   expect(r.progress.subtraction).toEqual({ level: 1, window: [], calibrationLeft: 10 });
@@ -36,10 +36,10 @@ test('addition one level short of the multiplication threshold unlocks nothing',
 });
 
 test('unlock happens once; later threshold crossings change nothing', () => {
-  const once = applyUnlocks({ ...base, addition: at(3) }).progress;
-  const dropped = { ...once, addition: at(2), subtraction: at(4) };
+  const once = applyUnlocks({ ...base, addition: at(2) }).progress;
+  const dropped = { ...once, addition: at(1), subtraction: at(4) };
   expect(applyUnlocks(dropped)).toEqual({ progress: dropped, unlocked: [] });
-  const again = { ...dropped, addition: at(3) };
+  const again = { ...dropped, addition: at(2) };
   expect(applyUnlocks(again)).toEqual({ progress: again, unlocked: [] });
 });
 

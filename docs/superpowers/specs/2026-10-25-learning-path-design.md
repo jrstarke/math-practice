@@ -9,7 +9,7 @@ everything starts at the easiest level, and operations she has topped out on fad
 time goes to what she's still learning.
 
 ## Goals
-- **Unlock rules.** Addition is always on. Subtraction unlocks when addition reaches level 3.
+- **Unlock rules.** Addition is always on. Subtraction unlocks when addition reaches level 2 (was 3; lowered 2026-11-01 because BC teaches both from Grade 1).
   (Multiplication, added by the next project, unlocks when addition reaches level 6 and subtraction level 5.)
   "Reaches" = the operation's current level is ≥ the threshold.
 - **Permanent.** Once unlocked, an operation stays unlocked even if levels later drop below a threshold.
@@ -59,7 +59,7 @@ level can drop back below its threshold.
 - How the unlock is reported from `recordResult` to the UI (e.g. alongside `levelChange`).
 - Exact friendly message styling.
 - Tests: v2→v3 and v1→v3 upgrades with realistic records (kept levels, both unlocked); defaults have only addition at
-  level 1; unlock fires exactly once at addition level 3 and starts subtraction at level 1 with calibration; stays
+  level 1; unlock fires exactly once at addition level 2 and starts subtraction at level 1 with calibration; stays
   unlocked after addition drops; operation mix (only addition → 100% addition; one op at level 9 → about 1/6 of
   problems with two ops); the message and sound on unlock and its clearing on the next key press. Re-run the
   Playwright layout check (fixture must move to the v3 key).

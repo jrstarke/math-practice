@@ -77,10 +77,10 @@ test('recordResult updates the matching operation only', () => {
   expect(r.progress.addition.level).toBe(4);
 });
 
-test('a level-up to addition 3 reports the unlock on that answer', () => {
-  const start = { ...defaultProgress(), addition: calibrating(2) };
-  const once = recordResult(start, { op: '+', a: 7, b: 8, level: 2 }, clean);
-  const r = recordResult(once.progress, { op: '+', a: 6, b: 9, level: 2 }, clean); // second clean in calibration → level 3
+test('a level-up to addition 2 reports the unlock on that answer', () => {
+  const start = { ...defaultProgress(), addition: calibrating(1) };
+  const once = recordResult(start, { op: '+', a: 3, b: 4, level: 1 }, clean);
+  const r = recordResult(once.progress, { op: '+', a: 2, b: 5, level: 1 }, clean); // second clean in calibration → level 2
   expect(r.levelChange).toBe(1);
   expect(r.unlocked).toEqual(['subtraction']);
   expect(r.progress.unlocked).toEqual(['addition', 'subtraction']);
