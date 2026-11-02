@@ -1,10 +1,9 @@
 # WIP (updated 2026-11-01)
 
-## >>> RESUME HERE (stashed 2026-11-01)
-- **Branch:** on `feat/mult-reorder` in the main checkout (/workspace, no worktree). One feature commit 91046cf on top
-  of main (55eea89) + this stash commit. Working tree clean. **Waiting on user:** "merge feat/mult-reorder into main?"
-  (fast-forward). After merge: user pushes dev, then prod. Don't merge/push without asking.
-- **What the branch does:** multiplication levels 7 = 2-digit × 2–5, 8 = 3-digit × 2–5, 9 = facts 6–9; progress v5
+## >>> RESUME HERE (updated 2026-11-01)
+- **Merged:** feat/mult-reorder fast-forwarded into main 2026-11-01 (HEAD 4c23f5e + this note), branch deleted.
+  345 tests + tsc clean before merge. **Next for user:** push main to dev, then prod (from the host).
+- **What the merge brought:** multiplication levels 7 = 2-digit × 2–5, 8 = 3-digit × 2–5, 9 = facts 6–9; progress v5
   (key math-practice-progress-v5; v4 mult level 7→7, 8→7, 9→8, moved levels clear window). Spec table updated with a
   dated note. Verified: 345 vitest, tsc clean, Playwright SEEDS=8 only se-tab/se-tab-tip FAIL (cell 31px < 38).
   No subagent review was run on this change (user said "just dive in"); consider one before merge if asked.
