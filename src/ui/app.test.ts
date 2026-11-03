@@ -264,3 +264,56 @@ test('unlock message survives the auto-advance and clears on the next key', () =
   expect(s.q('[data-role="message"]')!.textContent).toBe('');
   expect(s.q('[data-role="message"]')!.classList.contains('good')).toBe(false);
 });
+
+// Only division unlocked, calibrating at level 1, so every problem is division at a known level.
+const divisionOnly = (): Progress => ({
+  ...defaultProgress(),
+  unlocked: ['division'],
+  multiplication: { level: 5, window: [], calibrationLeft: 0 },
+  division: { level: 1, window: [], calibrationLeft: 10 },
+});
+
+test('division renders the horizontal ÷ layout and records a clean answer', () => {
+  const s = setup(1, {}, divisionOnly());
+  expect(s.current().op).toBe('÷');
+  expect(s.q('.problem.horizontal')).not.toBeNull();
+  s.typeAnswer(s.correctAnswer());
+  s.tap('[data-key="submit"]');
+  expect(s.saved[0].streak).toBe(1);
+});
+
+test('division: the picture with its pile appears only after the first hint; Pass fills the answer', () => {
+  const s = setup(1, {}, divisionOnly());
+  const c = s.current();
+  expect(s.q('[data-role="picture"]')!.children.length).toBe(0);
+  s.tap('[data-action="hint"]');
+  expect(s.q('[data-role="picture"] .pile')).not.toBeNull();
+  s.tap('[data-action="pass"]');
+  s.advance(10000);
+  const ghosts = [...s.root.querySelectorAll('[data-ghost]')]
+    .sort((x, y) => Number(x.getAttribute('data-ghost')) - Number(y.getAttribute('data-ghost')))
+    .reverse().map(e => e.textContent).join('');
+  expect(ghosts).toBe(String(c.a / c.b));
+});
+
+test('reaching multiplication 2 announces division and the next 3 problems are division', () => {
+  const nearDivision: Progress = {
+    ...defaultProgress(),
+    unlocked: ['addition', 'subtraction', 'multiplication'],
+    addition: { level: 9, window: [], calibrationLeft: 0 },
+    subtraction: { level: 9, window: [], calibrationLeft: 0 },
+    multiplication: { level: 1, window: [1], calibrationLeft: 9 },
+    welcome: { op: 'multiplication', left: 1 }, // makes the first problem ×, whatever the seed
+  };
+  const s = setup(1, {}, nearDivision);
+  s.typeAnswer(s.correctAnswer());
+  s.tap('[data-key="submit"]');
+  expect(s.q('[data-role="message"]')!.textContent).toBe('New: division!');
+  for (let i = 0; i < 3; i++) {
+    s.advance(1000);
+    expect(s.current().op).toBe('÷');
+    s.typeAnswer(s.correctAnswer());
+    s.tap('[data-key="submit"]');
+  }
+  expect(s.saved.at(-1)!.welcome).toBeNull();
+});

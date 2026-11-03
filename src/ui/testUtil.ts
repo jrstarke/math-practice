@@ -19,7 +19,7 @@ export function setup(seed = 1, overrides: Partial<AppDeps> = {}, initial: Progr
   const tap = (sel: string) => q(sel)!.dispatchEvent(new Event('pointerdown', { bubbles: true }));
   const current = () => {
     const opText = q('[data-role="op"]')!.textContent!;
-    const op: '+' | '-' | '×' = opText.includes('+') ? '+' : opText.includes('×') ? '×' : '-';
+    const op: '+' | '-' | '×' | '÷' = opText.includes('+') ? '+' : opText.includes('×') ? '×' : opText.includes('÷') ? '÷' : '-';
     return {
       a: +q('[data-role="top"]')!.textContent!.replace(/\D/g, ''),
       b: +q('[data-role="bottom"]')!.textContent!.replace(/\D/g, ''),
@@ -29,7 +29,7 @@ export function setup(seed = 1, overrides: Partial<AppDeps> = {}, initial: Progr
   const typeAnswer = (n: number) => { for (const d of String(n)) tap(`[data-key="${d}"]`); };
   const correctAnswer = () => {
     const c = current();
-    return c.op === '+' ? c.a + c.b : c.op === '-' ? c.a - c.b : c.a * c.b;
+    return c.op === '+' ? c.a + c.b : c.op === '-' ? c.a - c.b : c.op === '÷' ? c.a / c.b : c.a * c.b;
   };
   const answerText = () => q('[data-role="answer"]')!.textContent!.replace(/\D/g, '');
   const advance = (ms: number) => { t += ms; vi.advanceTimersByTime(ms); };

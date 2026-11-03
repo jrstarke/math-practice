@@ -188,3 +188,26 @@ test('outline groups hold the same (invisible) blocks as the drawn group, so the
     expect(o.querySelectorAll('.block')).toHaveLength(0);
   }
 });
+
+test('a division state draws the to-share pile above the groups with place-value blocks', () => {
+  const host = mount();
+  renderPicture(host, pic({
+    totalGroups: 3, groupsShown: 3,
+    pile: [{ label: 'tens', count: 1, revealed: true }, { label: 'ones', count: 2, revealed: true }],
+  }));
+  const pile = host.querySelector('.picture > .pile')!;
+  expect(pile).not.toBeNull();
+  expect(pile.nextElementSibling!.classList.contains('groups')).toBe(true);
+  expect(pile.querySelectorAll('.block.rod').length).toBe(1);
+  expect(pile.querySelectorAll('.block.square').length).toBe(2);
+  expect(pile.textContent).toContain('to share');
+  expect(host.querySelectorAll('.groups > .group').length).toBe(3); // empty groups are still drawn
+});
+
+test('an empty pile still shows its caption; multiplication states have no pile', () => {
+  const host = mount();
+  renderPicture(host, pic({ totalGroups: 2, groupsShown: 2, pile: [] }));
+  expect(host.querySelector('.pile')!.textContent).toContain('to share');
+  renderPicture(host, pic({ totalGroups: 2, groupsShown: 2 }));
+  expect(host.querySelector('.pile')).toBeNull();
+});

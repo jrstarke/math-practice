@@ -147,7 +147,7 @@ function shrinkToFit(container: HTMLElement, budget: number): boolean {
   return fits(container, budget);
 }
 
-/** Draw a PictureState's groups-of picture, or clear the container when there's nothing to show yet. */
+/** Draw a PictureState's groups-of picture (plus division's to-share pile), or clear the container when there's nothing to show yet. */
 export function renderPicture(container: HTMLElement, state: PictureState | null): void {
   if (!state) {
     container.replaceChildren();
@@ -160,8 +160,14 @@ export function renderPicture(container: HTMLElement, state: PictureState | null
   const outlines = Array.from({ length: state.groupsOutlined },
     () => renderOutline(state.groupSize, state.parts, state.highlightPlace));
   const tally = el('ul', { class: 'tally' }, ...state.tally.map(line => el('li', {}, line)));
+  // Division only: the blocks still to share, above the groups they'll be dealt into.
+  const pile = state.pile
+    ? [el('div', { class: 'pile' }, el('span', { class: 'pile-label' }, 'to share'),
+      el('div', { class: 'pile-blocks' }, ...state.pile.map(part => renderPart(part, null, false))))]
+    : [];
   container.replaceChildren(
     el('div', { class: 'picture' },
+      ...pile,
       el('div', { class: outlines.length > 0 ? 'groups outlined' : 'groups' }, ...groups, ...outlines),
       tally),
   );

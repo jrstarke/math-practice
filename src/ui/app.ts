@@ -88,7 +88,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   }
 
   function render() {
-    const renderFn = problem.op === '×' ? renderHorizontalProblem : renderColumnProblem;
+    const renderFn = problem.op === '×' || problem.op === '÷' ? renderHorizontalProblem : renderColumnProblem;
     renderFn(problemHost, { problem, entry, ghosts: reveal.ghosts, highlight: reveal.column, phase });
     totalEl.textContent = `⭐ ${progress.total}`;
     streakEl.textContent = `🔥 ${progress.streak}`;

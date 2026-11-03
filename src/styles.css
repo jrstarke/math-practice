@@ -266,6 +266,19 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
   border-radius: calc(var(--picture-cell) * 0.2);
   background: rgba(255, 255, 255, 0.6);
 }
+/* Division: a group nothing has been dealt into yet still shows its circle, about one square-row
+   tall and a few squares wide, so the divisor's groups read as groups before the first deal. */
+.group:empty { min-width: calc(var(--unit) * 5); min-height: calc(var(--unit) * 3); }
+/* Division's "to share" pile (pictureView.ts): the same blocks as the groups, undashed, with a small
+   caption, so she can see blocks move from here into the groups as the hints deal them out. */
+.pile {
+  display: flex; flex-direction: column; align-items: center; gap: calc(var(--picture-cell) * 0.05);
+}
+.pile-label { font-size: max(0.7rem, calc(var(--picture-cell) * 0.22)); font-weight: 700; color: var(--muted); }
+.pile-blocks {
+  display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: center; gap: calc(var(--picture-cell) * 0.05);
+  max-width: calc(var(--unit) * 60);
+}
 .part { display: flex; flex-wrap: wrap; align-items: flex-end; gap: calc(var(--picture-cell) * 0.03); }
 .block { background: var(--accent); border-radius: 3px; }
 .block.pending { background: var(--muted); opacity: 0.4; }

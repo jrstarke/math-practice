@@ -3,7 +3,7 @@ import { el } from './dom';
 import type { ProblemViewModel } from './problemView';
 
 /**
- * Re-render the horizontal equation (multiplication): a plain "a × b =" line,
+ * Re-render the horizontal equation (multiplication, division): a plain "a × b =" / "a ÷ b =" line,
  * then an answer row built with the same cell-grid pattern the column view
  * uses (a leading blank `op` cell plus `cols` digit cells, where `cols` is
  * `maxAnswerLength(p)` rather than the operands' own digit count) so the
@@ -42,7 +42,7 @@ export function renderHorizontalProblem(container: HTMLElement, vm: ProblemViewM
 
   const equation = el('div', { class: 'equation' },
     el('span', { 'data-role': 'top' }, String(p.a)),
-    el('span', { 'data-role': 'op', class: 'op' }, '×'),
+    el('span', { 'data-role': 'op', class: 'op' }, p.op),
     el('span', { 'data-role': 'bottom' }, String(p.b)),
     el('span', { class: 'eq' }, '='));
 
