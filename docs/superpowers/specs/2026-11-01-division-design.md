@@ -38,7 +38,7 @@ for ones, deal again) and connect it to the multiplication fact she knows, and s
 - Long division / the standard algorithm; divisors above 9 except the ÷ 10 facts; 4-digit dividends.
 - Grouping ("how many 3s fit in 72?") as a picture model. Hint text may say "what times 3 makes …", but the picture
   is always sharing.
-- Choosing an operation; timed drills.
+- Choosing an operation by hand; timed drills.
 - Changing how addition, subtraction or multiplication look or behave.
 
 ## Anti-goals (failure even if it "works")
@@ -51,7 +51,8 @@ for ones, deal again) and connect it to the multiplication fact she knows, and s
   climbing until multiplication catches up).
 - The picture or pile crowding the problem, answer boxes or controls, or not fitting on a phone or iPad landscape.
 - Losing or resetting saved progress on upgrade, or an older build wiping newer progress.
-- Any behaviour change to the other three operations (their existing tests pass unchanged).
+- Any behaviour change to the other three operations beyond the new mix weighting (their problem, hint and level
+  tests pass unchanged).
 
 ## Constraints
 
@@ -164,10 +165,23 @@ puts it in the boxes as ghost digits, at 1.5 s per step, ending in "Next →".
 - Must fit without overlap on every viewport in `.context/playwright/shots.mjs`, extended to division levels 1, 2, 6,
   7, 8 and 9 with all hints shown (the existing iPhone SE Safari-tab cell-size exception stays accepted).
 
-### Share of the mix (unchanged rule, my call)
+### Share of the mix: practise what's behind (user's idea, added 2026-11-02)
 
-Division joins the existing equal sharing: with four operations unlocked, each still-learning one gets an equal
-share and a topped-out one gets `REVIEW_SHARE`. So once division unlocks, addition and subtraction come up less often.
+Replaces today's rule (equal shares, topped-out ones at `REVIEW_SHARE`) for **all** operations, so it ships with
+division but also changes the mix she sees now, with three operations.
+
+- **Behind gets more.** Weight = `1 + 0.25 × gap`, capped at 2, where `gap` = levels this operation trails her
+  strongest operation that is still learning (level < 9). Never zero for anything unlocked.
+- **Topped out (level 9):** keeps `REVIEW_SHARE` (0.2) and doesn't count as "strongest".
+- **New operations (levels 1–2):** weight 1, no behind boost (the boost starts at level 3).
+- **Division compares against its cap:** `gap = min(strongest, cap) − division level`, so while it waits at the cap
+  it gets weight 1.
+- **Welcome (user chose this over a plain normal share):** right after any unlock, the next 3 problems are the new
+  operation, then the weights above apply. The countdown is saved in progress so closing the app mid-welcome
+  doesn't lose it (my call). Applies to every unlock, including subtraction for a new player.
+
+Example (user approved the numbers): addition 8 → 1, subtraction 6 → 1.5, multiplication 4 → 2, division 2 → 1;
+shares ≈ 18% / 27% / 36% / 18%.
 
 ### Target times (my call, same as multiplication)
 
@@ -177,7 +191,7 @@ Levels 1–6 and 9: 8 s; level 7: 20 s; level 8: 30 s.
 
 - v6 under `math-practice-progress-v6`: `OpKey` gains `'division'` with its own ladder state. Load chain v6 → v5 → …
   → v1 → defaults; older keys never written, so an older build reading v5 still works.
-- v5 → v6 upgrade: adds `division: initialOpState()`; `unlocked` unchanged.
+- v5 → v6 upgrade: adds `division: initialOpState()` and an empty welcome countdown; `unlocked` unchanged.
 
 ### Code structure
 
@@ -197,4 +211,5 @@ Levels 1–6 and 9: 8 s; level 7: 20 s; level 8: 30 s.
   does; the cap (no level-up past it, no served problem above it, a multiplication slip leaves division's level
   alone, cap lifts to 9 at multiplication 9); unlock at multiplication 2 with "New: division!"; v5 → v6 upgrade with
   a realistic record; UI tests for layout, entry and picture appearing only after the first hint; the Playwright
-  layout check for division.
+  layout check for division; mix weights for the example above, the level-9 review share, weight 1 for a new
+  operation at levels 1–2, division at its cap, and the 3-problem welcome (including surviving a reload).
