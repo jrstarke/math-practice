@@ -9,6 +9,7 @@ export const UNLOCK_RULES: Record<OpKey, Partial<Record<OpKey, number>>> = {
   addition: {},
   subtraction: { addition: 2 },
   multiplication: { addition: 6, subtraction: 5 },
+  division: { multiplication: 2 },
 };
 
 /** Share of problems for an operation she has topped out on, relative to one she's still learning. */

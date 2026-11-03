@@ -14,14 +14,15 @@ export interface ProblemViewModel {
 }
 
 /** How each operation is written in the operator cell. */
-const OP_SYMBOL: Record<Op, string> = { '+': '+', '-': '−', '×': '×' };
+const OP_SYMBOL: Record<Op, string> = { '+': '+', '-': '−', '×': '×', '÷': '÷' };
 
 /** Whether column c of the top operand gets a scratch box (spec §7). */
 function hasScratchBox(p: Problem, c: number): boolean {
   switch (p.op) {
     case '-': return c < digitsOf(p.a).length; // borrows
     case '+': return c >= 1;                   // carries
-    case '×': return false;                    // multiplication uses the horizontal layout, no scratch boxes
+    case '×':                                  // multiplication and division use the horizontal layout,
+    case '÷': return false;                    // no scratch boxes
   }
 }
 

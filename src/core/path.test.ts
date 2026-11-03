@@ -65,3 +65,16 @@ test('both at level 9 still split evenly', () => {
   expect(plus / 4000).toBeGreaterThan(0.45);
   expect(plus / 4000).toBeLessThan(0.55);
 });
+
+test("division unlocks when multiplication reaches level 2, starting at level 1 with calibration", () => {
+  const p = { ...base, unlocked: all, addition: at(6), subtraction: at(5), multiplication: at(2), division: at(6) };
+  const r = applyUnlocks(p);
+  expect(r.unlocked).toEqual(["division"]);
+  expect(r.progress.unlocked).toEqual([...all, "division"]);
+  expect(r.progress.division).toEqual({ level: 1, window: [], calibrationLeft: 10 });
+});
+
+test("multiplication at level 1 does not unlock division", () => {
+  const p = { ...base, unlocked: all, addition: at(6), subtraction: at(5), multiplication: at(1) };
+  expect(applyUnlocks(p).unlocked).toEqual([]);
+});

@@ -3,9 +3,11 @@ import type { OpModule } from './types';
 import { additionModule } from './addition';
 import { subtractionModule } from './subtraction';
 import { multiplicationModule } from './multiplication';
+import { divisionModule } from './division';
 
 export const OPS: Record<Op, OpModule> = {
   '+': additionModule,
   '-': subtractionModule,
   '×': multiplicationModule,
+  '÷': divisionModule,
 };
