@@ -12,8 +12,7 @@ just passed. BC teaches division in Grade 3 as fair sharing and grouping, connec
 Grade 4 extends it to 2–3-digit ÷ 1-digit by breaking numbers apart, not by long division. Remainders are Grade 5
 and out of scope for now.
 
-Success: once she's past × 2, ÷ 2 appears; division keeps one level behind multiplication all the way up to
-3-digit ÷ 1-digit; when stuck, the hints and block picture show her equal sharing (deal out, trade a leftover ten
+Success: once she's past × 2, ÷ 2 appears; division then climbs at her own pace up to 3-digit ÷ 1-digit; when stuck, the hints and block picture show her equal sharing (deal out, trade a leftover ten
 for ones, deal again) and connect it to the multiplication fact she knows, and she still produces the answer herself.
 
 ## Goals
@@ -21,9 +20,9 @@ for ones, deal again) and connect it to the multiplication fact she knows, and s
 - A fourth operation, `÷`, with a 9-level ladder that mirrors multiplication's level for level (table below),
   adaptive like the others.
 - Unlocks when multiplication reaches level 2; announced as "New: division!".
-- **One level behind (user's idea):** division can only be at, climb to, or be served a level that multiplication is
-  already past (`division level ≤ multiplication level − 1`), except that once multiplication is at 9, division may
-  reach 9.
+- **No cap after unlocking (user decision 2026-11-02, replacing "one level behind"):** once unlocked, division
+  climbs on its own, even past multiplication. Practising 42 ÷ 6 rehearses 6 × 7 from the other side, and the
+  practise-what's-behind mix gives multiplication more problems whenever division gets ahead.
 - Every problem divides evenly. No remainders, never ÷ 0.
 - Horizontal layout (`72 ÷ 3 = ▢▢`), final answer only, existing number pad, same as multiplication.
 - Hints use **sharing**: the divisor is the number of groups, the answer is how many in each group. Each tap goes one
@@ -45,11 +44,6 @@ for ones, deal again) and connect it to the multiplication fact she knows, and s
 
 - A hint (not Pass) whose text, tally **or picture** reveals the answer. In sharing, a fully dealt group *is* the
   answer, so no hint step may show the pile fully dealt (except 0 ÷ n, where there's nothing to deal).
-- Division getting ahead of multiplication: she must never be served a ÷ problem from a level multiplication hasn't
-  passed, including the "one level up" problems the ladder mixes in.
-- A slip in multiplication taking division levels away (user agreed: division keeps what it earned and just stops
-  climbing until multiplication catches up).
-- The picture or pile crowding the problem, answer boxes or controls, or not fitting on a phone or iPad landscape.
 - Losing or resetting saved progress on upgrade, or an older build wiping newer progress.
 - Any behaviour change to the other three operations beyond the new mix weighting (their problem, hint and level
   tests pass unchanged).
@@ -102,18 +96,16 @@ divisor (345 ÷ 5), which force trading every hundred for tens; that's the main 
 Levels 1, 3, 4, 5, 9: 1 box. Level 2: 2 (40 ÷ 4 = 10). Level 6: 2 (90 ÷ 9 = 10). Level 7: 2 (up to 49). Level 8: 3
 (21–499).
 
-### Unlocking and "one level behind"
+### Unlocking
 
 - Unlock rule: `division: { multiplication: 2 }` in `core/path.ts`. Starts at level 1 with calibration, like the
   others. A player already past multiplication 2 when this ships unlocks division on her next at-level answer.
-- Cap: `cap = multiplication.level === 9 ? 9 : multiplication.level − 1`.
-  - Climbing: a level-up that would put division above the cap doesn't happen (it behaves like "stay").
-  - Serving: the ladder's "one level up" pick never goes above the cap; the "one level down" pick is unaffected.
-  - Calibration also respects the cap (calibration can climb fast).
-  - Slips: if multiplication drops and division is now above the cap, division keeps its level, keeps being served
-    at it, and can still drop by its own results. It just can't climb until multiplication passes it again.
-- Shape (my call): a general per-operation cap rule beside `UNLOCK_RULES` (e.g. `CAP_RULES = { division:
-  { by: 'multiplication', behind: 1 } }`), so `adaptive.ts` stays operation-agnostic and is handed a max level.
+- **No cap (2026-11-02).** The first build kept division one level behind multiplication (`CAP_RULES`,
+  `maxLevelFor`, a `maxLevel` on `update`/`pickLevel`). The user reconsidered: multiplication should come first,
+  which the unlock already ensures, but if division comes more easily, letting it advance helps her learn
+  multiplication. The cap was removed entirely (code and tests; recoverable from commit 9f4f80d). Accepted risk:
+  level 7–8 hints lean on the 2–5 facts, which she may meet in division before multiplication; the hints deal
+  them out on the blocks, so she can count.
 
 ### Hints (examples of the intended copy; builder finalises wording)
 
@@ -174,8 +166,7 @@ division but also changes the mix she sees now, with three operations.
   strongest operation that is still learning (level < 9). Never zero for anything unlocked.
 - **Topped out (level 9):** keeps `REVIEW_SHARE` (0.2) and doesn't count as "strongest".
 - **New operations (levels 1–2):** weight 1, no behind boost (the boost starts at level 3).
-- **Division compares against its cap:** `gap = min(strongest, cap) − division level`, so while it waits at the cap
-  it gets weight 1.
+- **If division gets ahead of multiplication,** multiplication is the operation behind and gets the boost.
 - **Welcome (user chose this over a plain normal share):** right after any unlock, the next 3 problems are the new
   operation, then the weights above apply. The countdown is saved in progress so closing the app mid-welcome
   doesn't lose it (my call). Applies to every unlock, including subtraction for a new player.
@@ -201,15 +192,13 @@ Levels 1–6 and 9: 8 s; level 7: 20 s; level 8: 30 s.
 
 ## Left to the builder
 
-- Exact cap plumbing between `path.ts`, `adaptive.ts` and `session.ts`.
 - `PictureState` field names for the pile and how dealing rounds are represented.
 - Final hint and tally wording within the rules above; whether levels 4–5 deal 2 per round first or keep the default.
 - Pile sizing/wrapping within the fit rules.
 - Tests: generator/level matching for all 9 levels (1,000 seeded problems each, every problem divides evenly, divisor
   ≥ 1, answers within the level's box count); both directions appear on fact levels; hint steps per strategy,
   including that no hint step's text, tally or picture (pile never empty) states the answer and Pass's last step
-  does; the cap (no level-up past it, no served problem above it, a multiplication slip leaves division's level
-  alone, cap lifts to 9 at multiplication 9); unlock at multiplication 2 with "New: division!"; v5 → v6 upgrade with
+  does; division climbing past multiplication and being served above multiplication's level; unlock at multiplication 2 with "New: division!"; v5 → v6 upgrade with
   a realistic record; UI tests for layout, entry and picture appearing only after the first hint; the Playwright
   layout check for division; mix weights for the example above, the level-9 review share, weight 1 for a new
-  operation at levels 1–2, division at its cap, and the 3-problem welcome (including surviving a reload).
+  operation at levels 1–2, multiplication boosted when division is ahead, and the 3-problem welcome (including surviving a reload).

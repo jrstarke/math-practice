@@ -1,5 +1,5 @@
 import { initialOpState } from './adaptive';
-import { MAX_LEVEL, MIN_LEVEL } from './levels';
+import { MAX_LEVEL } from './levels';
 import { opOf, type OpKey, type Progress } from './progress';
 import type { Rng } from './rng';
 import type { Op } from './types';
@@ -11,19 +11,6 @@ export const UNLOCK_RULES: Record<OpKey, Partial<Record<OpKey, number>>> = {
   multiplication: { addition: 6, subtraction: 5 },
   division: { multiplication: 2 },
 };
-
-/** An operation that may only be at, or climb to, levels another operation is already past. */
-export const CAP_RULES: Partial<Record<OpKey, { by: OpKey; behind: number }>> = {
-  division: { by: 'multiplication', behind: 1 },
-};
-
-/** The highest level this operation may climb to or be served at; once the leader tops out, so may it. */
-export function maxLevelFor(p: Progress, key: OpKey): number {
-  const rule = CAP_RULES[key];
-  if (!rule) return MAX_LEVEL;
-  const lead = p[rule.by].level;
-  return lead === MAX_LEVEL ? MAX_LEVEL : Math.max(MIN_LEVEL, lead - rule.behind);
-}
 
 /** Share of problems for an operation she has topped out on, relative to one she's still learning. */
 export const REVIEW_SHARE = 0.2;
@@ -42,8 +29,7 @@ export function opWeight(p: Progress, key: OpKey): number {
   if (level < BOOST_FROM_LEVEL) return 1;
   const learning = p.unlocked.map(k => p[k].level).filter(l => l < MAX_LEVEL);
   const strongest = learning.length > 0 ? Math.max(...learning) : 0;
-  const ref = CAP_RULES[key] ? Math.min(strongest, maxLevelFor(p, key)) : strongest;
-  return Math.min(MAX_WEIGHT, 1 + BEHIND_STEP * Math.max(0, ref - level));
+  return Math.min(MAX_WEIGHT, 1 + BEHIND_STEP * Math.max(0, strongest - level));
 }
 
 /** Unlock every operation whose rules are now met. Unlocks are permanent; a new one starts at level 1 with a welcome. */

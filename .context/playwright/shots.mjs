@@ -13,8 +13,7 @@ const ATTEMPT_CAP = 20;
 
 // OP=× (default) or OP=÷ picks the operation under test, at the levels that stress its picture.
 // The fixture saves a running unlock welcome for that op, so the first problem is always that op
-// (see src/core/path.ts pickOp); the retry loop below stays only as a safety net. Multiplication is
-// at 9 for the division run so division's one-level-behind cap allows every level.
+// (see src/core/path.ts pickOp); the retry loop below stays only as a safety net.
 const OP = process.env.OP ?? '×';
 const OP_KEY = OP === '÷' ? 'division' : 'multiplication';
 const LEVELS = OP === '÷' ? [1, 2, 6, 7, 8, 9] : [1, 7, 8, 9];

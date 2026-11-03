@@ -5,9 +5,9 @@
   division spec/plan, and the 5 division tasks. Not merged — ask before merging/pushing.
 - **Division (plan docs/superpowers/plans/2026-11-02-division.md, executed inline):** all 5 tasks done. ÷ module
   (src/core/operations/division.ts) mirrors mult levels; sharing hints with a "to share" pile (PictureState.pile);
-  progress v6 (key math-practice-progress-v6, adds division + welcome); path.ts: division unlocks at mult 2, CAP_RULES
-  (one level behind mult, lifts to 9 at mult 9), opWeight (1 + 0.25/level behind strongest still-learning op, cap 2,
-  level 9 → 0.2, levels 1-2 → 1), 3-problem welcome after any unlock (persisted). 479 vitest, tsc clean.
+  progress v6 (key math-practice-progress-v6, adds division + welcome); path.ts: division unlocks at mult 2, then climbs
+  freely (the one-level-behind cap was built, then removed 2026-11-02 at the user's request), opWeight (1 + 0.25/level behind strongest still-learning op, cap 2,
+  level 9 → 0.2, levels 1-2 → 1), 3-problem welcome after any unlock (persisted). 467 vitest (after cap removal), tsc clean.
   Playwright (`OP=÷` / default ×, fixture now v6 + welcome forces the op): only se-tab cell 31px fails, as before.
 - **Final review (2026-11-02):** fresh reviewer said With fixes; fixed 0 ÷ 10 "undefined groups", 10 ÷ 1 answer leak, 0 ÷ 1 grammar, scoped empty-group CSS to division (commit after 4644e25). 479 tests.
   Deferred minors: layout check uses random seeds (add fixed 495÷5, 90÷10, 0÷10); no test for serving division after a mult slip.

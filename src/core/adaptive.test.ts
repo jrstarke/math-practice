@@ -56,29 +56,3 @@ test('pickLevel edges and calibration', () => {
     expect(pickLevel(calibrating4, rng)).toBe(4);
   }
 });
-
-test('a level-up past maxLevel stays put, keeping the window rolling', () => {
-  const r = run(normal(4), [1, 1, 1, 1, 1].map(x => x)); // would go up to 5
-  expect(r.state.level).toBe(5);
-  const capped = [1, 1, 1, 1, 1].reduce((acc, sc) => update(acc.state, sc, 4), { state: normal(4), change: 0 as LevelChange });
-  expect(capped.change).toBe(0);
-  expect(capped.state.level).toBe(4);
-});
-
-test('calibration also respects maxLevel', () => {
-  const r = [1, 1].reduce((acc, sc) => update(acc.state, sc, 4), { state: calibrating4, change: 0 as LevelChange });
-  expect(r.state.level).toBe(4);
-  expect(r.change).toBe(0);
-});
-
-test('maxLevel never blocks a drop, even from above it', () => {
-  expect(update(update(normal(4), 0, 4).state, 0, 4).state.level).toBe(3);
-  expect(update(update(normal(6), 0, 4).state, 0, 4).state.level).toBe(5);
-});
-
-test('pickLevel never serves above maxLevel but still serves below', () => {
-  const rng = mulberry32(9);
-  const seen = new Set<number>();
-  for (let i = 0; i < 1000; i++) seen.add(pickLevel(normal(4), rng, 4));
-  expect(seen).toEqual(new Set([3, 4]));
-});

@@ -20,3 +20,6 @@
   Also new mix rule for all ops: weight 1 + 0.25/level behind strongest still-learning op (cap 2), level 9 = 0.2,
   new op weight 1 at levels 1-2, division gap vs its cap, 3-problem welcome after any unlock (persisted).
   Subtraction now unlocks at addition 2 (commit 9adb562, same branch).
+- 2026-11-02: Division "one level behind multiplication" cap REMOVED (user): multiplication still comes first via the
+  unlock at mult 2, but after that division climbs freely — if division comes easier, advancing it helps multiplication
+  (fact families), and the practise-what's-behind mix boosts multiplication when it lags. Cap code recoverable from 9f4f80d.

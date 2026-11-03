@@ -100,31 +100,6 @@ const withDivision = (mult: number, div: number) => ({
   addition: settled(8), subtraction: settled(7), multiplication: settled(mult), division: settled(div, [1, 1, 1, 1]),
 });
 
-test('division stays one level behind multiplication: a level-up at the cap does nothing', () => {
-  const r = recordResult(withDivision(5, 4), { op: '÷', a: 21, b: 3, level: 4 }, clean);
-  expect(r.progress.division.level).toBe(4);
-  expect(r.levelChange).toBe(0);
-});
-
-test('below the cap division climbs as usual', () => {
-  const r = recordResult(withDivision(6, 4), { op: '÷', a: 21, b: 3, level: 4 }, clean);
-  expect(r.progress.division.level).toBe(5);
-});
-
-test('a multiplication slip never takes division levels away', () => {
-  const r = recordResult(withDivision(3, 4), { op: '÷', a: 21, b: 3, level: 4 }, clean);
-  expect(r.progress.division.level).toBe(4);
-});
-
-test('nextProblem never serves division above its cap', () => {
-  const p = { ...withDivision(5, 4), division: settled(4) };
-  const rng = mulberry32(13);
-  for (let i = 0; i < 2000; i++) {
-    const n = nextProblem(p, [], rng);
-    if (n.op === '÷') expect(n.level).toBeLessThanOrEqual(4);
-  }
-});
-
 test('the three problems after an unlock are the new operation, then the mix resumes', () => {
   const nearDivision = {
     ...defaultProgress(), unlocked: ['addition', 'subtraction', 'multiplication'] as OpKey[],
@@ -160,4 +135,20 @@ test('a welcome reloaded with 2 left gives exactly 2 more', () => {
 test('an off-level welcome problem still counts down', () => {
   const p = { ...withDivision(5, 3), welcome: { op: 'division' as OpKey, left: 3 } };
   expect(recordResult(p, { op: '÷', a: 12, b: 2, level: 1 }, clean).progress.welcome).toEqual({ op: 'division', left: 2 });
+});
+
+// ---- No cap (user decision 2026-11-02): division climbs on its own once unlocked ----
+
+test('division climbs past multiplication when she finds it easier', () => {
+  const r = recordResult(withDivision(3, 4), { op: '÷', a: 21, b: 3, level: 4 }, clean);
+  expect(r.progress.division.level).toBe(5);
+  expect(r.levelChange).toBe(1);
+});
+
+test('nextProblem serves division above multiplication\'s level', () => {
+  const p = { ...withDivision(3, 4), division: settled(4) };
+  const rng = mulberry32(16);
+  const levels = new Set<number>();
+  for (let i = 0; i < 3000; i++) { const n = nextProblem(p, [], rng); if (n.op === '÷') levels.add(n.level); }
+  expect(levels.has(5)).toBe(true);
 });
