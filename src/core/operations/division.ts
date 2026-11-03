@@ -2,7 +2,7 @@ import { digitsOf } from '../arith';
 import type { Problem } from '../types';
 import type { Rng } from '../rng';
 import { randInt } from '../rng';
-import type { OpModule, Step } from './types';
+import type { OpModule, PicturePart, PictureState, Place, Step } from './types';
 
 type Range = [number, number];
 const inRange = (n: number, [lo, hi]: Range) => n >= lo && n <= hi;
@@ -94,13 +94,129 @@ export function maxAnswerLen(p: Problem): number {
   return 1;
 }
 
+// ---- Sharing hints: the divisor is the number of groups; blocks move from the pile into the groups ----
+
+const WORDS = ['nothing', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
+const NOUN: Record<Place, [string, string]> = { hundreds: ['hundred', 'hundreds'], tens: ['ten', 'tens'], ones: ['one', 'ones'] };
+const noun = (place: Place, n: number) => NOUN[place][n === 1 ? 0 : 1];
+const NEXT: Partial<Record<Place, Place>> = { hundreds: 'tens', tens: 'ones' };
+
+type Counts = Partial<Record<Place, number>>;
+/** Place-value blocks, biggest first, leaving out empty places. */
+const blocks = (c: Counts): PicturePart[] => (['hundreds', 'tens', 'ones'] as Place[])
+  .filter(place => (c[place] ?? 0) > 0)
+  .map(place => ({ label: place, count: c[place]!, revealed: true }));
+/** Plain unit squares (fact levels), or nothing. */
+const squares = (label: string, n: number): PicturePart[] => (n > 0 ? [{ label, count: n, revealed: true }] : []);
+
+function pic(groups: number, parts: PicturePart[], pile: PicturePart[], tally: string[]): PictureState {
+  return { totalGroups: groups, groupSize: 0, groupsShown: groups, groupsOutlined: 0, parts, pile, tally };
+}
+
+function step(text: string, picture: PictureState): Step {
+  return { column: null, text, scratch: {}, ghosts: [], picture };
+}
+
+const naming = (a: number, b: number) => `Share ${a} into ${b} equal groups. ${b} groups of what make ${a}?`;
+
+type Strategy = { steps: Step[]; final: PictureState };
+
+/** Levels 1-6: deal one to each group per round, counting by the divisor; the last round is hers. */
+function dealSteps(a: number, b: number): Strategy {
+  const q = a / b;
+  if (a === 0) {
+    const empty = pic(b, [], [], []);
+    return { steps: [step(`Share nothing into ${WORDS[b]} groups. How many in each?`, empty)], final: empty };
+  }
+  if (q === 10) { // 40 ÷ 4: one ten for each group
+    const final = pic(b, blocks({ tens: 1 }), [], []);
+    return { steps: [step(naming(a, b), pic(b, [], blocks({ tens: b }), []))], final };
+  }
+  const final = pic(b, squares('each', q), [], []);
+  if (b === 1) {
+    return { steps: [step('Put them all in one group. How many are in it?', pic(1, [], squares('to share', a), []))], final };
+  }
+  const steps = [step(naming(a, b), pic(b, [], squares('to share', a), []))];
+  if (q >= 2) {
+    const counts = Array.from({ length: q - 1 }, (_, i) => (i + 1) * b).join(', ');
+    steps.push(step('Deal one to each group at a time. How many in each group when it\'s all shared?',
+      pic(b, squares('each', q - 1), squares('to share', b), [counts])));
+  }
+  return { steps, final };
+}
+
+/** Level 9: give each group 5 first (the ×5 facts she knows), then share what's left. */
+function fiveFirstSteps(a: number, b: number): Strategy {
+  const q = a / b;
+  const left = a - 5 * b;
+  const fiveLine = `${b} groups of 5 = ${5 * b}`;
+  const dealt = pic(b, squares('five', 5), squares('to share', left), [fiveLine]);
+  return {
+    steps: [
+      step(naming(a, b), pic(b, [], squares('to share', a), [])),
+      step(`Give each group 5: ${fiveLine}. ${left} left to share.`, dealt),
+      step(`Share the ${left} into ${b} groups. How many in each group altogether?`,
+        { ...dealt, tally: [fiveLine, `${left} left`] }),
+    ],
+    final: pic(b, [{ label: 'five', count: 5, revealed: true }, ...squares('rest', q - 5)], [], []),
+  };
+}
+
+/** Levels 7-8: share each place from the biggest, trading what can't be shared for the next place down. */
+function placeSteps(a: number, b: number): Strategy {
+  const places: Place[] = a >= 100 ? ['hundreds', 'tens', 'ones'] : ['tens', 'ones'];
+  const pile: Counts = { hundreds: Math.floor(a / 100) % 10, tens: Math.floor(a / 10) % 10, ones: a % 10 };
+  const each: Counts = {};
+  const tally: string[] = [];
+  const snap = () => pic(b, blocks(each), blocks(pile), [...tally]);
+  const steps = [step(naming(a, b), snap())];
+
+  for (const place of places.slice(0, -1)) {
+    const next = NEXT[place]!;
+    const avail = pile[place] ?? 0;
+    if (avail === 0) continue;
+    if (avail >= b) {
+      const share = Math.floor(avail / b);
+      const left = avail % b;
+      each[place] = share;
+      pile[place] = left;
+      tally.push(`${share} ${noun(place, share)} in each group`);
+      steps.push(step(`Share the ${place}: ${share} ${noun(place, share)} in each group${left ? `, ${left} ${noun(place, left)} left over` : ''}.`, snap()));
+      if (left > 0) {
+        pile[place] = 0;
+        pile[next] = (pile[next] ?? 0) + left * 10;
+        const what = left === 1 ? NOUN[place][0] : `${left} ${NOUN[place][1]}`;
+        steps.push(step(`Trade the leftover ${what} for ${left * 10} ${next}. Now there are ${pile[next]} ${next}.`, snap()));
+      }
+    } else {
+      pile[place] = 0;
+      pile[next] = (pile[next] ?? 0) + avail * 10;
+      steps.push(step(`Can't share ${avail} ${noun(place, avail)} into ${b} groups. Trade ${avail === 1 ? 'it' : 'them'} for ${avail * 10} ${next}: ${pile[next]} ${next}.`, snap()));
+    }
+  }
+  // Ones are always left in the pile for her (the quotient is never a multiple of 10).
+  steps.push(step(`Share ${pile.ones} ones into ${b} groups. How many in each group altogether?`, snap()));
+  each.ones = (pile.ones ?? 0) / b;
+  pile.ones = 0;
+  return { steps, final: pic(b, blocks(each), [], []) };
+}
+
+function strategyFor(p: Problem): Strategy {
+  if (p.level === 7 || p.level === 8) return placeSteps(p.a, p.b);
+  if (p.level === 9) return fiveFirstSteps(p.a, p.b);
+  return dealSteps(p.a, p.b);
+}
+
 export function solve(p: Problem): Step[] {
   const q = p.a / p.b;
-  return [{
+  const { steps, final } = strategyFor(p);
+  const lastTally = steps.at(-1)?.picture?.tally ?? [];
+  return [...steps, {
     column: null,
     text: `${p.a} ÷ ${p.b} = ${q}.`,
     scratch: {},
     ghosts: digitsOf(q).map((digit, column) => ({ column, digit })),
+    picture: { ...final, tally: lastTally },
     passOnly: true,
   }];
 }

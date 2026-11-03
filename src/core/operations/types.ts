@@ -39,6 +39,7 @@ export interface PictureState {
   tally: string[];         // running-total lines under the picture, e.g. ["6 tens = 60"]
   highlightGroups?: number; // levels 1–3/6 skip counting: the first n drawn groups are the ones being counted
   highlightPlace?: Place;   // levels 7–8: the place being worked on — that part of the drawn group, and that digit of each outline label
+  pile?: PicturePart[];     // division: blocks still to share, drawn above the groups (same label rules as parts)
 }
 
 export type Place = 'hundreds' | 'tens' | 'ones';
