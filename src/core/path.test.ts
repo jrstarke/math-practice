@@ -1,4 +1,4 @@
-import { applyUnlocks, pickOp, UNLOCK_RULES } from './path';
+import { applyUnlocks, maxLevelFor, opWeight, pickOp, UNLOCK_RULES } from './path';
 import { defaultProgress, type OpKey } from './progress';
 import { mulberry32 } from './rng';
 
@@ -77,4 +77,57 @@ test("division unlocks when multiplication reaches level 2, starting at level 1 
 test("multiplication at level 1 does not unlock division", () => {
   const p = { ...base, unlocked: all, addition: at(6), subtraction: at(5), multiplication: at(1) };
   expect(applyUnlocks(p).unlocked).toEqual([]);
+});
+
+// ---- Cap, weights and welcome (Task 3) ----
+
+const four: OpKey[] = ['addition', 'subtraction', 'multiplication', 'division'];
+const levels = (add: number, sub: number, mult: number, div: number) =>
+  ({ ...base, unlocked: four, addition: at(add), subtraction: at(sub), multiplication: at(mult), division: at(div) });
+
+test('unlocking starts a 3-problem welcome for the new operation', () => {
+  expect(applyUnlocks({ ...base, addition: at(2) }).progress.welcome).toEqual({ op: 'subtraction', left: 3 });
+  const p = { ...base, unlocked: all, addition: at(6), subtraction: at(5), multiplication: at(2) };
+  expect(applyUnlocks(p).progress.welcome).toEqual({ op: 'division', left: 3 });
+});
+
+test.each([[2, 1], [5, 4], [8, 7], [9, 9], [1, 1]])('with multiplication at %i, division may reach %i', (mult, cap) =>
+  expect(maxLevelFor(levels(9, 9, mult, 1), 'division')).toBe(cap));
+
+test('operations without a cap rule may reach 9', () =>
+  expect(maxLevelFor(levels(3, 2, 2, 1), 'addition')).toBe(9));
+
+test('the spec example: behind gets more, a new operation gets a normal share', () => {
+  const p = levels(8, 6, 4, 2);
+  expect(four.map(k => opWeight(p, k))).toEqual([1, 1.5, 2, 1]);
+});
+
+test('weights: no boost below level 3, capped at double, review share at 9', () => {
+  const p = { ...base, unlocked: all, addition: at(9), subtraction: at(8), multiplication: at(1) };
+  expect(opWeight(p, 'multiplication')).toBe(1);
+  expect(opWeight(p, 'addition')).toBe(0.2);
+  expect(opWeight({ ...base, unlocked: both, addition: at(8), subtraction: at(3) }, 'subtraction')).toBe(2);
+});
+
+test('division waiting at its cap gets a normal share', () =>
+  expect(opWeight(levels(8, 7, 5, 4), 'division')).toBe(1));
+
+test('pickOp follows the weights: about 18 / 27 / 36 / 18% for the spec example', () => {
+  const p = levels(8, 6, 4, 2);
+  const rng = mulberry32(11);
+  const n = 20000;
+  const counts: Record<string, number> = {};
+  for (let i = 0; i < n; i++) { const op = pickOp(p, rng); counts[op] = (counts[op] ?? 0) + 1; }
+  const share = (op: string) => (counts[op] ?? 0) / n;
+  expect(Math.abs(share('+') - 1 / 5.5)).toBeLessThan(0.02);
+  expect(Math.abs(share('-') - 1.5 / 5.5)).toBeLessThan(0.02);
+  expect(Math.abs(share('×') - 2 / 5.5)).toBeLessThan(0.02);
+  expect(Math.abs(share('÷') - 1 / 5.5)).toBeLessThan(0.02);
+});
+
+test('during a welcome, pickOp always gives the new operation', () => {
+  const p = { ...levels(8, 6, 4, 1), welcome: { op: 'division' as OpKey, left: 2 } };
+  const rng = mulberry32(12);
+  for (let i = 0; i < 200; i++) expect(pickOp(p, rng)).toBe('÷');
+  expect(pickOp({ ...p, welcome: { op: 'division', left: 0 } }, () => 0)).toBe('+');
 });

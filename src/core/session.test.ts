@@ -1,4 +1,4 @@
-import { defaultProgress, type OpKey } from './progress';
+import { defaultProgress, type OpKey, type Progress } from './progress';
 import { mulberry32 } from './rng';
 import { nextProblem, recordResult, RECENT_LIMIT } from './session';
 import type { Problem } from './types';
@@ -89,4 +89,75 @@ test('a level-up to addition 2 reports the unlock on that answer', () => {
 test('no unlock is reported when subtraction is already unlocked', () => {
   const p = { ...defaultProgress(), unlocked: both, addition: { level: 5, window: [], calibrationLeft: 0 } };
   expect(recordResult(p, { op: '+', a: 34, b: 25, level: 5 }, clean).unlocked).toEqual([]);
+});
+
+// ---- Cap and welcome (Task 3) ----
+
+const fourOps: OpKey[] = ['addition', 'subtraction', 'multiplication', 'division'];
+const settled = (level: number, window: number[] = []) => ({ level, window, calibrationLeft: 0 });
+const withDivision = (mult: number, div: number) => ({
+  ...defaultProgress(), unlocked: fourOps,
+  addition: settled(8), subtraction: settled(7), multiplication: settled(mult), division: settled(div, [1, 1, 1, 1]),
+});
+
+test('division stays one level behind multiplication: a level-up at the cap does nothing', () => {
+  const r = recordResult(withDivision(5, 4), { op: '÷', a: 21, b: 3, level: 4 }, clean);
+  expect(r.progress.division.level).toBe(4);
+  expect(r.levelChange).toBe(0);
+});
+
+test('below the cap division climbs as usual', () => {
+  const r = recordResult(withDivision(6, 4), { op: '÷', a: 21, b: 3, level: 4 }, clean);
+  expect(r.progress.division.level).toBe(5);
+});
+
+test('a multiplication slip never takes division levels away', () => {
+  const r = recordResult(withDivision(3, 4), { op: '÷', a: 21, b: 3, level: 4 }, clean);
+  expect(r.progress.division.level).toBe(4);
+});
+
+test('nextProblem never serves division above its cap', () => {
+  const p = { ...withDivision(5, 4), division: settled(4) };
+  const rng = mulberry32(13);
+  for (let i = 0; i < 2000; i++) {
+    const n = nextProblem(p, [], rng);
+    if (n.op === '÷') expect(n.level).toBeLessThanOrEqual(4);
+  }
+});
+
+test('the three problems after an unlock are the new operation, then the mix resumes', () => {
+  const nearDivision = {
+    ...defaultProgress(), unlocked: ['addition', 'subtraction', 'multiplication'] as OpKey[],
+    addition: settled(8), subtraction: settled(7), multiplication: calibrating(1),
+  };
+  // Two clean calibrating answers take multiplication to 2, which unlocks division.
+  let p = recordResult(nearDivision, { op: '×', a: 2, b: 3, level: 1 }, clean).progress;
+  const r = recordResult(p, { op: '×', a: 2, b: 4, level: 1 }, clean);
+  expect(r.unlocked).toEqual(['division']);
+  p = r.progress;
+  const rng = mulberry32(14);
+  for (let i = 0; i < 3; i++) {
+    const n = nextProblem(p, [], rng);
+    expect(n.op).toBe('÷');
+    p = recordResult(p, n, i === 1 ? { ...clean, passed: true } : clean).progress; // Pass still counts down
+  }
+  expect(p.welcome).toBeNull();
+  const ops = new Set(Array.from({ length: 100 }, () => nextProblem(p, [], rng).op));
+  expect(ops.size).toBeGreaterThan(1);
+});
+
+test('a welcome reloaded with 2 left gives exactly 2 more', () => {
+  let p: Progress = { ...withDivision(5, 1), division: calibrating(1), welcome: { op: 'division', left: 2 } };
+  const rng = mulberry32(15);
+  for (let i = 0; i < 2; i++) {
+    const n = nextProblem(p, [], rng);
+    expect(n.op).toBe('÷');
+    p = recordResult(p, n, clean).progress;
+  }
+  expect(p.welcome).toBeNull();
+});
+
+test('an off-level welcome problem still counts down', () => {
+  const p = { ...withDivision(5, 3), welcome: { op: 'division' as OpKey, left: 3 } };
+  expect(recordResult(p, { op: '÷', a: 12, b: 2, level: 1 }, clean).progress.welcome).toEqual({ op: 'division', left: 2 });
 });
