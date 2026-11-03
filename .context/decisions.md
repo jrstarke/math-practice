@@ -14,3 +14,9 @@
 - 2026-10-25: Multiplication levels reordered to match BC (7 = 2-digit × 2–5, 8 = 3-digit × 2–5, 9 = facts 6–9);
   2-digit × 6–9 dropped (user OK). Progress v5 remaps saved levels. Curriculum notes: add/sub hints teach column
   carry/borrow while BC Grade 2 teaches mental strategies (bridging 10, decomposing) — possible future project.
+- 2026-11-02: Division designed (docs/superpowers/specs/2026-11-01-division-design.md, on branch feat/sub-unlock-2,
+  awaiting user approval): mirrors the 9 mult levels, no remainders, unlocks at mult 2 and stays one level behind
+  mult (cap lifts to 9 at mult 9; slips never take levels away), sharing picture with a "to share" pile, progress v6.
+  Also new mix rule for all ops: weight 1 + 0.25/level behind strongest still-learning op (cap 2), level 9 = 0.2,
+  new op weight 1 at levels 1-2, division gap vs its cap, 3-problem welcome after any unlock (persisted).
+  Subtraction now unlocks at addition 2 (commit 9adb562, same branch).
