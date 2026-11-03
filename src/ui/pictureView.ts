@@ -168,7 +168,7 @@ export function renderPicture(container: HTMLElement, state: PictureState | null
   container.replaceChildren(
     el('div', { class: 'picture' },
       ...pile,
-      el('div', { class: outlines.length > 0 ? 'groups outlined' : 'groups' }, ...groups, ...outlines),
+      el('div', { class: outlines.length > 0 ? 'groups outlined' : state.pile ? 'groups sharing' : 'groups' }, ...groups, ...outlines),
       tally),
   );
   fitPicture(container);

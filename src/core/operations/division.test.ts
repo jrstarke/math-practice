@@ -184,3 +184,35 @@ test.each([[0, 4], [9, 1]])('%i ÷ %i is a single question in words, with no dig
 test('multiplication pictures never have a pile', () => {
   for (const s of solveAny({ op: '×', a: 24, b: 3, level: 7 })) expect(s.picture?.pile).toBeUndefined();
 });
+
+// ---- Final-review fixes ----
+
+/** Every level-6 problem: each fact pair from the review set, both directions, never ÷ 0. */
+const level6 = (): Problem[] => {
+  const out: Problem[] = [];
+  for (const t of [0, 1, 2, 3, 4, 5, 10]) for (let k = 0; k <= 9; k++)
+    for (const b of [t, k]) if (b !== 0) out.push(div(t * k, b, 6));
+  return out;
+};
+
+test('every level-6 zero and one problem asks its question in words, with no digits and no gaps', () => {
+  for (const p of level6()) {
+    const text = hints(p)[0].text;
+    expect(text).not.toMatch(/undefined/);
+    if (p.a === 0) expect(text).toMatch(/^Share nothing into [a-z]+ groups?\. How many in each\?$/);
+    if (p.b === 1 && p.a !== 0) expect(text).toBe('Put them all in one group. How many are in it?');
+    if (p.a === 0 || p.b === 1) expect(text).not.toMatch(/\d/);
+  }
+});
+
+test('0 ÷ 10 and 0 ÷ 1 read naturally', () => {
+  expect(hints(div(0, 10, 6))[0].text).toBe('Share nothing into ten groups. How many in each?');
+  expect(hints(div(0, 1, 6))[0].text).toBe('Share nothing into one group. How many in each?');
+});
+
+test('10 ÷ 1 uses the one-group question, with the ten in the pile', () => {
+  const s = hints(div(10, 1, 6));
+  expect(s).toHaveLength(1);
+  expect(s[0].text).toBe('Put them all in one group. How many are in it?');
+  expect(s[0].picture!.pile).toEqual([{ label: 'tens', count: 1, revealed: true }]);
+});

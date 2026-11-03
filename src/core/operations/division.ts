@@ -96,7 +96,7 @@ export function maxAnswerLen(p: Problem): number {
 
 // ---- Sharing hints: the divisor is the number of groups; blocks move from the pile into the groups ----
 
-const WORDS = ['nothing', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
+const WORDS = ['nothing', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
 const NOUN: Record<Place, [string, string]> = { hundreds: ['hundred', 'hundreds'], tens: ['ten', 'tens'], ones: ['one', 'ones'] };
 const noun = (place: Place, n: number) => NOUN[place][n === 1 ? 0 : 1];
 const NEXT: Partial<Record<Place, Place>> = { hundreds: 'tens', tens: 'ones' };
@@ -126,16 +126,18 @@ function dealSteps(a: number, b: number): Strategy {
   const q = a / b;
   if (a === 0) {
     const empty = pic(b, [], [], []);
-    return { steps: [step(`Share nothing into ${WORDS[b]} groups. How many in each?`, empty)], final: empty };
+    return { steps: [step(`Share nothing into ${WORDS[b]} group${b === 1 ? '' : 's'}. How many in each?`, empty)], final: empty };
+  }
+  if (b === 1) { // ÷ 1 before the answer-10 case, so 10 ÷ 1 also asks in words (its ten stays a rod)
+    const pile = q === 10 ? blocks({ tens: 1 }) : squares('to share', a);
+    const final = pic(1, q === 10 ? blocks({ tens: 1 }) : squares('each', q), [], []);
+    return { steps: [step('Put them all in one group. How many are in it?', pic(1, [], pile, []))], final };
   }
   if (q === 10) { // 40 ÷ 4: one ten for each group
     const final = pic(b, blocks({ tens: 1 }), [], []);
     return { steps: [step(naming(a, b), pic(b, [], blocks({ tens: b }), []))], final };
   }
   const final = pic(b, squares('each', q), [], []);
-  if (b === 1) {
-    return { steps: [step('Put them all in one group. How many are in it?', pic(1, [], squares('to share', a), []))], final };
-  }
   const steps = [step(naming(a, b), pic(b, [], squares('to share', a), []))];
   if (q >= 2) {
     const counts = Array.from({ length: q - 1 }, (_, i) => (i + 1) * b).join(', ');

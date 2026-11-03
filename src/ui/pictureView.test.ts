@@ -211,3 +211,11 @@ test('an empty pile still shows its caption; multiplication states have no pile'
   renderPicture(host, pic({ totalGroups: 2, groupsShown: 2 }));
   expect(host.querySelector('.pile')).toBeNull();
 });
+
+test('only division groups are marked for the empty-circle sizing; multiplication × 0 groups are not', () => {
+  const host = mount();
+  renderPicture(host, pic({ totalGroups: 3, groupsShown: 3, pile: [] }));
+  expect(host.querySelector('.groups')!.classList.contains('sharing')).toBe(true);
+  renderPicture(host, pic({ totalGroups: 3, groupsShown: 3, groupSize: 0 }));
+  expect(host.querySelector('.groups')!.classList.contains('sharing')).toBe(false);
+});
