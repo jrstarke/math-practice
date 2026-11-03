@@ -1,12 +1,16 @@
 # WIP (updated 2026-11-01)
 
-## >>> RESUME HERE (updated 2026-11-01)
-- **Merged:** feat/mult-reorder fast-forwarded into main 2026-11-01 (HEAD 4c23f5e + this note), branch deleted.
-  345 tests + tsc clean before merge. **Next for user:** push main to dev, then prod (from the host).
-- **What the merge brought:** multiplication levels 7 = 2-digit × 2–5, 8 = 3-digit × 2–5, 9 = facts 6–9; progress v5
-  (key math-practice-progress-v5; v4 mult level 7→7, 8→7, 9→8, moved levels clear window). Spec table updated with a
-  dated note. Verified: 345 vitest, tsc clean, Playwright SEEDS=8 only se-tab/se-tab-tip FAIL (cell 31px < 38).
-  No subagent review was run on this change (user said "just dive in"); consider one before merge if asked.
+## >>> RESUME HERE (updated 2026-11-02)
+- **Branch:** `feat/division` (main checkout, no worktree). Holds: subtraction unlocks at addition 2 (9adb562),
+  division spec/plan, and the 5 division tasks. Not merged — ask before merging/pushing.
+- **Division (plan docs/superpowers/plans/2026-11-02-division.md, executed inline):** all 5 tasks done. ÷ module
+  (src/core/operations/division.ts) mirrors mult levels; sharing hints with a "to share" pile (PictureState.pile);
+  progress v6 (key math-practice-progress-v6, adds division + welcome); path.ts: division unlocks at mult 2, CAP_RULES
+  (one level behind mult, lifts to 9 at mult 9), opWeight (1 + 0.25/level behind strongest still-learning op, cap 2,
+  level 9 → 0.2, levels 1-2 → 1), 3-problem welcome after any unlock (persisted). ~475 vitest, tsc clean.
+  Playwright (`OP=÷` / default ×, fixture now v6 + welcome forces the op): only se-tab cell 31px fails, as before.
+- **Ledger:** .superpowers/sdd/2026-11-02-division/progress.md (rulings there). Final whole-branch review pending/see ledger.
+- **Known:** division pictures on iPhone SE Safari tab are tiny (fit, hard to read) — same trade-off as mult.
 - **Deployed (last seen 2026-10-25):** dev/main = 6dce415 (multiplication + update-on-resume + build label, old level
   order, progress v4). prod/main = 89d0e75 — a mid-fix-wave commit, lacks the L9 picture-fit fix, update-on-resume and
   build label. Suggested user push main to prod. Both are live with v4 saves → the v5 migration matters.

@@ -8,23 +8,26 @@ const views = process.env.VIEWS ? JSON.parse(process.env.VIEWS) : [
   ['ipad-p', 820, 1180], ['ipad-l', 1180, 820], ['ipad-l-tab', 1180, 745], ['ipad102-l-tab', 1080, 740], ['ipad102-p', 810, 1080], ['ipad102-p-tab', 810, 1005], ['se-land', 667, 375], ['ip15-land', 852, 393], ['ip15-land-notch', 852, 393],
   ['ipad6-l', 1024, 768], ['ipad6-l-tabs', 1024, 665], ['ipad102-l-tabs', 1080, 707], ['ipad6-p-tabs', 768, 918],
 ];
-const STORAGE_KEY = 'math-practice-progress-v5';
+const STORAGE_KEY = 'math-practice-progress-v6';
 const ATTEMPT_CAP = 20;
 
-// One fixture per multiplication level under test. addition/subtraction stay calibrated
-// at level 9 throughout, so they draw only the REVIEW_SHARE (0.2) of problems: at
-// multiplication levels 1/7/8 (weight 1) that's ~71% multiplication, at level 9 (also
-// REVIEW_SHARE once maxed) it drops to ~33% — see src/core/path.ts's pickOp/REVIEW_SHARE.
-// Hence the retry-until-× logic below, applied at every level including 9.
-const MULT_LEVELS = [1, 7, 8, 9];
+// OP=× (default) or OP=÷ picks the operation under test, at the levels that stress its picture.
+// The fixture saves a running unlock welcome for that op, so the first problem is always that op
+// (see src/core/path.ts pickOp); the retry loop below stays only as a safety net. Multiplication is
+// at 9 for the division run so division's one-level-behind cap allows every level.
+const OP = process.env.OP ?? '×';
+const OP_KEY = OP === '÷' ? 'division' : 'multiplication';
+const LEVELS = OP === '÷' ? [1, 2, 6, 7, 8, 9] : [1, 7, 8, 9];
 const nine = { level: 9, window: [], calibrationLeft: 0 };
 function progressFor(level) {
   return {
-    version: 5,
-    unlocked: ['addition', 'subtraction', 'multiplication'],
+    version: 6,
+    unlocked: ['addition', 'subtraction', 'multiplication', 'division'],
     addition: nine,
     subtraction: nine,
-    multiplication: { level, window: [], calibrationLeft: 0 },
+    multiplication: OP === '÷' ? nine : { level, window: [], calibrationLeft: 0 },
+    division: OP === '÷' ? { level, window: [], calibrationLeft: 0 } : nine,
+    welcome: { op: OP_KEY, left: 3 },
     streak: 12, bestStreak: 12, total: +(process.env.TOTAL ?? 12), muted: false, installTipShown: false,
   };
 }
@@ -85,15 +88,15 @@ function measure(longHint) {
   return { issues, cell, key, act, bubbleOverTopbar: bub ? bub.top < top.bottom : false };
 }
 
-for (const level of MULT_LEVELS) {
+for (const level of LEVELS) {
   const progress = progressFor(level);
   for (const [name, w, h] of views) {
     for (const tip of [false, true]) {
-      const label = `L${level}-${name}${tip ? '-tip' : ''}`;
+      const label = `${OP === '÷' ? 'D' : 'L'}${level}-${name}${tip ? '-tip' : ''}`;
       const agg = { issues: new Set(), cells: [], keys: [], overTop: 0, states: 0, maxAttempts: 0 };
       for (let seed = 1; seed <= SEEDS; seed++) {
         // Problem selection is probabilistic (REVIEW_SHARE draws addition/subtraction too), so retry
-        // with a different derived seed until the rendered op is ×, up to ATTEMPT_CAP attempts.
+        // with a different derived seed until the rendered op is OP, up to ATTEMPT_CAP attempts.
         let ctx, page, attempts = 0, gotMult = false;
         for (attempts = 1; attempts <= ATTEMPT_CAP; attempts++) {
           ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true, isMobile: w < 1000 });
@@ -112,11 +115,11 @@ for (const level of MULT_LEVELS) {
           await page.goto(URL);
           await page.waitForSelector('[data-role="answer"]', { state: 'attached' });
           const op = await page.$eval('[data-role="op"]', e => e.textContent);
-          if (op === '×') { gotMult = true; break; }
+          if (op === OP) { gotMult = true; break; }
           await ctx.close();
         }
         agg.maxAttempts = Math.max(agg.maxAttempts, attempts);
-        if (!gotMult) { agg.issues.add(`no × after ${ATTEMPT_CAP} attempts [seed ${seed}]`); continue; }
+        if (!gotMult) { agg.issues.add(`no ${OP} after ${ATTEMPT_CAP} attempts [seed ${seed}]`); continue; }
         const cellsThisProblem = [];
         const snap = async (tag, longHint) => {
           const m = await page.evaluate(measure, longHint);
@@ -148,7 +151,7 @@ for (const level of MULT_LEVELS) {
       const issues = [...agg.issues];
       console.log(label.padEnd(22), ok ? 'ok  ' : 'FAIL',
         `cell ${Math.min(...agg.cells).toFixed(0)}-${Math.max(...agg.cells).toFixed(0)}px key ${Math.min(...agg.keys).toFixed(0)}px bubble>topbar ${agg.overTop}/${agg.states}` +
-        (agg.maxAttempts > 2 ? ` [max ${agg.maxAttempts} attempts to roll ×]` : ''),
+        (agg.maxAttempts > 2 ? ` [max ${agg.maxAttempts} attempts to roll ${OP}]` : ''),
         ok ? '' : '\n    ' + issues.slice(0, 6).join('\n    ') + (issues.length > 6 ? `\n    …+${issues.length - 6}` : ''));
     }
   }
