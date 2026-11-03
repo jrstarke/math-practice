@@ -7,9 +7,10 @@
   (src/core/operations/division.ts) mirrors mult levels; sharing hints with a "to share" pile (PictureState.pile);
   progress v6 (key math-practice-progress-v6, adds division + welcome); path.ts: division unlocks at mult 2, CAP_RULES
   (one level behind mult, lifts to 9 at mult 9), opWeight (1 + 0.25/level behind strongest still-learning op, cap 2,
-  level 9 → 0.2, levels 1-2 → 1), 3-problem welcome after any unlock (persisted). ~475 vitest, tsc clean.
+  level 9 → 0.2, levels 1-2 → 1), 3-problem welcome after any unlock (persisted). 479 vitest, tsc clean.
   Playwright (`OP=÷` / default ×, fixture now v6 + welcome forces the op): only se-tab cell 31px fails, as before.
-- **Ledger:** .superpowers/sdd/2026-11-02-division/progress.md (rulings there). Final whole-branch review pending/see ledger.
+- **Final review (2026-11-02):** fresh reviewer said With fixes; fixed 0 ÷ 10 "undefined groups", 10 ÷ 1 answer leak, 0 ÷ 1 grammar, scoped empty-group CSS to division (commit after 4644e25). 479 tests.
+  Deferred minors: layout check uses random seeds (add fixed 495÷5, 90÷10, 0÷10); no test for serving division after a mult slip.
 - **Known:** division pictures on iPhone SE Safari tab are tiny (fit, hard to read) — same trade-off as mult.
 - **Deployed (last seen 2026-10-25):** dev/main = 6dce415 (multiplication + update-on-resume + build label, old level
   order, progress v4). prod/main = 89d0e75 — a mid-fix-wave commit, lacks the L9 picture-fit fix, update-on-resume and
