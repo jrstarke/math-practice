@@ -43,3 +43,150 @@
   .robo-figure[data-light="off"] .robo-eyes,
   .robo-figure:not([data-light="off"]) [data-part="glow"] { animation: none; }
 }
+
+/* ---- The standing Robo (data-role="robo") ---- */
+.robo {
+  position: fixed; left: 0; top: 0; z-index: 4; pointer-events: none;
+  transition: left 0.3s ease, top 0.3s ease, opacity 0.3s ease;
+}
+.robo[hidden] { display: none; }
+.robo[data-away] { opacity: 0; }
+.robo.robo-hop .robo-figure { animation: robo-hop 0.35s ease-out; }
+.robo.robo-flash [data-part="glow"] { animation: robo-flash 0.6s ease-out; }
+.robo[data-surprise="bounce"] .robo-figure { animation: robo-bounce 1.2s ease-in-out; }
+.robo[data-surprise="wave"] [data-part="arm-right"] .robo-arm { animation: robo-wave 1.2s ease-in-out; }
+.robo-arm, .robo-leg { transform-origin: 0 0; }
+
+/* Robo's own bubble at its spot: above its head, kept within Robo's column so it never covers the pad. */
+.robo-bubble, .robo-words {
+  background: #ffffff; border-radius: 16px; padding: 8px 12px; box-shadow: 0 3px 0 #e6dccb;
+  font-size: 1rem; font-weight: 700; line-height: 1.3; text-align: center; color: #2b2a4c;
+}
+.robo-bubble {
+  position: absolute; bottom: calc(100% + 10px); right: -4px; width: max-content; max-width: 128px;
+}
+.robo-bubble::after {
+  content: ''; position: absolute; right: 44px; bottom: -10px;
+  border: 10px solid transparent; border-bottom: 0; border-top-color: #ffffff;
+}
+.robo-bubble.empty { visibility: hidden; }
+
+/* ---- Moments (data-role="robo-moment") ---- */
+.robo-moment-layer {
+  position: fixed; left: 0; top: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; overflow: hidden;
+}
+.robo-moment-layer * { pointer-events: none; }
+.robo-scene { position: absolute; left: 0; width: 100%; }
+.robo-slot { position: relative; flex: none; }
+.robo-friend svg { transform: scaleX(-1); }
+.robo-words { width: max-content; max-width: 220px; }
+
+/* Walk: across the lane above the controls, 0.8s steps with the walk cycle from robot-walk.svg. */
+.robo-walker {
+  position: absolute; left: 0; top: 0; display: flex; align-items: flex-start; gap: 6px;
+  animation: robo-walk 4s linear forwards;
+}
+.robo-walker .robo-words { align-self: flex-start; margin-top: 6px; }
+.robo-walking .robo-body-group { animation: robo-bob 0.8s ease-in-out infinite; }
+.robo-walking [data-part="leg-left"] .robo-leg { animation: robo-swing-a 0.8s ease-in-out infinite; }
+.robo-walking [data-part="leg-right"] .robo-leg { animation: robo-swing-b 0.8s ease-in-out infinite; }
+.robo-walking [data-part="arm-left"] .robo-arm { animation: robo-arm-a 0.8s ease-in-out infinite; }
+.robo-walking [data-part="arm-right"] .robo-arm { animation: robo-arm-b 0.8s ease-in-out infinite; }
+.robo-walking-b .robo-body-group,
+.robo-walking-b .robo-leg,
+.robo-walking-b .robo-arm { animation-delay: -0.4s; }
+
+/* High five: Robo hops in mid-lane, the friend runs in from the right, they high-five, the friend runs off. */
+.robo-hf-me, .robo-hf-friend { position: absolute; top: 0; }
+.robo-hf-me { left: calc(50% - 100px); animation: robo-pop-in 2.5s ease-out forwards; }
+.robo-hf-friend { left: calc(50% - 6px); animation: robo-run-in 2.5s ease-in-out forwards; }
+[data-moment="high-five"] .robo-words { position: absolute; right: calc(50% + 112px); top: 8px; animation: robo-pop-in 2.5s ease-out forwards; }
+
+/* Kick (robot-kick.svg): wind up, kick fast, the ball bounces away across the lane with speed lines. */
+.robo-kicker { position: absolute; top: 0; left: calc(50% - 200px); animation: robo-pop-in 3s ease-out forwards; }
+[data-moment="kick"] .robo-words { position: absolute; right: calc(50% + 212px); top: 8px; animation: robo-pop-in 3s ease-out forwards; }
+.robo-kicking [data-part="leg-right"] .robo-leg { animation: robo-kick-leg 3s forwards; }
+.robo-kicking [data-part="arm-left"] .robo-arm { animation: robo-kick-arm-a 3s ease-in-out forwards; }
+.robo-kicking [data-part="arm-right"] .robo-arm { animation: robo-kick-arm-b 3s ease-in-out forwards; }
+.robo-kicking[data-light] [data-part="glow"] { animation: robo-kick-glow 3s ease-in-out forwards; }
+.robo-ball {
+  position: absolute; top: 108px; left: calc(50% - 200px + 76px); width: 50px; height: 29px;
+  animation: robo-fly 3s forwards;
+}
+.robo-ball svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.robo-ball-spin { transform-box: fill-box; transform-origin: center; animation: robo-spin 3s forwards; }
+.robo-speed { animation: robo-speed 3s forwards; }
+
+/* Peek (small screens): rise out of the controls' top edge, cheer, drop back. */
+.robo-peek { position: absolute; }
+.robo-peek-clip { width: 100%; height: 100%; overflow: hidden; }
+.robo-peek-clip .robo-slot { animation: robo-peek 2.5s ease-in-out forwards; }
+.robo-peek .robo-words {
+  position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); max-width: 80vw;
+  animation: robo-fade 2.5s ease-in-out forwards;
+}
+
+@keyframes robo-hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-14px); } }
+@keyframes robo-flash { 0% { opacity: 1; } 100% { opacity: 0.6; } }
+@keyframes robo-bounce {
+  0%, 100% { transform: translateY(0); } 20%, 60% { transform: translateY(-12px); } 40%, 80% { transform: translateY(0); }
+}
+@keyframes robo-wave {
+  0%, 100% { transform: rotate(0deg); } 20%, 50% { transform: rotate(-150deg); } 35%, 65% { transform: rotate(-115deg); }
+  80% { transform: rotate(-150deg); }
+}
+@keyframes robo-walk { from { transform: translateX(-100%); } to { transform: translateX(100vw); } }
+@keyframes robo-bob { 0%, 50%, 100% { transform: translateY(0); } 25%, 75% { transform: translateY(-5px); } }
+@keyframes robo-swing-a { 0%, 100% { transform: rotate(24deg); } 50% { transform: rotate(-24deg); } }
+@keyframes robo-swing-b { 0%, 100% { transform: rotate(-24deg); } 50% { transform: rotate(24deg); } }
+@keyframes robo-arm-a { 0%, 100% { transform: rotate(-25deg); } 50% { transform: rotate(20deg); } }
+@keyframes robo-arm-b { 0%, 100% { transform: rotate(-20deg); } 50% { transform: rotate(25deg); } }
+@keyframes robo-pop-in {
+  0% { opacity: 0; transform: translateY(16px); } 12% { opacity: 1; transform: translateY(-6px); }
+  20%, 88% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(0); }
+}
+@keyframes robo-run-in {
+  0% { transform: translateX(60vw); } 32%, 72% { transform: translateX(0); } 100% { transform: translateX(60vw); }
+}
+@keyframes robo-kick-leg {
+  0%, 20% { transform: rotate(0deg); animation-timing-function: ease-in-out; }
+  38% { transform: rotate(35deg); animation-timing-function: ease-in; }
+  46%, 56% { transform: rotate(-45deg); animation-timing-function: ease-in-out; }
+  70%, 100% { transform: rotate(0deg); }
+}
+@keyframes robo-kick-arm-a { 0%, 30%, 75%, 100% { transform: rotate(0deg); } 46%, 56% { transform: rotate(45deg); } }
+@keyframes robo-kick-arm-b { 0%, 30%, 75%, 100% { transform: rotate(0deg); } 46%, 56% { transform: rotate(-45deg); } }
+@keyframes robo-kick-glow { 0%, 35%, 70%, 100% { opacity: 0.3; } 46%, 56% { opacity: 1; } }
+@keyframes robo-fly {
+  0%, 44% { transform: translate(0, 0); opacity: 1; animation-timing-function: ease-out; }
+  52% { transform: translate(88px, -72px); animation-timing-function: ease-in; }
+  60% { transform: translate(176px, 0); animation-timing-function: ease-out; }
+  66% { transform: translate(231px, -41px); animation-timing-function: ease-in; }
+  72% { transform: translate(286px, 0); animation-timing-function: ease-out; }
+  76% { transform: translate(313px, -18px); animation-timing-function: ease-in; }
+  80% { transform: translate(341px, 0); opacity: 1; animation-timing-function: ease-out; }
+  92%, 100% { transform: translate(380px, 0); opacity: 0; }
+}
+@keyframes robo-spin { 0%, 44% { transform: rotate(0deg); } 90%, 100% { transform: rotate(900deg); } }
+@keyframes robo-speed { 0%, 43% { opacity: 0; } 44%, 60% { opacity: 1; } 80%, 100% { opacity: 0; } }
+@keyframes robo-peek {
+  0% { transform: translateY(100%); } 18%, 82% { transform: translateY(0); } 100% { transform: translateY(100%); }
+}
+@keyframes robo-fade { 0% { opacity: 0; } 15%, 85% { opacity: 1; } 100% { opacity: 0; } }
+
+/* Reduce Motion: no walking, hopping, kicking or running; Robo fades in and out instead. */
+@media (prefers-reduced-motion: reduce) {
+  .robo { transition: opacity 0.3s ease; }
+  .robo.robo-hop .robo-figure { animation: robo-fade-in 0.35s ease-out; }
+  .robo[data-surprise="bounce"] .robo-figure,
+  .robo[data-surprise="wave"] .robo-figure { animation: robo-fade-in 0.6s ease-out; }
+  .robo[data-surprise="wave"] [data-part="arm-right"] .robo-arm,
+  .robo-walking .robo-body-group, .robo-walking .robo-leg, .robo-walking .robo-arm,
+  .robo-kicking .robo-leg, .robo-kicking .robo-arm { animation: none; }
+  .robo-walker { left: 50%; transform: translateX(-50%); animation: robo-fade 4s ease-in-out forwards; }
+  .robo-hf-me, .robo-hf-friend, .robo-kicker,
+  [data-moment="high-five"] .robo-words, [data-moment="kick"] .robo-words { animation: robo-fade 2.5s ease-in-out forwards; }
+  .robo-ball { display: none; }
+  .robo-peek-clip .robo-slot { animation: robo-fade 2.5s ease-in-out forwards; }
+}
+@keyframes robo-fade-in { from { opacity: 0; } to { opacity: 1; } }

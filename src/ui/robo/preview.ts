@@ -1,7 +1,12 @@
 // Dev-only page (robo-preview.html, not part of the build): every pose side by side, for screenshots.
+// ?moment=walk|walk-friend|high-five|kick|peek|surprise|up plays that moment on a mock iPad-upright layout.
+import type { BigMoment } from '../../core/robo';
 import { createFigure, setFigure, type Arms, type Light, type Look, type Mouth } from './drawing';
+import { laneTop, peekPosition, spotPosition, type Box } from './layout';
+import { createRobo } from './robo';
 
 const root = document.getElementById('preview')!;
+const moment = new URLSearchParams(location.search).get('moment');
 
 function section(title: string, items: [string, Parameters<typeof setFigure>[1]][]) {
   const h = document.createElement('h2');
@@ -22,12 +27,46 @@ function section(title: string, items: [string, Parameters<typeof setFigure>[1]]
   root.append(h, grid);
 }
 
-const lights: Light[] = ['off', 'green', 'red'];
-const mouths: Mouth[] = ['flat', 'smile', 'talk'];
-section('Light × mouth', lights.flatMap(light => mouths.map(mouth => [`${light} / ${mouth}`, { light, mouth }] as [string, { light: Light; mouth: Mouth }])));
-const arms: Arms[] = ['down', 'point', 'up', 'high-five'];
-section('Arms', arms.map(a => [a, { arms: a, light: 'green', mouth: 'smile' }]));
-const looks: Look[] = ['front', 'up', 'side'];
-section('Looking', looks.map(l => [l, { look: l }]));
+function mock(): void {
+  const w = innerWidth, h = innerHeight;
+  const controls: Box = { left: (w - 460) / 2, top: h - 440, right: (w + 460) / 2, bottom: h - 12 };
+  const stage: Box = { left: 16, top: 60, right: w - 16, bottom: controls.top - 12 };
+  const pad = document.createElement('div');
+  Object.assign(pad.style, { position: 'fixed', left: `${controls.left}px`, top: `${controls.top}px`,
+    width: `${controls.right - controls.left}px`, height: `${controls.bottom - controls.top}px`, background: '#e6dccb', borderRadius: '16px' });
+  const problem = document.createElement('div');
+  Object.assign(problem.style, { position: 'fixed', left: `${w / 2 - 110}px`, top: `${stage.top + 140}px`, width: '220px', height: '250px',
+    background: '#fff', border: '2px dashed #8a87a8', borderRadius: '12px' });
+  document.body.append(pad, problem);
+  const robo = createRobo();
+  document.body.append(robo.el, robo.overlay);
+  const spot = spotPosition(controls);
+  robo.moveTo(spot, 'spot');
+  robo.think();
+  const at = { mode: 'standing' as const, spot, laneTop: laneTop(controls), viewportWidth: w, peek: peekPosition(stage, controls) };
+  const bigs: Record<string, BigMoment> = {
+    walk: { kind: 'walk', withFriend: false, words: "You've gotten 40 questions right! Keep going!" },
+    'walk-friend': { kind: 'walk', withFriend: true, words: "You've gotten 100 questions right! Keep going!" },
+    'high-five': { kind: 'highFive', words: 'High five!' },
+    kick: { kind: 'kick', words: 'New: division!' },
+  };
+  if (moment === 'peek') robo.play(bigs.walk, { ...at, mode: 'peek' });
+  else if (moment === 'surprise') robo.surprise();
+  else if (moment === 'wrong') robo.wrong('Not quite — try again!');
+  else if (moment === 'right') robo.right('You figured it out!');
+  else if (moment === 'up') { robo.moveTo({ left: w / 2 + 122, top: stage.top + 140 }, 'up'); robo.think(); robo.talk(true); }
+  else if (moment && bigs[moment]) robo.play(bigs[moment], at);
+}
+
+if (moment) mock();
+else {
+  const lights: Light[] = ['off', 'green', 'red'];
+  const mouths: Mouth[] = ['flat', 'smile', 'talk'];
+  section('Light × mouth', lights.flatMap(light => mouths.map(mouth => [`${light} / ${mouth}`, { light, mouth }] as [string, { light: Light; mouth: Mouth }])));
+  const arms: Arms[] = ['down', 'point', 'up', 'high-five'];
+  section('Arms', arms.map(a => [a, { arms: a, light: 'green', mouth: 'smile' }]));
+  const looks: Look[] = ['front', 'up', 'side'];
+  section('Looking', looks.map(l => [l, { look: l }]));
+}
 
 export {};
