@@ -4,7 +4,8 @@
 - **Robo built (2026-11-08), inline execution (superpowers:executing-plans).** Branch `feat/robo` (off main c74cc7b).
   Spec docs/superpowers/specs/2026-11-08-robo-companion-design.md, plan docs/superpowers/plans/2026-11-08-robo-companion.md.
   All 6 tasks done + final review (With fixes → 3 fixes, 552 tests). Rulings + deferred minors were reported to the
-  user in chat on 2026-11-08 (ledger deleted). Next: user decides merge / push to dev to try it on her iPad.
+  user in chat on 2026-11-08 (ledger deleted). MERGED to main 2026-11-08 (ff, branch deleted). Not pushed: user pushes main to dev
+  (math-practice-dev.jamiestarke.com) to try it on her iPad, then to prod. Screenshots: /workspace/robo-screenshots/ (git-excluded).
   Code: src/core/robo.ts (what happens when), src/ui/robo/{drawing,layout,robo}.ts + robo.css, wired in src/ui/app.ts.
   Dev-only preview: /robo-preview.html (+ ?moment=walk|walk-friend|high-five|kick|peek|surprise|wrong|right|up).
 - **For the user and the child to look at** (Playwright, Chromium, her iPad size 810×1080; /tmp, lost on restart —
