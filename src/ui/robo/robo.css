@@ -1,0 +1,45 @@
+/* Robo (src/ui/robo/). Safari 15 safe: no container queries, :has(), nesting or inset shorthand. */
+
+.robo-figure { width: 100%; height: 100%; pointer-events: none; }
+.robo-figure svg { display: block; overflow: visible; }
+
+/* Light: colours come from setFigure() as custom properties (LIGHT in drawing.ts). */
+.robo-figure [data-part="light"] { fill: var(--robo-light, #e4e1d8); }
+.robo-figure [data-part="glow"] { fill: var(--robo-glow, transparent); opacity: 0.6; }
+.robo-figure [data-part="rays"] { stroke: var(--robo-rays, transparent); }
+.robo-figure[data-light="off"] [data-part="glow"],
+.robo-figure[data-light="off"] [data-part="rays"],
+.robo-figure[data-light="off"] [data-part="highlight"] { display: none; }
+
+/* Only the variant matching the figure's state shows. */
+.robo-figure [data-part^="eyes-"],
+.robo-figure [data-part^="mouth-"],
+.robo-figure [data-pose] { display: none; }
+.robo-figure[data-look="front"] [data-part="eyes-front"],
+.robo-figure[data-look="up"] [data-part="eyes-up"],
+.robo-figure[data-look="side"] [data-part="eyes-side"],
+.robo-figure[data-mouth="flat"] [data-part="mouth-flat"],
+.robo-figure[data-mouth="smile"] [data-part="mouth-smile"],
+.robo-figure[data-mouth="talk"] [data-part="mouth-talk"],
+.robo-figure[data-arms="down"] [data-pose="down"],
+.robo-figure[data-arms="point"] [data-pose="point"],
+.robo-figure[data-arms="up"] [data-pose="up"],
+.robo-figure[data-arms="high-five"] [data-pose="high-five"] { display: inline; }
+
+/* Signs of life: a blink every few seconds while the light is off, a soft pulse while it's on. */
+.robo-eyes { transform-box: fill-box; transform-origin: center; }
+.robo-figure[data-light="off"] .robo-eyes { animation: robo-blink 4.2s infinite; }
+.robo-figure:not([data-light="off"]) [data-part="glow"] { animation: robo-pulse 1.2s ease-in-out infinite; }
+@keyframes robo-blink {
+  0%, 94%, 100% { transform: scaleY(1); }
+  97% { transform: scaleY(0.1); }
+}
+@keyframes robo-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.85; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .robo-figure[data-light="off"] .robo-eyes,
+  .robo-figure:not([data-light="off"]) [data-part="glow"] { animation: none; }
+}
