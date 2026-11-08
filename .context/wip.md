@@ -1,6 +1,21 @@
-# WIP (updated 2026-11-01)
+# WIP (updated 2026-11-08)
 
-## >>> RESUME HERE (updated 2026-11-02)
+## >>> RESUME HERE (updated 2026-11-08)
+- **Next: build Robo.** Branch `feat/robo` (off main c74cc7b). Spec docs/superpowers/specs/2026-11-08-robo-companion-design.md
+  (approved by user), plan docs/superpowers/plans/2026-11-08-robo-companion.md (6 tasks, none started).
+  Execution method NOT yet chosen: ask the user (I recommended Native = superpowers:executing-plans, inline + one
+  final reviewer). Character art + guide in character/ (the child's; Robo + identical friend).
+- **Key decisions (all in the spec):** light OFF while she works (the child's pick over yellow/green pulse), green =
+  good, red = wrong until next key; Robo stands beside the pad on her iPad, hops up beside the problem to say hints
+  (the existing hint bubble restyled), peeks in on small screens; walks every 20 stars (friend at 100), high five on
+  level-up, kick on unlock, rare surprises; cooldown 4 problems, held-back walks play later. No progress change.
+- **Her iPad is still on iPadOS 15** (upgrade failed; user is fixing that in a separate conversation) → no container
+  queries; Robo measures in JS; final visual check must be on her iPad.
+- Mockups from brainstorming: .superpowers/brainstorm/346246-1794165648/content/ (hint-robo-v2.html, robo-light.html).
+  The visual companion server needs node on PATH and BRAINSTORM_PORT=$PUBLISH_PORT, --host 0.0.0.0, run in background.
+- Division: merged to main and deployed to dev + prod on 2026-11-04 (c74cc7b).
+
+## Division notes (2026-11-02; merged + deployed 2026-11-04)
 - **Branch:** `feat/division` (main checkout, no worktree). Holds: subtraction unlocks at addition 2 (9adb562),
   division spec/plan, and the 5 division tasks. Not merged — ask before merging/pushing.
 - **Division (plan docs/superpowers/plans/2026-11-02-division.md, executed inline):** all 5 tasks done. ÷ module
@@ -129,3 +144,16 @@
 - iOS 15 lacks container queries (16+), so the cell-size fallback explains the oversized problem; it does NOT
   obviously explain why the landscape/max-height media queries didn't match. Re-test after upgrade; if still
   broken, investigate the media-query mismatch (maybe show innerWidth/innerHeight on device).
+
+- 2026-11-04: feat/division merged to main (ff, c74cc7b) and pushed to dev and prod. Branch deleted. 467 tests, tsc clean.
+
+## Engagement ideas (researched 2026-11-08, nothing decided yet)
+Daughter wants it more fun, "like Duolingo math"; she made a character, Robo (character/robot-character.md + SVGs: stand,
+walk, kick, two robots). Ideas offered, in recommended order: 1) Robo as an on-screen companion that reacts (light
+green/red, speech bubble, says the hints, points at buttons); 2) short sets with a finish line, ending in Robo's soccer
+kick (reverses v1 non-goal "fixed-length rounds"); 3) Robo moments for level-ups/unlocks/star milestones; 4) unlockables
+earned through practice (light colours, balls, a robot friend from robots.svg); 5) gentler streak (hints currently
+break it); 6) bigger later: soccer mini-game. Cautions: reward the maths not time spent, no shop/currency, no guilt or
+loss pressure, never punish hint use. Character research is the strongest evidence; customization evidence is thin.
+- 2026-11-08: Robo companion design drafted (docs/superpowers/specs/2026-11-08-robo-companion-design.md), awaiting user approval.
+  Her iPad is STILL on iPadOS 15 (upgrade failed; user handling separately) → no container queries; Robo measures in JS.
