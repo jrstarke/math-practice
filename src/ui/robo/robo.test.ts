@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { BigMoment } from '../../core/robo';
 import { createRobo, MOMENT_MS, type MomentPlace, type RoboView } from './robo';
 
-const standing: MomentPlace = { mode: 'standing', spot: { left: 647, top: 932 }, laneTop: 504, viewportWidth: 810, peek: { left: 349, top: 504 } };
+const standing: MomentPlace = { mode: 'standing', spot: { left: 647, top: 932 }, laneTop: 504, size: 136, viewportWidth: 810, peek: { left: 349, top: 504 }, wordsAt: { x: 405, bottom: 188, width: 778 } };
 const peek: MomentPlace = { ...standing, mode: 'peek', spot: null };
 const walk: BigMoment = { kind: 'walk', withFriend: false, words: "You've gotten 40 questions right! Keep going!" };
 const walk100: BigMoment = { kind: 'walk', withFriend: true, words: "You've gotten 100 questions right! Keep going!" };
@@ -132,6 +132,28 @@ describe('Robo view', () => {
       expect(robo.overlay.querySelector('[data-role="moment-words"]')!.textContent).toBe(big.words);
       expect(robo.overlay.querySelector<HTMLElement>('.robo-figure')!.dataset).toMatchObject({ light: 'green', arms: 'up' });
     }
+  });
+
+  it('in peek mode the words show above the problem, where hints show', () => {
+    robo.play(walk, peek);
+    const w = robo.overlay.querySelector<HTMLElement>('[data-role="moment-words"]')!;
+    expect(w.classList.contains('robo-peek-words')).toBe(true);
+    expect([w.style.left, w.style.top, w.style.maxWidth]).toEqual(['405px', '188px', '778px']);
+  });
+
+  it('a moment in a short lane shrinks Robo to fit it', () => {
+    for (const big of [walk, highFive, kick]) {
+      robo.play(big, { ...standing, laneTop: 572, size: 68 });
+      const scene = moment()!;
+      expect(scene.style.top).toBe('572px');
+      expect(scene.style.height).toBe('68px');
+      expect(scene.style.getPropertyValue('--s')).toBe('0.5');
+      const slot = robo.overlay.querySelector<HTMLElement>('.robo-slot')!;
+      expect([slot.style.width, slot.style.height]).toEqual(['56px', '68px']);
+    }
+    robo.play(walk, { ...peek, size: 68 });
+    expect(moment()!.style.height).toBe('68px');
+    expect(robo.overlay.querySelector<HTMLElement>('.robo-slot')!.style.width).toBe('56px');
   });
 
   it('endMoment clears the overlay and brings Robo back', () => {

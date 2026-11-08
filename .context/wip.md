@@ -1,10 +1,21 @@
 # WIP (updated 2026-11-08)
 
 ## >>> RESUME HERE (updated 2026-11-08)
-- **Next: build Robo.** Branch `feat/robo` (off main c74cc7b). Spec docs/superpowers/specs/2026-11-08-robo-companion-design.md
-  (approved by user), plan docs/superpowers/plans/2026-11-08-robo-companion.md (6 tasks, none started).
-  Execution method NOT yet chosen: ask the user (I recommended Native = superpowers:executing-plans, inline + one
-  final reviewer). Character art + guide in character/ (the child's; Robo + identical friend).
+- **Robo built (2026-11-08), inline execution (superpowers:executing-plans).** Branch `feat/robo` (off main c74cc7b).
+  Spec docs/superpowers/specs/2026-11-08-robo-companion-design.md, plan docs/superpowers/plans/2026-11-08-robo-companion.md.
+  All 6 tasks done; ledger + rulings in .superpowers/sdd/2026-11-08-robo-companion/progress.md (until the final review
+  deletes it). Next: final whole-branch review → fix pass → finishing-a-development-branch (ask before merge/push).
+  Code: src/core/robo.ts (what happens when), src/ui/robo/{drawing,layout,robo}.ts + robo.css, wired in src/ui/app.ts.
+  Dev-only preview: /robo-preview.html (+ ?moment=walk|walk-friend|high-five|kick|peek|surprise|wrong|right|up).
+- **For the user and the child to look at** (Playwright, Chromium, her iPad size 810×1080; /tmp, lost on restart —
+  regenerate with ROBO_ONLY=1, see running.md): /tmp/claude-1000/pw/out/robo-ipad102-p-{thinking,hint,wrong,walk,
+  high-five,kick}.png, and the Safari-tab size robo-ipad102-p-tab-*.png; poses robo-poses.png; animation frames
+  robo-moment-*-{25,50,75}.png. Best of all: open the dev build on her iPad.
+- **User's step: final check on her iPad (iPadOS 15)** — Chromium can't show Safari 15. Check: Robo beside the pad
+  and not over anything; Hint → Robo hops up beside the problem, bubble tail toward it; red on wrong, off at next key;
+  walk at the next multiple of 20 stars; rotate while Robo is up; Settings → Accessibility → Motion → Reduce Motion
+  turns movement into fades. Known risk (pre-existing, not Robo): the app shell uses `100dvh`, which needs Safari 15.4+ — on 15.0–15.3 it's ignored, which may explain the old iPad landscape bug.
+- Character art + guide in character/ (the child's; Robo + identical friend).
 - **Key decisions (all in the spec):** light OFF while she works (the child's pick over yellow/green pulse), green =
   good, red = wrong until next key; Robo stands beside the pad on her iPad, hops up beside the problem to say hints
   (the existing hint bubble restyled), peeks in on small screens; walks every 20 stars (friend at 100), high five on

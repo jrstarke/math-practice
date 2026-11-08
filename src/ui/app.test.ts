@@ -464,6 +464,25 @@ describe('Robo', () => {
     expect(robo(s).dataset.place).toBe('up');
   });
 
+  test('rotating to a layout with no room and back: Robo hides, then goes up beside the hint again', () => {
+    ipadRects();
+    const s = setup(1); // no roboMode: measured from the (mocked) layout
+    s.tap('[data-action="hint"]');
+    expect(robo(s).dataset.place).toBe('up');
+    const wide = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      return this.classList.contains('controls') ? new DOMRect(560, 16, 500, 780) : new DOMRect(0, 0, 0, 0);
+    });
+    window.dispatchEvent(new Event('resize'));
+    expect(robo(s).hidden).toBe(true);
+    expect(s.q('[data-role="bubble"]')!.classList.contains('robo-says')).toBe(false);
+    wide.mockRestore();
+    ipadRects();
+    window.dispatchEvent(new Event('resize'));
+    expect(robo(s).hidden).toBe(false);
+    expect(robo(s).dataset.place).toBe('up');
+    expect(s.q('[data-role="bubble"]')!.classList.contains('robo-says')).toBe(true);
+  });
+
   test('a wrong answer during a walk shows the message on the text line', () => {
     const s = setup(1, standing, at39());
     answerRight(s);

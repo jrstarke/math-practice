@@ -43,7 +43,9 @@ function mock(): void {
   const spot = spotPosition(controls);
   robo.moveTo(spot, 'spot');
   robo.think();
-  const at = { mode: 'standing' as const, spot, laneTop: laneTop(controls), viewportWidth: w, peek: peekPosition(stage, controls) };
+  const size = Number(new URLSearchParams(location.search).get('size') ?? 136);
+  const at = { mode: 'standing' as const, spot, laneTop: laneTop(stage, size), size, viewportWidth: w, peek: peekPosition(stage, size),
+    wordsAt: { x: w / 2, bottom: stage.top + 128, width: w - 32 } };
   const bigs: Record<string, BigMoment> = {
     walk: { kind: 'walk', withFriend: false, words: "You've gotten 40 questions right! Keep going!" },
     'walk-friend': { kind: 'walk', withFriend: true, words: "You've gotten 100 questions right! Keep going!" },

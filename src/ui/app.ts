@@ -16,7 +16,7 @@ import { createInstallTip, shouldShowInstallTip } from './installTip';
 import { createNumberPad, keyFromKeyboard } from './numberPad';
 import { fitPicture, renderPicture } from './pictureView';
 import { renderColumnProblem, type Phase } from './problemView';
-import { chooseMode, laneTop, peekPosition, placeUp, spotPosition, union, type Box, type RoboMode } from './robo/layout';
+import { chooseMode, laneTop, momentSize, peekPosition, placeUp, spotPosition, union, type Box, type RoboMode } from './robo/layout';
 import { createRobo } from './robo/robo';
 import type { SoundPlayer } from './sound';
 
@@ -73,6 +73,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   let roboMemory = initialRoboMemory();
   let roboMode: RoboMode = deps.roboMode ?? 'standing';
   let roboPlace: 'spot' | 'up' | 'point' = 'spot';
+  let roboWanted = false; // Hint or Pass asked Robo up for this problem (survives a rotation through peek mode)
   let momentTimer: ReturnType<typeof setTimeout> | null = null;
   let roboAway = false; // a walk, high five or kick is playing in standing mode
 
@@ -134,6 +135,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
 
   /** Up beside the problem if there's room, otherwise point at the bubble from the spot. */
   function roboUp() {
+    roboWanted = true;
     if (roboMode !== 'standing') return;
     // --robo-shift is a transform, so measure without it.
     problemArea.style.removeProperty('--robo-shift');
@@ -156,7 +158,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   function measureRobo() {
     roboMode = deps.roboMode ?? chooseMode(document.documentElement.clientWidth || window.innerWidth, rect(controlsEl));
     robo.show(roboMode === 'standing');
-    if (roboMode === 'standing' && roboPlace !== 'spot') roboUp(); else roboDown();
+    if (roboMode === 'standing' && roboWanted) roboUp(); else roboDown();
     syncMessage();
   }
 
@@ -169,12 +171,17 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   function playMoment(big: BigMoment) {
     endMoment();
     const controls = rect(controlsEl);
+    const anchor = rect(problemAnchor), stage = rect(stageEl);
+    const content = union(anchor, pictureHost.childElementCount > 0 ? rect(pictureHost) : null);
+    const size = momentSize(stage.bottom, content.bottom);
     const ms = robo.play(big, {
       mode: roboMode,
       spot: roboMode === 'standing' ? spotPosition(controls) : null,
-      laneTop: laneTop(controls),
+      laneTop: laneTop(stage, size),
+      size,
       viewportWidth: window.innerWidth,
-      peek: peekPosition(rect(stageEl), controls),
+      peek: peekPosition(stage, size),
+      wordsAt: { x: (stage.left + stage.right) / 2, bottom: anchor.top - 12, width: stage.right - stage.left },
     });
     roboAway = roboMode === 'standing';
     sound.robo();
@@ -231,6 +238,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     shownAt = now();
     phase = 'answering';
     message = '';
+    roboWanted = false;
     roboDown();
     robo.think();
     render();
@@ -297,7 +305,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
       timers.add(passTimer);
     }
     render();
-    if (roboPlace !== 'spot') roboUp(); // the picture may have just appeared
+    if (roboWanted) roboUp(); // the picture may have just appeared
   }
 
   function pass() {
@@ -309,7 +317,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     entry = focusAnswer({ ...entry, answer: '', faded: false });
     endMoment();
     robo.calm();
-    if (roboMode === 'standing') roboPlace = 'point'; // so passStep() sends Robo up
+    roboWanted = true; // so passStep() sends Robo up
     passStep();
     cheer({ totalBefore, totalAfter: progress.total, levelChange, unlocked,
       wrongSubmits: attempt.wrongSubmits, hintsUsed: attempt.hintsUsed, passed: true });

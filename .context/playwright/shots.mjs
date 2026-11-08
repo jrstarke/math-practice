@@ -34,7 +34,13 @@ function progressFor(level) {
 const browser = await chromium.launch({ channel: 'chromium' });
 let failures = 0;
 
-function measure(longHint) {
+// Robo stands beside the pad on wide upright screens and peeks (hidden) on phones; elsewhere either is fine.
+const STANDS = ['ipad102-p', 'ipad102-p-tab', 'ipad-p', 'ipad6-p-tabs'];
+const PEEKS = ['se-tab', 'se-standalone', 'ip15-tab', 'ip15'];
+
+const expectFor = name => STANDS.includes(name) ? 'stand' : PEEKS.includes(name) ? 'peek' : null;
+
+function measure([longHint, expect]) {
   const r = s => document.querySelector(s)?.getBoundingClientRect();
   if (longHint) { const b = document.querySelector('[data-role="bubble"]'); b.textContent = longHint; b.classList.remove('empty'); b.classList.toggle('long', longHint.length > 70); }
   const top = r('.topbar'), prob = r('.problem'), msg = r('[data-role="message"]'), ctl = r('.controls'), stage = r('.stage');
@@ -84,10 +90,31 @@ function measure(longHint) {
   if (cell < 38) issues.push(`cell ${cell.toFixed(0)}<38`);
   if (key < 44) issues.push(`key ${key.toFixed(0)}<44`);
   if (act < 44) issues.push(`action ${act.toFixed(0)}<44`);
+  // Robo: wherever it is, it never covers the problem, answer boxes, bubble, picture or controls.
+  const roboEl = document.querySelector('[data-role="robo"]');
+  const shown = roboEl && !roboEl.hidden;
+  if (expect === 'stand' && !shown) issues.push('Robo should stand here');
+  if (expect === 'peek' && shown) issues.push('Robo should peek here');
+  if (shown && !roboEl.hasAttribute('data-away')) {
+    const hit = (a, b) => a && b && a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
+    const place = roboEl.dataset.place;
+    const rb = roboEl.getBoundingClientRect();
+    const said = document.querySelector('[data-role="robo-bubble"]');
+    const rbub = said && !said.classList.contains('empty') ? said.getBoundingClientRect() : null;
+    const answer = r('[data-role="answer"]');
+    if (rb.left < -1 || rb.right > innerWidth + 1 || rb.top < -1 || rb.bottom > innerHeight + 1) issues.push(`Robo off-screen (${place})`);
+    for (const [n, b] of [['controls', ctl], ['problem', prob], ['answer', answer], ['bubble', bub], ['picture', pic]]) {
+      if (hit(rb, b)) issues.push(`Robo (${place}) over ${n}`);
+      if (hit(rbub, b)) issues.push(`Robo's bubble (${place}) over ${n}`);
+    }
+    if (place === 'up' && (rb.left < stage.left - 1 || rb.right > stage.right + 1 || rb.top < stage.top - 1 || rb.bottom > stage.bottom + 1)) issues.push('Robo up outside the stage');
+    if (getComputedStyle(roboEl).pointerEvents !== 'none') issues.push('Robo takes taps');
+  }
   return { issues, cell, key, act, bubbleOverTopbar: bub ? bub.top < top.bottom : false };
 }
 
-for (const level of LEVELS) {
+// ROBO_ONLY=1 skips the per-level picture checks and runs only the Robo flow below.
+for (const level of process.env.ROBO_ONLY ? [] : LEVELS) {
   const progress = progressFor(level);
   for (const [name, w, h] of views) {
     for (const tip of [false, true]) {
@@ -108,6 +135,10 @@ for (const level of LEVELS) {
             let first = true; const real = Date.now;
             Date.now = () => (first ? (first = false, s * 7919) : real());
           }, [progress, tip, trySeed, STORAGE_KEY]);
+          // These checks measure layout, not motion: settle Robo's glide between places at once.
+          await page.addInitScript(() => addEventListener('DOMContentLoaded', () => {
+            const s = document.createElement('style'); s.textContent = '.robo{transition:none!important}'; document.head.append(s);
+          }));
           if (name.endsWith('notch')) await page.addInitScript(() => addEventListener('DOMContentLoaded', () => {
             const s = document.createElement('style'); s.textContent = '.app{padding-left:59px!important;padding-right:59px!important}'; document.head.append(s);
           }));
@@ -121,7 +152,7 @@ for (const level of LEVELS) {
         if (!gotMult) { agg.issues.add(`no ${OP} after ${ATTEMPT_CAP} attempts [seed ${seed}]`); continue; }
         const cellsThisProblem = [];
         const snap = async (tag, longHint) => {
-          const m = await page.evaluate(measure, longHint);
+          const m = await page.evaluate(measure, [longHint, expectFor(name)]);
           m.issues.forEach(i => agg.issues.add(`${i} [seed ${seed} ${tag}]`));
           agg.cells.push(m.cell); agg.keys.push(m.key); agg.states++; if (m.bubbleOverTopbar) agg.overTop++;
           cellsThisProblem.push(m.cell);
@@ -155,5 +186,102 @@ for (const level of LEVELS) {
     }
   }
 }
+// ---- Robo flow, once per view: thinking, up with a hint (then rotated and back), wrong (red), and mid-moment
+// frames for a walk (40th star), a high five (division level-up) and a kick (division unlock). RM=1 runs it with
+// prefers-reduced-motion. Screenshots: OUT/robo-<view>-<state>.png
+const RM = !!process.env.RM;
+const all9 = ['addition', 'subtraction', 'multiplication', 'division'];
+const roboFixtures = {
+  walk: { ...progressFor(1), total: 39 },
+  highFive: { ...progressFor(1), unlocked: all9, total: 12, multiplication: nine,
+    division: { level: 1, window: [1], calibrationLeft: 9 }, welcome: { op: 'division', left: 3 } },
+  kick: { ...progressFor(1), unlocked: all9.slice(0, 3), total: 12, division: { level: 1, window: [], calibrationLeft: 10 },
+    multiplication: { level: 1, window: [1], calibrationLeft: 9 }, welcome: { op: 'multiplication', left: 3 } },
+};
+
+async function open(name, w, h, progress) {
+  const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true, isMobile: w < 1000, reducedMotion: RM ? 'reduce' : 'no-preference' });
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on('pageerror', e => errors.push('PAGEERROR ' + e.message));
+  await page.addInitScript(([p, key]) => {
+    localStorage.setItem(key, JSON.stringify({ ...p, installTipShown: true }));
+    let first = true; const real = Date.now;
+    Date.now = () => (first ? (first = false, 7919) : real());
+  }, [progress, STORAGE_KEY]);
+  await page.goto(URL);
+  await page.waitForSelector('[data-role="answer"]', { state: 'attached' });
+  await page.waitForTimeout(300); // first ResizeObserver measure
+  return { ctx, page, errors };
+}
+
+const answerNow = page => page.evaluate(() => {
+  const t = s => document.querySelector(s).textContent;
+  const a = +t('[data-role="top"]').replace(/\D/g, ''), b = +t('[data-role="bottom"]').replace(/\D/g, ''), op = t('[data-role="op"]');
+  const n = op.includes('+') ? a + b : op.includes('×') ? a * b : op.includes('÷') ? a / b : a - b;
+  const tap = sel => document.querySelector(sel).dispatchEvent(new Event('pointerdown', { bubbles: true }));
+  for (const d of String(n)) tap(`[data-key="${d}"]`);
+  tap('[data-key="submit"]');
+});
+
+// During a moment: taps reach the pad, and nothing Robo draws covers the problem, answer boxes or controls.
+const momentCheck = page => page.evaluate(() => {
+  const issues = [];
+  const r = s => document.querySelector(s)?.getBoundingClientRect();
+  const hit = (a, b) => a && b && a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
+  const k = r('[data-key="5"]');
+  const at = document.elementFromPoint(k.left + k.width / 2, k.top + k.height / 2);
+  if (!document.querySelector('[data-key="5"]').contains(at)) issues.push('a tap on 5 does not reach the key');
+  if (!document.querySelector('[data-moment]')) issues.push('no moment playing');
+  const parts = [...document.querySelectorAll('[data-role="robo-moment"] .robo-slot, [data-role="robo-moment"] .robo-words')]
+    .map(e => e.getBoundingClientRect()).filter(b => b.width > 0);
+  for (const [n, b] of [['problem', r('.problem')], ['answer', r('[data-role="answer"]')], ['controls', r('.controls')]]) {
+    if (parts.some(p => hit(p, b))) issues.push(`moment over ${n}`);
+  }
+  return issues;
+});
+
+for (const [name, w, h] of views) {
+  const issues = new Set();
+  const add = (tag, list) => list.forEach(i => issues.add(`${i} [${tag}]`));
+  const shot = (page, state) => page.screenshot({ path: `${OUT}/robo-${name}-${state}${RM ? '-rm' : ''}.png` });
+  const snap = async (page, tag, expect = expectFor(name)) => add(tag, (await page.evaluate(measure, [undefined, expect])).issues);
+
+  let { ctx, page, errors } = await open(name, w, h, roboFixtures.walk);
+  await snap(page, 'thinking'); await shot(page, 'thinking');
+  await page.dispatchEvent('[data-action="hint"]', 'pointerdown');
+  await page.waitForTimeout(400);
+  await snap(page, 'hint1');
+  await page.dispatchEvent('[data-action="hint"]', 'pointerdown');
+  await page.waitForTimeout(400);
+  await snap(page, 'hint2'); await shot(page, 'hint');
+  await page.setViewportSize({ width: h, height: w });
+  await page.waitForTimeout(500);
+  await snap(page, 'rotated', null); await shot(page, 'hint-rotated');
+  await page.setViewportSize({ width: w, height: h });
+  await page.waitForTimeout(500);
+  await snap(page, 'rotated back');
+  for (const d of '99') await page.dispatchEvent(`[data-key="${d}"]`, 'pointerdown');
+  await page.dispatchEvent('[data-key="submit"]', 'pointerdown');
+  await page.waitForTimeout(200);
+  await snap(page, 'wrong'); await shot(page, 'wrong');
+  add('errors', errors); await ctx.close();
+
+  for (const [moment, fixture, wait] of [['walk', roboFixtures.walk, 1600], ['high-five', roboFixtures.highFive, 1000], ['kick', roboFixtures.kick, 1500]]) {
+    ({ ctx, page, errors } = await open(name, w, h, fixture));
+    await answerNow(page);
+    await page.waitForTimeout(wait);
+    add(moment, await momentCheck(page));
+    await snap(page, moment);
+    await shot(page, moment);
+    add('errors', errors); await ctx.close();
+  }
+
+  const ok = issues.size === 0;
+  if (!ok) failures++;
+  const list = [...issues];
+  console.log(`robo-${name}`.padEnd(22), ok ? 'ok' : 'FAIL', ok ? '' : '\n    ' + list.slice(0, 8).join('\n    ') + (list.length > 8 ? `\n    …+${list.length - 8}` : ''));
+}
+
 await browser.close();
 process.exit(failures ? 1 : 0);

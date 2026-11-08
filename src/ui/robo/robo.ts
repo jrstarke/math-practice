@@ -9,8 +9,12 @@ export interface MomentPlace {
   mode: RoboMode;
   spot: { left: number; top: number } | null;
   laneTop: number;
+  /** Robo's height in the moment: ROBO_H, or less to fit the gap under the problem (layout.momentSize). */
+  size: number;
   viewportWidth: number;
   peek: { left: number; top: number };
+  /** Peek mode: where the words go, centred on x with their bottom edge here (just above the problem). */
+  wordsAt: { x: number; bottom: number; width: number };
 }
 
 export interface RoboView {
@@ -57,11 +61,11 @@ function cheering(friend = false): HTMLElement {
   return f;
 }
 
-/** A positioned box the size of Robo, holding one figure. */
-function slot(f: HTMLElement, cls = ''): HTMLElement {
+/** A box Robo's shape, `size` tall, holding one figure (the drawing scales to fill it). */
+function slot(f: HTMLElement, cls = '', size = ROBO_H): HTMLElement {
   const s = div(`robo-slot ${cls}`.trim());
-  s.style.width = `${ROBO_W}px`;
-  s.style.height = `${ROBO_H}px`;
+  s.style.width = `${Math.round(ROBO_W * size / ROBO_H)}px`;
+  s.style.height = `${size}px`;
   s.append(f);
   return s;
 }
@@ -81,54 +85,62 @@ export function createRobo(): RoboView {
     bubble.classList.toggle('empty', text === '');
   }
 
-  function scene(kind: string, top: number): HTMLElement {
-    const m = div('robo-scene', { 'data-moment': kind });
-    m.style.top = `${top}px`;
-    m.style.height = `${ROBO_H}px`;
+  /** A moment's layer. --s is Robo's scale in it, which the CSS uses for offsets and the ball. */
+  function scene(kind: string, at: MomentPlace, cls = 'robo-scene'): HTMLElement {
+    const m = div(cls, { 'data-moment': kind });
+    m.style.top = `${at.laneTop}px`;
+    m.style.height = `${at.size}px`;
+    m.style.setProperty('--s', String(Math.round(at.size / ROBO_H * 1000) / 1000));
     return m;
   }
 
   function standingMoment(big: BigMoment, at: MomentPlace): { node: HTMLElement; ms: number } {
     if (big.kind === 'walk') {
-      const m = scene(big.withFriend ? 'walk-friend' : 'walk', at.laneTop);
+      const m = scene(big.withFriend ? 'walk-friend' : 'walk', at);
       const walker = div('robo-walker');
-      walker.append(slot(cheering(), 'robo-walking'));
-      if (big.withFriend) walker.append(slot(cheering(true), 'robo-walking robo-walking-b'));
+      walker.append(slot(cheering(), 'robo-walking', at.size));
+      if (big.withFriend) walker.append(slot(cheering(true), 'robo-walking robo-walking-b', at.size));
       walker.append(words(big.words));
       m.append(walker);
       return { node: m, ms: MOMENT_MS.walk };
     }
     if (big.kind === 'highFive') {
-      const m = scene('high-five', at.laneTop);
+      const m = scene('high-five', at);
       const me = cheering();
       setFigure(me, { arms: 'high-five' });
       const friend = cheering(true);
       setFigure(friend, { arms: 'high-five' });
-      m.append(words(big.words), slot(me, 'robo-hf-me'), slot(friend, 'robo-hf-friend'));
+      m.append(words(big.words), slot(me, 'robo-hf-me', at.size), slot(friend, 'robo-hf-friend', at.size));
       return { node: m, ms: MOMENT_MS.highFive };
     }
-    const m = scene('kick', at.laneTop);
+    const m = scene('kick', at);
     const kicker = cheering();
     kicker.classList.add('robo-kicking');
     const ball = div('robo-ball');
     ball.innerHTML = BALL;
-    m.append(words(big.words), slot(kicker, 'robo-kicker'), ball);
+    const ballRig = div('robo-ball-rig'); // scales the ball and its flight with Robo
+    ballRig.append(ball);
+    m.append(words(big.words), slot(kicker, 'robo-kicker', at.size), ballRig);
     return { node: m, ms: MOMENT_MS.kick };
   }
 
-  function peekMoment(big: BigMoment, at: MomentPlace): HTMLElement {
-    const m = div('robo-scene robo-peek', { 'data-moment': 'peek' });
+  function peekMoment(big: BigMoment, at: MomentPlace): HTMLElement[] {
+    const m = scene('peek', { ...at, laneTop: at.peek.top }, 'robo-scene robo-peek');
     m.style.left = `${at.peek.left}px`;
-    m.style.top = `${at.peek.top}px`;
-    m.style.width = `${ROBO_W}px`;
-    m.style.height = `${ROBO_H}px`;
+    m.style.width = `${Math.round(ROBO_W * at.size / ROBO_H)}px`;
     const f = cheering();
     setFigure(f, { arms: 'up' });
     // Robo rises out of the controls' top edge: the clip hides it until it's above that line.
     const clip = div('robo-peek-clip');
-    clip.append(slot(f));
-    m.append(clip, words(big.words));
-    return m;
+    clip.append(slot(f, '', at.size));
+    m.append(clip);
+    // On a small screen there's no room beside or above Robo, so the words show where hints show.
+    const w = words(big.words);
+    w.classList.add('robo-peek-words');
+    w.style.left = `${at.wordsAt.x}px`;
+    w.style.top = `${at.wordsAt.bottom}px`;
+    w.style.maxWidth = `${at.wordsAt.width}px`;
+    return [m, w];
   }
 
   const view: RoboView = {
@@ -168,7 +180,7 @@ export function createRobo(): RoboView {
     play(big, at) {
       el.removeAttribute('data-surprise');
       if (at.mode === 'peek') {
-        overlay.replaceChildren(peekMoment(big, at));
+        overlay.replaceChildren(...peekMoment(big, at));
         return MOMENT_MS.peek;
       }
       const { node, ms } = standingMoment(big, at);

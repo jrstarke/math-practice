@@ -98,21 +98,23 @@
 
 /* High five: Robo hops in mid-lane, the friend runs in from the right, they high-five, the friend runs off. */
 .robo-hf-me, .robo-hf-friend { position: absolute; top: 0; }
-.robo-hf-me { left: calc(50% - 100px); animation: robo-pop-in 2.5s ease-out forwards; }
-.robo-hf-friend { left: calc(50% - 6px); animation: robo-run-in 2.5s ease-in-out forwards; }
-[data-moment="high-five"] .robo-words { position: absolute; right: calc(50% + 112px); top: 8px; animation: robo-pop-in 2.5s ease-out forwards; }
+.robo-hf-me { left: calc(50% - var(--s, 1) * 100px); animation: robo-pop-in 2.5s ease-out forwards; }
+.robo-hf-friend { left: calc(50% - var(--s, 1) * 6px); animation: robo-run-in 2.5s ease-in-out forwards; }
+[data-moment="high-five"] .robo-words { position: absolute; right: calc(50% + var(--s, 1) * 112px); top: 0; animation: robo-pop-in 2.5s ease-out forwards; }
 
 /* Kick (robot-kick.svg): wind up, kick fast, the ball bounces away across the lane with speed lines. */
-.robo-kicker { position: absolute; top: 0; left: calc(50% - 200px); animation: robo-pop-in 3s ease-out forwards; }
-[data-moment="kick"] .robo-words { position: absolute; right: calc(50% + 212px); top: 8px; animation: robo-pop-in 3s ease-out forwards; }
+.robo-kicker { position: absolute; top: 0; left: calc(50% - var(--s, 1) * 200px); animation: robo-pop-in 3s ease-out forwards; }
+[data-moment="kick"] .robo-words { position: absolute; right: calc(50% + var(--s, 1) * 212px); top: 0; animation: robo-pop-in 3s ease-out forwards; }
 .robo-kicking [data-part="leg-right"] .robo-leg { animation: robo-kick-leg 3s forwards; }
 .robo-kicking [data-part="arm-left"] .robo-arm { animation: robo-kick-arm-a 3s ease-in-out forwards; }
 .robo-kicking [data-part="arm-right"] .robo-arm { animation: robo-kick-arm-b 3s ease-in-out forwards; }
 .robo-kicking[data-light] [data-part="glow"] { animation: robo-kick-glow 3s ease-in-out forwards; }
-.robo-ball {
-  position: absolute; top: 108px; left: calc(50% - 200px + 76px); width: 50px; height: 29px;
-  animation: robo-fly 3s forwards;
+/* The rig is Robo-sized at full scale and shrinks with --s, so the ball's size and flight shrink with Robo. */
+.robo-ball-rig {
+  position: absolute; bottom: 0; left: calc(50% - var(--s, 1) * 200px); width: 112px; height: 136px;
+  transform: scale(var(--s, 1)); transform-origin: 0 100%;
 }
+.robo-ball { position: absolute; top: 108px; left: 76px; width: 50px; height: 29px; animation: robo-fly 3s forwards; }
 .robo-ball svg { display: block; width: 100%; height: 100%; overflow: visible; }
 .robo-ball-spin { transform-box: fill-box; transform-origin: center; animation: robo-spin 3s forwards; }
 .robo-speed { animation: robo-speed 3s forwards; }
@@ -121,8 +123,8 @@
 .robo-peek { position: absolute; }
 .robo-peek-clip { width: 100%; height: 100%; overflow: hidden; }
 .robo-peek-clip .robo-slot { animation: robo-peek 2.5s ease-in-out forwards; }
-.robo-peek .robo-words {
-  position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); max-width: 80vw;
+.robo-peek-words {
+  position: absolute; transform: translate(-50%, -100%); max-width: calc(100vw - 32px);
   animation: robo-fade 2.5s ease-in-out forwards;
 }
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chooseMode, GAP, laneTop, peekPosition, placeUp, ROBO_H, ROBO_W, spotPosition, union, type Box } from './layout';
+import { chooseMode, GAP, laneTop, MIN_MOMENT_H, momentSize, peekPosition, placeUp, ROBO_H, ROBO_W, spotPosition, union, type Box } from './layout';
 
 const box = (left: number, top: number, right: number, bottom: number): Box => ({ left, top, right, bottom });
 
@@ -58,11 +58,27 @@ describe('union', () => {
 });
 
 describe('peek and lane', () => {
-  it('peek is centred on the stage, just above the controls', () => {
-    expect(peekPosition(box(12, 60, 363, 380), box(12, 390, 363, 655)))
-      .toEqual({ left: (12 + 363) / 2 - ROBO_W / 2, top: 390 - ROBO_H });
+  it("peek sits at the stage's bottom left corner (clear of the centred text line)", () => {
+    expect(peekPosition(box(12, 60, 363, 380), ROBO_H)).toEqual({ left: 12, top: 380 - ROBO_H });
+    expect(peekPosition(box(12, 60, 363, 380), 68)).toEqual({ left: 12, top: 380 - 68 });
   });
-  it('the walk lane is the row just above the controls', () => {
-    expect(laneTop(box(175, 640, 635, 1068))).toBe(640 - ROBO_H);
+  it('phone landscape: the peek stays in the stage column, not above the controls beside it', () => {
+    expect(peekPosition(box(16, 52, 330, 367), 80)).toEqual({ left: 16, top: 367 - 80 });
+  });
+  it('the walk lane is the bottom row of the stage, just above the controls', () => {
+    expect(laneTop(box(16, 80, 794, 628), ROBO_H)).toBe(628 - ROBO_H);
+    expect(laneTop(box(16, 80, 794, 628), 80)).toBe(548);
+  });
+});
+
+describe('momentSize', () => {
+  it('full size when the gap under the problem has room', () => {
+    expect(momentSize(640, 400)).toBe(ROBO_H);
+  });
+  it('shrinks to fit the gap between the problem and the controls (phones)', () => {
+    expect(momentSize(640, 565)).toBe(71); // 75 px gap, 4 px clear of the answer row
+  });
+  it('never smaller than MIN_MOMENT_H', () => {
+    expect(momentSize(640, 620)).toBe(MIN_MOMENT_H);
   });
 });
