@@ -23,3 +23,7 @@
 - 2026-11-02: Division "one level behind multiplication" cap REMOVED (user): multiplication still comes first via the
   unlock at mult 2, but after that division climbs freely — if division comes easier, advancing it helps multiplication
   (fact families), and the practise-what's-behind mix boosts multiplication when it lags. Cap code recoverable from 9f4f80d.
+- 2026-11-08: Robo companion built (spec docs/superpowers/specs/2026-11-08-robo-companion-design.md). Her iPad is now
+  iPadOS 18.7.11 (was 15), so Safari-15 limits no longer bind new work; Robo's JS layout measuring stays. Robo moments
+  shrink to fit the room under the problem (min 56px), peek at the stage's bottom-left on small screens, and end on a
+  rotation.

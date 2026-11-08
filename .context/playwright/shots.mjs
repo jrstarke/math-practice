@@ -274,6 +274,14 @@ for (const [name, w, h] of views) {
     add(moment, await momentCheck(page));
     await snap(page, moment);
     await shot(page, moment);
+    if (moment === 'walk') {
+      // Review Focus 2, mid-moment: rotating ends the moment, so there's never a stale walk or a second Robo.
+      await page.setViewportSize({ width: h, height: w });
+      await page.waitForTimeout(400);
+      const left = await page.evaluate(() => document.querySelectorAll('[data-moment]').length);
+      if (left) add('walk rotated', ['a moment is still playing after rotating']);
+      await snap(page, 'walk rotated', null);
+    }
     add('errors', errors); await ctx.close();
   }
 

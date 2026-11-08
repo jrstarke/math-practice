@@ -11,17 +11,20 @@
   regenerate with ROBO_ONLY=1, see running.md): /tmp/claude-1000/pw/out/robo-ipad102-p-{thinking,hint,wrong,walk,
   high-five,kick}.png, and the Safari-tab size robo-ipad102-p-tab-*.png; poses robo-poses.png; animation frames
   robo-moment-*-{25,50,75}.png. Best of all: open the dev build on her iPad.
-- **User's step: final check on her iPad (iPadOS 15)** — Chromium can't show Safari 15. Check: Robo beside the pad
+- **User's step: final check on her iPad** (now iPadOS 18.7.11, upgraded 2026-11-08 — container queries, dvh etc. all
+  work there; Robo still measures in JS, which is fine). Check: Robo beside the pad
   and not over anything; Hint → Robo hops up beside the problem, bubble tail toward it; red on wrong, off at next key;
   walk at the next multiple of 20 stars; rotate while Robo is up; Settings → Accessibility → Motion → Reduce Motion
-  turns movement into fades. Known risk (pre-existing, not Robo): the app shell uses `100dvh`, which needs Safari 15.4+ — on 15.0–15.3 it's ignored, which may explain the old iPad landscape bug.
+  turns movement into fades; arms/legs swing from the shoulders/hips (SVG transform-origin); a walk after a × answer
+  shrinks to fit when the next problem is a taller column problem. Also re-check the old iPad landscape overlap bug
+  (it was probably iPadOS 15: no container queries / dvh).
 - Character art + guide in character/ (the child's; Robo + identical friend).
 - **Key decisions (all in the spec):** light OFF while she works (the child's pick over yellow/green pulse), green =
   good, red = wrong until next key; Robo stands beside the pad on her iPad, hops up beside the problem to say hints
   (the existing hint bubble restyled), peeks in on small screens; walks every 20 stars (friend at 100), high five on
   level-up, kick on unlock, rare surprises; cooldown 4 problems, held-back walks play later. No progress change.
-- **Her iPad is still on iPadOS 15** (upgrade failed; user is fixing that in a separate conversation) → no container
-  queries; Robo measures in JS; final visual check must be on her iPad.
+- **Her iPad is on iPadOS 18.7.11** (upgraded 2026-11-08; was 15). The Robo design kept iPadOS 15 limits (JS measuring),
+  which still works.
 - Mockups from brainstorming: .superpowers/brainstorm/346246-1794165648/content/ (hint-robo-v2.html, robo-light.html).
   The visual companion server needs node on PATH and BRAINSTORM_PORT=$PUBLISH_PORT, --host 0.0.0.0, run in background.
 - Division: merged to main and deployed to dev + prod on 2026-11-04 (c74cc7b).

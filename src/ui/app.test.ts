@@ -483,6 +483,80 @@ describe('Robo', () => {
     expect(s.q('[data-role="bubble"]')!.classList.contains('robo-says')).toBe(true);
   });
 
+  test('wrong, then Hint: Robo goes up without the words and the text line shows them', () => {
+    ipadRects();
+    const s = setup(1, standing);
+    answerWrong(s);
+    expect(roboSays(s)).toBe('Not quite — try again!');
+    s.tap('[data-action="hint"]');
+    expect(robo(s).dataset.place).toBe('up');
+    expect(roboSays(s)).toBe('');
+    expect(message(s).classList.contains('sr-only')).toBe(false);
+  });
+
+  test('a wrong answer during a walk: when the walk ends, Robo says it and the text line hands back', () => {
+    const s = setup(1, standing, at39());
+    answerRight(s);
+    s.advance(1000);
+    answerWrong(s);
+    expect(message(s).classList.contains('sr-only')).toBe(false);
+    s.advance(3000); // the walk ends
+    expect(roboSays(s)).toBe('Not quite — try again!');
+    expect(message(s).classList.contains('sr-only')).toBe(true);
+  });
+
+  test('rotating mid-walk into a layout with no room ends the walk', () => {
+    ipadRects();
+    const s = setup(1, {}, at39());
+    answerRight(s);
+    expect(s.q('[data-moment="walk"]')).not.toBeNull();
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      return this.classList.contains('controls') ? new DOMRect(560, 16, 500, 780) : new DOMRect(0, 0, 0, 0);
+    });
+    window.dispatchEvent(new Event('resize'));
+    expect(s.q('[data-moment]')).toBeNull();
+  });
+
+  test('the next problem appearing mid-walk refits the walk to the room under it', () => {
+    let anchorBottom = 400;
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      if (this.classList.contains('stage')) return new DOMRect(16, 80, 778, 540); // bottom 620
+      if (this.classList.contains('problem-anchor')) return new DOMRect(300, 200, 200, anchorBottom - 200);
+      if (this.classList.contains('controls')) return new DOMRect(175, 640, 460, 428);
+      return new DOMRect(0, 0, 0, 0);
+    });
+    const s = setup(1, standing, at39());
+    answerRight(s);
+    expect(s.q('[data-moment="walk"]')!.style.height).toBe('136px');
+    anchorBottom = 540; // a taller column problem comes next: 80 px left under it
+    s.advance(1000);
+    const walk = s.q('[data-moment="walk"]')!;
+    expect([walk.style.top, walk.style.height]).toEqual(['544px', '76px']);
+  });
+
+  test('a resize that leaves the layout where it was does not cut a walk short', () => {
+    ipadRects();
+    const s = setup(1, {}, at39());
+    answerRight(s);
+    window.dispatchEvent(new Event('resize'));
+    expect(s.q('[data-moment="walk"]')).not.toBeNull();
+  });
+
+  test('rotating mid-peek into a layout with room ends the peek: only one Robo', () => {
+    const wide = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      return this.classList.contains('controls') ? new DOMRect(560, 16, 500, 780) : new DOMRect(0, 0, 0, 0);
+    });
+    const s = setup(1, {}, at39());
+    expect(robo(s).hidden).toBe(true);
+    answerRight(s);
+    expect(s.q('[data-moment="peek"]')).not.toBeNull();
+    wide.mockRestore();
+    ipadRects();
+    window.dispatchEvent(new Event('resize'));
+    expect(robo(s).hidden).toBe(false);
+    expect(s.q('[data-moment]')).toBeNull();
+  });
+
   test('a wrong answer during a walk shows the message on the text line', () => {
     const s = setup(1, standing, at39());
     answerRight(s);

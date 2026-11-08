@@ -17,7 +17,7 @@ import { createNumberPad, keyFromKeyboard } from './numberPad';
 import { fitPicture, renderPicture } from './pictureView';
 import { renderColumnProblem, type Phase } from './problemView';
 import { chooseMode, laneTop, momentSize, peekPosition, placeUp, spotPosition, union, type Box, type RoboMode } from './robo/layout';
-import { createRobo } from './robo/robo';
+import { createRobo, type MomentPlace } from './robo/robo';
 import type { SoundPlayer } from './sound';
 
 export interface AppDeps {
@@ -75,6 +75,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   let roboPlace: 'spot' | 'up' | 'point' = 'spot';
   let roboWanted = false; // Hint or Pass asked Robo up for this problem (survives a rotation through peek mode)
   let momentTimer: ReturnType<typeof setTimeout> | null = null;
+  let roboLayout = ''; // where the stage and controls were at the last measure
   let roboAway = false; // a walk, high five or kick is playing in standing mode
 
   // Static shell
@@ -119,10 +120,14 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     return roboMode === 'standing' && roboPlace !== 'up' && !roboAway;
   }
 
-  /** In standing mode Robo says these itself, so the text line is kept for screen readers only. */
+  /**
+   * In standing mode Robo says these itself, so the text line is kept for screen readers only. The one owner of
+   * where "try again" shows: Robo's bubble at its spot, or the text line (Robo up with a hint, away, or peeking).
+   */
   function syncMessage() {
     const roboSaysIt = message ? message === TRY_AGAIN && roboSaysTryAgain() : unlockNote !== '' && roboMode === 'standing';
     messageEl.classList.toggle('sr-only', roboSaysIt);
+    if (message === TRY_AGAIN) robo.say(roboSaysIt ? ROBO_TRY_AGAIN : '');
   }
 
   /** Back to the spot: the problem moves back and the hint bubble is an ordinary bubble again. */
@@ -131,6 +136,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     bubble.el.classList.remove('robo-says');
     roboPlace = 'spot';
     robo.moveTo(spot(), 'spot');
+    syncMessage();
   }
 
   /** Up beside the problem if there's room, otherwise point at the bubble from the spot. */
@@ -152,10 +158,16 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
       roboPlace = 'point';
       robo.moveTo(spot(), 'point');
     }
+    syncMessage();
   }
 
   /** Measure the layout: stand or peek, and where. Runs after the first render and on every resize. */
   function measureRobo() {
+    // A moment is placed in pixels for the layout it started in; if a rotation or resize moved the stage or the
+    // controls it would be in the wrong place (or a second Robo, peek → standing), so it ends.
+    const layout = JSON.stringify([rect(stageEl), rect(controlsEl)]);
+    if (momentTimer && layout !== roboLayout) endMoment();
+    roboLayout = layout;
     roboMode = deps.roboMode ?? chooseMode(document.documentElement.clientWidth || window.innerWidth, rect(controlsEl));
     robo.show(roboMode === 'standing');
     if (roboMode === 'standing' && roboWanted) roboUp(); else roboDown();
@@ -168,13 +180,13 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     robo.endMoment();
   }
 
-  function playMoment(big: BigMoment) {
-    endMoment();
+  /** Where a moment can play now: the room under the problem (or picture) on screen. */
+  function momentPlace(): MomentPlace {
     const controls = rect(controlsEl);
     const anchor = rect(problemAnchor), stage = rect(stageEl);
     const content = union(anchor, pictureHost.childElementCount > 0 ? rect(pictureHost) : null);
     const size = momentSize(stage.bottom, content.bottom);
-    const ms = robo.play(big, {
+    return {
       mode: roboMode,
       spot: roboMode === 'standing' ? spotPosition(controls) : null,
       laneTop: laneTop(stage, size),
@@ -182,7 +194,12 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
       viewportWidth: window.innerWidth,
       peek: peekPosition(stage, size),
       wordsAt: { x: (stage.left + stage.right) / 2, bottom: anchor.top - 12, width: stage.right - stage.left },
-    });
+    };
+  }
+
+  function playMoment(big: BigMoment) {
+    endMoment();
+    const ms = robo.play(big, momentPlace());
     roboAway = roboMode === 'standing';
     sound.robo();
     momentTimer = later(() => { momentTimer = null; endMoment(); syncMessage(); }, ms);
@@ -242,6 +259,8 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     roboDown();
     robo.think();
     render();
+    // A moment still playing from the last answer: fit it to the room under this problem.
+    if (momentTimer) robo.refit(momentPlace());
   }
 
   function finish(a: Attempt) {
@@ -273,7 +292,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
       attempt.wrongSubmits++;
       entry = markWrong(entry);
       message = TRY_AGAIN;
-      robo.wrong(roboSaysTryAgain() ? ROBO_TRY_AGAIN : null);
+      robo.wrong(null); // render() → syncMessage() decides where the words go
       sound.wrong();
       render();
       shake(problemArea.querySelector<HTMLElement>('[data-role="answer"]')!);

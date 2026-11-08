@@ -63,6 +63,15 @@ describe('Robo view', () => {
     expect(bubble().textContent).toBe('You got it!');
   });
 
+  it('say sets or clears the words without touching the light', () => {
+    robo.wrong(null);
+    robo.say('Not quite — try again!');
+    expect(bubble().textContent).toBe('Not quite — try again!');
+    robo.say('');
+    expect(bubble().classList.contains('empty')).toBe(true);
+    expect(figure().dataset.light).toBe('red');
+  });
+
   it('moveTo sets data-place and the fixed position', () => {
     robo.moveTo({ left: 520, top: 210 }, 'up');
     expect(robo.el.dataset.place).toBe('up');
@@ -154,6 +163,20 @@ describe('Robo view', () => {
     robo.play(walk, { ...peek, size: 68 });
     expect(moment()!.style.height).toBe('68px');
     expect(robo.overlay.querySelector<HTMLElement>('.robo-slot')!.style.width).toBe('56px');
+  });
+
+  it('refit moves and resizes the moment that is playing (the next problem has less room under it)', () => {
+    robo.play(walk100, standing);
+    robo.refit({ ...standing, laneTop: 572, size: 68 });
+    expect([moment()!.style.top, moment()!.style.height, moment()!.style.getPropertyValue('--s')]).toEqual(['572px', '68px', '0.5']);
+    for (const slot of robo.overlay.querySelectorAll<HTMLElement>('.robo-slot')) expect([slot.style.width, slot.style.height]).toEqual(['56px', '68px']);
+    robo.play(walk, peek);
+    robo.refit({ ...peek, size: 68, peek: { left: 12, top: 300 }, wordsAt: { x: 190, bottom: 120, width: 350 } });
+    expect([moment()!.style.left, moment()!.style.top, moment()!.style.width]).toEqual(['12px', '300px', '56px']);
+    const w = robo.overlay.querySelector<HTMLElement>('[data-role="moment-words"]')!;
+    expect([w.style.left, w.style.top]).toEqual(['190px', '120px']);
+    robo.endMoment();
+    expect(() => robo.refit(standing)).not.toThrow();
   });
 
   it('endMoment clears the overlay and brings Robo back', () => {

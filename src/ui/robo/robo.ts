@@ -28,8 +28,12 @@ export interface RoboView {
   right(line: string | null): void;
   wrong(words: string | null): void;
   calm(): void;
+  /** Robo's own words at its spot ('' hides the bubble). */
+  say(text: string): void;
   talk(on: boolean): void;
   play(big: BigMoment, at: MomentPlace): number;
+  /** Re-place the moment that's playing (the next problem may have less room under it). No-op without one. */
+  refit(at: MomentPlace): void;
   surprise(): number;
   endMoment(): void;
 }
@@ -86,17 +90,36 @@ export function createRobo(): RoboView {
   }
 
   /** A moment's layer. --s is Robo's scale in it, which the CSS uses for offsets and the ball. */
-  function scene(kind: string, at: MomentPlace, cls = 'robo-scene'): HTMLElement {
-    const m = div(cls, { 'data-moment': kind });
-    m.style.top = `${at.laneTop}px`;
+  function scene(kind: string, cls = 'robo-scene'): HTMLElement {
+    return div(cls, { 'data-moment': kind });
+  }
+
+  /** Size and place a moment's layer, its Robos and (peek) its words for `at`. */
+  function fit(m: HTMLElement, at: MomentPlace) {
+    const peeking = m.dataset.moment === 'peek';
+    const width = Math.round(ROBO_W * at.size / ROBO_H);
+    m.style.top = `${peeking ? at.peek.top : at.laneTop}px`;
     m.style.height = `${at.size}px`;
     m.style.setProperty('--s', String(Math.round(at.size / ROBO_H * 1000) / 1000));
-    return m;
+    if (peeking) {
+      m.style.left = `${at.peek.left}px`;
+      m.style.width = `${width}px`;
+    }
+    for (const s of m.querySelectorAll<HTMLElement>('.robo-slot')) {
+      s.style.width = `${width}px`;
+      s.style.height = `${at.size}px`;
+    }
+    const w = overlay.querySelector<HTMLElement>('.robo-peek-words');
+    if (w) {
+      w.style.left = `${at.wordsAt.x}px`;
+      w.style.top = `${at.wordsAt.bottom}px`;
+      w.style.maxWidth = `${at.wordsAt.width}px`;
+    }
   }
 
   function standingMoment(big: BigMoment, at: MomentPlace): { node: HTMLElement; ms: number } {
     if (big.kind === 'walk') {
-      const m = scene(big.withFriend ? 'walk-friend' : 'walk', at);
+      const m = scene(big.withFriend ? 'walk-friend' : 'walk');
       const walker = div('robo-walker');
       walker.append(slot(cheering(), 'robo-walking', at.size));
       if (big.withFriend) walker.append(slot(cheering(true), 'robo-walking robo-walking-b', at.size));
@@ -105,7 +128,7 @@ export function createRobo(): RoboView {
       return { node: m, ms: MOMENT_MS.walk };
     }
     if (big.kind === 'highFive') {
-      const m = scene('high-five', at);
+      const m = scene('high-five');
       const me = cheering();
       setFigure(me, { arms: 'high-five' });
       const friend = cheering(true);
@@ -113,7 +136,7 @@ export function createRobo(): RoboView {
       m.append(words(big.words), slot(me, 'robo-hf-me', at.size), slot(friend, 'robo-hf-friend', at.size));
       return { node: m, ms: MOMENT_MS.highFive };
     }
-    const m = scene('kick', at);
+    const m = scene('kick');
     const kicker = cheering();
     kicker.classList.add('robo-kicking');
     const ball = div('robo-ball');
@@ -125,9 +148,7 @@ export function createRobo(): RoboView {
   }
 
   function peekMoment(big: BigMoment, at: MomentPlace): HTMLElement[] {
-    const m = scene('peek', { ...at, laneTop: at.peek.top }, 'robo-scene robo-peek');
-    m.style.left = `${at.peek.left}px`;
-    m.style.width = `${Math.round(ROBO_W * at.size / ROBO_H)}px`;
+    const m = scene('peek', 'robo-scene robo-peek');
     const f = cheering();
     setFigure(f, { arms: 'up' });
     // Robo rises out of the controls' top edge: the clip hides it until it's above that line.
@@ -137,9 +158,6 @@ export function createRobo(): RoboView {
     // On a small screen there's no room beside or above Robo, so the words show where hints show.
     const w = words(big.words);
     w.classList.add('robo-peek-words');
-    w.style.left = `${at.wordsAt.x}px`;
-    w.style.top = `${at.wordsAt.bottom}px`;
-    w.style.maxWidth = `${at.wordsAt.width}px`;
     return [m, w];
   }
 
@@ -174,6 +192,7 @@ export function createRobo(): RoboView {
       setFigure(figure, { light: 'off' });
       say('');
     },
+    say,
     talk(on) {
       setFigure(figure, { mouth: on ? 'talk' : 'flat' });
     },
@@ -181,12 +200,18 @@ export function createRobo(): RoboView {
       el.removeAttribute('data-surprise');
       if (at.mode === 'peek') {
         overlay.replaceChildren(...peekMoment(big, at));
+        view.refit(at);
         return MOMENT_MS.peek;
       }
       const { node, ms } = standingMoment(big, at);
       overlay.replaceChildren(node);
+      view.refit(at);
       el.setAttribute('data-away', '');
       return ms;
+    },
+    refit(at) {
+      const m = overlay.querySelector<HTMLElement>('[data-moment]');
+      if (m) fit(m, at);
     },
     surprise() {
       el.dataset.surprise = surprises++ % 2 === 0 ? 'wave' : 'bounce';
