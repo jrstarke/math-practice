@@ -71,3 +71,15 @@ test('unlock resumes a suspended context every time, but leaves a running one al
   s.unlock();
   expect(ctx.resume).toHaveBeenCalledTimes(3);
 });
+
+test('robo() plays two short notes and is silent when muted', () => {
+  const f = fakeCtor();
+  const s = createSound(f.ctor);
+  s.unlock();
+  s.setMuted(true);
+  s.robo();
+  expect(f.created).toHaveLength(0);
+  s.setMuted(false);
+  s.robo();
+  expect(f.created).toEqual(['osc', 'osc']);
+});

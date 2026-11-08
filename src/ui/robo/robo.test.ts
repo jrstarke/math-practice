@@ -47,6 +47,7 @@ describe('Robo view', () => {
     expect(bubble().textContent).toBe('Not quite — try again!');
     robo.calm();
     expect(figure().dataset.light).toBe('off');
+    expect(bubble().textContent).toBe('');
   });
 
   it('calm leaves a green light alone', () => {

@@ -367,3 +367,15 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
   .pad { flex: 1; min-height: 0; grid-auto-rows: 1fr; }
   .key { height: auto; min-height: 0; }
 }
+
+/* Robo (src/ui/robo/robo.css has the rest) */
+/* Robo up beside the problem: the problem and its picture slide left by --robo-shift to make room. No transition,
+   so app.ts can measure the unshifted layout at once. */
+.problem-anchor, .picture-host { transform: translateX(calc(-1 * var(--robo-shift, 0px))); }
+/* While Robo is up, the hint bubble is Robo's: its tail points down and right, toward Robo. */
+.bubble.robo-says::after {
+  left: auto; right: 14px; bottom: -14px; transform: none;
+  border: 0; border-top: 14px solid var(--card); border-left: 18px solid transparent;
+}
+/* Robo is saying it, so the text line is for screen readers only. It keeps its space, so nothing moves. */
+.message.sr-only { color: transparent; }

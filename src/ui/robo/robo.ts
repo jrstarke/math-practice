@@ -158,7 +158,9 @@ export function createRobo(): RoboView {
       if (text !== null) say(text);
     },
     calm() {
-      if (figure.dataset.light === 'red') setFigure(figure, { light: 'off' });
+      if (figure.dataset.light !== 'red') return;
+      setFigure(figure, { light: 'off' });
+      say('');
     },
     talk(on) {
       setFigure(figure, { mouth: on ? 'talk' : 'flat' });

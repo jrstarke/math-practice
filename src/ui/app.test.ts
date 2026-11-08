@@ -317,3 +317,206 @@ test('reaching multiplication 2 announces division and the next 3 problems are d
   }
   expect(s.saved.at(-1)!.welcome).toBeNull();
 });
+
+describe('Robo', () => {
+  const robo = (s: ReturnType<typeof setup>) => s.q('[data-role="robo"]')!;
+  const light = (s: ReturnType<typeof setup>) => robo(s).querySelector<HTMLElement>('.robo-figure')!.dataset.light;
+  const roboSays = (s: ReturnType<typeof setup>) => s.q('[data-role="robo-bubble"]')!.textContent;
+  const message = (s: ReturnType<typeof setup>) => s.q('[data-role="message"]')!;
+  const answerRight = (s: ReturnType<typeof setup>) => { s.typeAnswer(s.correctAnswer()); s.tap('[data-key="submit"]'); };
+  const answerWrong = (s: ReturnType<typeof setup>) => { s.typeAnswer(s.correctAnswer() + 1); s.tap('[data-key="submit"]'); };
+  const standing = { roboMode: 'standing' as const };
+  const at39 = () => ({ ...defaultProgress(), total: 39 });
+
+  // Rectangles like an upright iPad, so Robo has room to go up beside the problem (jsdom's are all zeros).
+  function ipadRects() {
+    const boxes: [string, DOMRect][] = [
+      ['stage', new DOMRect(16, 80, 778, 540)],
+      ['problem-anchor', new DOMRect(300, 200, 200, 200)],
+      ['controls', new DOMRect(175, 640, 460, 428)],
+    ];
+    return vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      return boxes.find(([cls]) => this.classList.contains(cls))?.[1] ?? new DOMRect(0, 0, 0, 0);
+    });
+  }
+  afterEach(() => vi.restoreAllMocks());
+
+  test('Robo watches with its light off while she works', () => {
+    const s = setup(1, standing);
+    expect(light(s)).toBe('off');
+    expect(robo(s).hidden).toBe(false);
+    expect(robo(s).getAttribute('aria-hidden')).toBe('true');
+  });
+
+  test('a wrong answer turns Robo red with "Not quite — try again!"; her next key turns it off', () => {
+    const s = setup(1, standing);
+    answerWrong(s);
+    expect(light(s)).toBe('red');
+    expect(roboSays(s)).toBe('Not quite — try again!');
+    expect(message(s).textContent).toContain('Not quite — try again');
+    expect(message(s).classList.contains('sr-only')).toBe(true);
+    s.tap('[data-key="back"]');
+    expect(light(s)).toBe('off');
+    expect(roboSays(s)).toBe('');
+  });
+
+  test('right after a wrong try Robo says "You got it!"', () => {
+    const s = setup(1, standing);
+    answerWrong(s);
+    s.tap('[data-key="back"]'); s.tap('[data-key="back"]'); s.tap('[data-key="back"]'); s.tap('[data-key="back"]');
+    answerRight(s);
+    expect(light(s)).toBe('green');
+    expect(roboSays(s)).toBe('You got it!');
+  });
+
+  test('a clean right answer: green, no words', () => {
+    const s = setup(1, standing);
+    answerRight(s);
+    expect(light(s)).toBe('green');
+    expect(roboSays(s)).toBe('');
+    s.advance(1000);
+    expect(light(s)).toBe('off');
+  });
+
+  test('Hint sends Robo up and shows the hint in the bubble; the next problem brings it back', () => {
+    ipadRects();
+    const s = setup(1, standing);
+    s.tap('[data-action="hint"]');
+    expect(robo(s).dataset.place).toBe('up');
+    expect(s.q('[data-role="bubble"]')!.classList.contains('robo-says')).toBe(true);
+    expect(s.q('[data-role="bubble"]')!.textContent).not.toBe('');
+    expect(robo(s).querySelector<HTMLElement>('.robo-figure')!.dataset.mouth).toBe('talk');
+    answerRight(s);
+    s.advance(1000);
+    expect(robo(s).dataset.place).toBe('spot');
+    expect(s.q('[data-role="bubble"]')!.classList.contains('robo-says')).toBe(false);
+  });
+
+  test('Hint with no room beside the problem: Robo points from its spot', () => {
+    const s = setup(1, standing); // jsdom: every rectangle is zero, so there's no room
+    s.tap('[data-action="hint"]');
+    expect(robo(s).dataset.place).toBe('point');
+    expect(s.q('[data-role="bubble"]')!.classList.contains('robo-says')).toBe(false);
+  });
+
+  test('a wrong answer while Robo is up keeps the hint and shows the message on the text line', () => {
+    ipadRects();
+    const s = setup(1, standing);
+    s.tap('[data-action="hint"]');
+    const hint = s.q('[data-role="bubble"]')!.textContent;
+    answerWrong(s);
+    expect(s.q('[data-role="bubble"]')!.textContent).toBe(hint);
+    expect(message(s).textContent).toContain('Not quite — try again');
+    expect(message(s).classList.contains('sr-only')).toBe(false);
+    expect(light(s)).toBe('red');
+    s.tap('[data-key="back"]');
+    expect(light(s)).toBe('off');
+  });
+
+  test('right after hints while up: "You figured it out!" in the bubble beside the problem', () => {
+    ipadRects();
+    const s = setup(1, standing);
+    s.tap('[data-action="hint"]');
+    answerRight(s);
+    expect(light(s)).toBe('green');
+    expect(s.q('[data-role="bubble"]')!.textContent).toBe('You figured it out!');
+  });
+
+  test('reaching 40 stars plays the walk with its words and the chirp, and it ends after 4s', () => {
+    const s = setup(1, standing, at39());
+    answerRight(s);
+    expect(s.q('[data-moment="walk"]')).not.toBeNull();
+    expect(s.q('[data-role="moment-words"]')!.textContent).toBe("You've gotten 40 questions right! Keep going!");
+    expect(s.sound.robo).toHaveBeenCalledOnce();
+    expect(s.sound.correct).toHaveBeenCalledOnce();
+    s.advance(4000);
+    expect(s.q('[data-role="robo-moment"]')!.childElementCount).toBe(0);
+    expect(robo(s).hasAttribute('data-away')).toBe(false);
+  });
+
+  test('reaching multiplication 2 kicks with "New: division!"', () => {
+    const s = setup(1, standing, {
+      ...defaultProgress(),
+      unlocked: ['addition', 'subtraction', 'multiplication'],
+      addition: { level: 9, window: [], calibrationLeft: 0 },
+      subtraction: { level: 9, window: [], calibrationLeft: 0 },
+      multiplication: { level: 1, window: [1], calibrationLeft: 9 },
+      welcome: { op: 'multiplication', left: 1 },
+    });
+    answerRight(s);
+    expect(s.q('[data-moment="kick"]')).not.toBeNull();
+    expect(s.q('[data-role="moment-words"]')!.textContent).toBe('New: division!');
+    expect(message(s).textContent).toBe('New: division!');
+    expect(message(s).classList.contains('sr-only')).toBe(true);
+    expect(s.sound.levelUp).toHaveBeenCalledOnce();
+  });
+
+  test('tapping Hint during a walk ends the walk and sends Robo up', () => {
+    ipadRects();
+    const s = setup(1, standing, at39());
+    answerRight(s);
+    s.advance(1000);
+    expect(s.q('[data-moment]')).not.toBeNull();
+    s.tap('[data-action="hint"]');
+    expect(s.q('[data-moment]')).toBeNull();
+    expect(s.root.querySelectorAll('[data-role="robo"]')).toHaveLength(1);
+    expect(robo(s).hasAttribute('data-away')).toBe(false);
+    expect(robo(s).dataset.place).toBe('up');
+  });
+
+  test('a wrong answer during a walk shows the message on the text line', () => {
+    const s = setup(1, standing, at39());
+    answerRight(s);
+    s.advance(1000);
+    answerWrong(s);
+    expect(message(s).textContent).toContain('Not quite — try again');
+    expect(message(s).classList.contains('sr-only')).toBe(false);
+  });
+
+  test('a walk that ended early does not cut short a later moment', () => {
+    const s = setup(1, { ...standing, roboRng: () => 0 }, at39());
+    answerRight(s); // t=0: the walk starts; its timer would end it at 4000
+    s.advance(1000);
+    s.tap('[data-action="hint"]'); // ends the walk now
+    answerRight(s); // hinted: a line, no surprise
+    s.advance(2000);
+    answerRight(s); // t=3000: clean, so a surprise until 4200
+    expect(robo(s).dataset.surprise).toMatch(/^(wave|bounce)$/);
+    s.advance(1000); // t=4000: the ended walk's timer must not fire
+    expect(robo(s).hasAttribute('data-surprise')).toBe(true);
+    s.advance(200);
+    expect(robo(s).hasAttribute('data-surprise')).toBe(false);
+  });
+
+  test('destroy during a walk removes Robo and fires no more timers', () => {
+    const s = setup(1, standing, at39());
+    answerRight(s);
+    s.app.destroy();
+    expect(document.querySelector('[data-role="robo"]')).toBeNull();
+    expect(document.querySelector('[data-role="robo-moment"]')).toBeNull();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  test('peek mode: hints and messages work as today, and 40 stars plays a peek', () => {
+    const s = setup(1, { roboMode: 'peek' }, at39());
+    expect(robo(s).hidden).toBe(true);
+    s.tap('[data-action="hint"]');
+    expect(s.q('[data-role="bubble"]')!.classList.contains('robo-says')).toBe(false);
+    answerWrong(s);
+    expect(message(s).classList.contains('sr-only')).toBe(false);
+    s.tap('[data-key="back"]'); s.tap('[data-key="back"]'); s.tap('[data-key="back"]'); s.tap('[data-key="back"]');
+    answerRight(s); // not clean: no star, so no walk
+    s.advance(1000);
+    answerRight(s); // clean: the 40th star
+    expect(s.q('[data-moment="peek"]')).not.toBeNull();
+    expect(s.q('[data-role="moment-words"]')!.textContent).toBe("You've gotten 40 questions right! Keep going!");
+  });
+
+  test('a surprise plays now and then on a clean answer', () => {
+    const s = setup(1, { ...standing, roboRng: () => 0 });
+    answerRight(s);
+    expect(robo(s).dataset.surprise).toMatch(/^(wave|bounce)$/);
+    s.advance(1200);
+    expect(robo(s).hasAttribute('data-surprise')).toBe(false);
+  });
+});

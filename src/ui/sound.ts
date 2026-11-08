@@ -3,12 +3,14 @@ export interface SoundPlayer {
   correct(): void;
   wrong(): void;
   levelUp(): void;
+  /** Robo's "beep boop" for its big moments. */
+  robo(): void;
   setMuted(m: boolean): void;
 }
 
 export function createSilentSound(): SoundPlayer {
   const noop = () => {};
-  return { unlock: noop, correct: noop, wrong: noop, levelUp: noop, setMuted: noop };
+  return { unlock: noop, correct: noop, wrong: noop, levelUp: noop, robo: noop, setMuted: noop };
 }
 
 type Note = { freq: number; endFreq?: number; start: number; dur: number; type: OscillatorType; gain: number };
@@ -79,6 +81,12 @@ export function createSound(ctor: typeof AudioContext | undefined = defaultCtor(
         { freq: E5, start: 0.1, dur: 0.1, type: 'sine', gain: 0.25 },
         { freq: G5, start: 0.2, dur: 0.1, type: 'sine', gain: 0.25 },
         { freq: C5 * 2, start: 0.3, dur: 0.25, type: 'sine', gain: 0.25 },
+      ]);
+    },
+    robo() {
+      play([
+        { freq: 880, start: 0, dur: 0.09, type: 'square', gain: 0.06 },
+        { freq: 660, start: 0.11, dur: 0.1, type: 'square', gain: 0.06 },
       ]);
     },
     wrong() {

@@ -3,6 +3,7 @@ import { focusAnswer, focusScratch, initialEntry, markWrong, pressKey, setScratc
 import { maxAnswerLength } from '../core/levels';
 import type { Progress } from '../core/progress';
 import type { Rng } from '../core/rng';
+import { decideRobo, initialRoboMemory, type BigMoment, type RoboOutcome } from '../core/robo';
 import { nextProblem, recordResult, RECENT_LIMIT, type AttemptInput } from '../core/session';
 import { hintLimit, revealState, solve, type RevealState, type Step } from '../core/solver';
 import type { Problem } from '../core/types';
@@ -15,6 +16,8 @@ import { createInstallTip, shouldShowInstallTip } from './installTip';
 import { createNumberPad, keyFromKeyboard } from './numberPad';
 import { fitPicture, renderPicture } from './pictureView';
 import { renderColumnProblem, type Phase } from './problemView';
+import { chooseMode, laneTop, peekPosition, placeUp, spotPosition, union, type Box, type RoboMode } from './robo/layout';
+import { createRobo } from './robo/robo';
 import type { SoundPlayer } from './sound';
 
 export interface AppDeps {
@@ -27,6 +30,10 @@ export interface AppDeps {
   nav?: { standalone?: boolean };
   /** Build label shown small above the mute button, so a parent can tell which version is running. */
   version?: string;
+  /** Robo's surprises use their own random source, so seeded problem sequences don't change. */
+  roboRng?: Rng;
+  /** Tests only: fix Robo's mode instead of measuring the layout. */
+  roboMode?: RoboMode;
 }
 
 export const ADVANCE_MS = 1000;
@@ -34,6 +41,11 @@ export const PASS_STEP_MS = 1500;
 /** Hint/Pass ignore taps this soon after Next, so a double-tap on Next cannot pass the new problem. */
 export const ACTION_GUARD_MS = 400;
 const TRY_AGAIN = 'Not quite — try again';
+const ROBO_TRY_AGAIN = 'Not quite — try again!';
+
+function toBox(r: DOMRect): Box {
+  return { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+}
 
 interface Attempt extends AttemptInput { firstSubmitMs: number }
 
@@ -57,6 +69,12 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   let passTimer: ReturnType<typeof setTimeout> | null = null;
   let actionsReadyAt = -Infinity;
   const timers = new Set<ReturnType<typeof setTimeout>>();
+  const roboRng = deps.roboRng ?? Math.random;
+  let roboMemory = initialRoboMemory();
+  let roboMode: RoboMode = deps.roboMode ?? 'standing';
+  let roboPlace: 'spot' | 'up' | 'point' = 'spot';
+  let momentTimer: ReturnType<typeof setTimeout> | null = null;
+  let roboAway = false; // a walk, high five or kick is playing in standing mode
 
   // Static shell
   const totalEl = el('span', { class: 'total', 'data-role': 'total' });
@@ -67,24 +85,118 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   const bubble = createHintBubble();
   const pictureHost = el('div', { class: 'picture-host', 'data-role': 'picture' });
   // The bubble floats above the problem (anchored to it) so hint length never resizes the problem.
-  const problemArea = el('div', { class: 'problem-area', 'data-role': 'problem-area' },
-    el('div', { class: 'problem-anchor' }, bubble.el, problemHost), pictureHost);
+  const problemAnchor = el('div', { class: 'problem-anchor' }, bubble.el, problemHost);
+  const problemArea = el('div', { class: 'problem-area', 'data-role': 'problem-area' }, problemAnchor, pictureHost);
   const hintBtn = el('button', { type: 'button', class: 'action hint', 'data-action': 'hint' });
   const passBtn = el('button', { type: 'button', class: 'action pass', 'data-action': 'pass' }, 'Pass');
   const actions = el('div', { class: 'actions' });
+  const stageEl = el('section', { class: 'stage' }, problemArea, messageEl);
+  const controlsEl = el('section', { class: 'controls' }, actions, createNumberPad());
+  const robo = createRobo();
   const appEl = el('div', { class: 'app' },
       el('header', { class: 'topbar' }, el('div', { class: 'badges' }, totalEl, streakEl),
         el('div', { class: 'topbar-end' },
           ...(deps.version ? [el('span', { class: 'version', 'data-role': 'version' }, deps.version)] : []), muteBtn)),
       el('main', { class: 'play' },
-        el('section', { class: 'stage' }, problemArea, messageEl),
-        el('section', { class: 'controls' }, actions, createNumberPad())));
+        stageEl, controlsEl),
+      robo.el, robo.overlay);
   root.replaceChildren(appEl);
   if (shouldShowInstallTip(nav, progress)) appEl.prepend(createInstallTip());
 
   function later(fn: () => void, ms: number) {
     const t = setTimeout(() => { timers.delete(t); fn(); }, ms);
     timers.add(t);
+    return t;
+  }
+
+  // ---- Robo ----
+  const rect = (node: Element) => toBox(node.getBoundingClientRect());
+  const spot = () => spotPosition(rect(controlsEl));
+
+  /** Robo says the wrong-answer words itself, unless it's up with a hint or away for a moment. */
+  function roboSaysTryAgain() {
+    return roboMode === 'standing' && roboPlace !== 'up' && !roboAway;
+  }
+
+  /** In standing mode Robo says these itself, so the text line is kept for screen readers only. */
+  function syncMessage() {
+    const roboSaysIt = message ? message === TRY_AGAIN && roboSaysTryAgain() : unlockNote !== '' && roboMode === 'standing';
+    messageEl.classList.toggle('sr-only', roboSaysIt);
+  }
+
+  /** Back to the spot: the problem moves back and the hint bubble is an ordinary bubble again. */
+  function roboDown() {
+    problemArea.style.removeProperty('--robo-shift');
+    bubble.el.classList.remove('robo-says');
+    roboPlace = 'spot';
+    robo.moveTo(spot(), 'spot');
+  }
+
+  /** Up beside the problem if there's room, otherwise point at the bubble from the spot. */
+  function roboUp() {
+    if (roboMode !== 'standing') return;
+    // --robo-shift is a transform, so measure without it.
+    problemArea.style.removeProperty('--robo-shift');
+    const content = union(rect(problemAnchor), pictureHost.childElementCount > 0 ? rect(pictureHost) : null);
+    const p = placeUp(rect(stageEl), content);
+    if (p) {
+      problemArea.style.setProperty('--robo-shift', `${p.shift}px`);
+      bubble.el.classList.add('robo-says');
+      roboPlace = 'up';
+      robo.moveTo({ left: p.left, top: p.top }, 'up');
+      robo.talk(true);
+    } else {
+      bubble.el.classList.remove('robo-says');
+      roboPlace = 'point';
+      robo.moveTo(spot(), 'point');
+    }
+  }
+
+  /** Measure the layout: stand or peek, and where. Runs after the first render and on every resize. */
+  function measureRobo() {
+    roboMode = deps.roboMode ?? chooseMode(document.documentElement.clientWidth || window.innerWidth, rect(controlsEl));
+    robo.show(roboMode === 'standing');
+    if (roboMode === 'standing' && roboPlace !== 'spot') roboUp(); else roboDown();
+    syncMessage();
+  }
+
+  function endMoment() {
+    if (momentTimer) { clearTimeout(momentTimer); timers.delete(momentTimer); momentTimer = null; }
+    roboAway = false;
+    robo.endMoment();
+  }
+
+  function playMoment(big: BigMoment) {
+    endMoment();
+    const controls = rect(controlsEl);
+    const ms = robo.play(big, {
+      mode: roboMode,
+      spot: roboMode === 'standing' ? spotPosition(controls) : null,
+      laneTop: laneTop(controls),
+      viewportWidth: window.innerWidth,
+      peek: peekPosition(rect(stageEl), controls),
+    });
+    roboAway = roboMode === 'standing';
+    sound.robo();
+    momentTimer = later(() => { momentTimer = null; endMoment(); syncMessage(); }, ms);
+  }
+
+  function cheer(o: RoboOutcome) {
+    const r = decideRobo(roboMemory, o, roboRng);
+    roboMemory = r.memory;
+    const { big, line, surprise } = r.decision;
+    if (big) { playMoment(big); return; }
+    if (o.passed) return;
+    if (roboPlace === 'up') {
+      robo.right(null);
+      if (line) bubble.set(line); // Robo's bubble is the one beside the problem while it's up
+    } else {
+      robo.right(line);
+    }
+    if (surprise && roboMode === 'standing' && roboPlace === 'spot' && !roboAway) {
+      endMoment();
+      momentTimer = later(() => { momentTimer = null; endMoment(); }, robo.surprise());
+    }
   }
 
   function render() {
@@ -94,6 +206,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     streakEl.textContent = `🔥 ${progress.streak}`;
     messageEl.textContent = message || unlockNote;
     messageEl.classList.toggle('good', !message && unlockNote !== '');
+    syncMessage();
     muteBtn.textContent = progress.muted ? '🔇' : '🔊';
     bubble.set(reveal.text);
     renderPicture(pictureHost, reveal.picture ?? null);
@@ -118,6 +231,8 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     shownAt = now();
     phase = 'answering';
     message = '';
+    roboDown();
+    robo.think();
     render();
   }
 
@@ -136,17 +251,21 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
       firstSubmitted = true;
     }
     if (Number(entry.answer) === answerOf(problem)) {
+      const totalBefore = progress.total;
       const { levelChange, unlocked } = finish(attempt);
       if (unlocked.length > 0) unlockNote = `New: ${unlocked.join(' and ')}!`;
       if (levelChange === 1 || unlocked.length > 0) sound.levelUp(); else sound.correct();
       phase = 'correct';
       message = '';
       render();
+      cheer({ totalBefore, totalAfter: progress.total, levelChange, unlocked,
+        wrongSubmits: attempt.wrongSubmits, hintsUsed: attempt.hintsUsed, passed: false });
       later(showNext, ADVANCE_MS);
     } else {
       attempt.wrongSubmits++;
       entry = markWrong(entry);
       message = TRY_AGAIN;
+      robo.wrong(roboSaysTryAgain() ? ROBO_TRY_AGAIN : null);
       sound.wrong();
       render();
       shake(problemArea.querySelector<HTMLElement>('[data-role="answer"]')!);
@@ -163,7 +282,9 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     if (phase !== 'answering' || hintsShown >= hintLimit(steps)) return;
     showSteps(hintsShown + 1);
     attempt.hintsUsed = hintsShown;
+    endMoment();
     render();
+    roboUp();
   }
 
   function passStep() {
@@ -176,15 +297,22 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
       timers.add(passTimer);
     }
     render();
+    if (roboPlace !== 'spot') roboUp(); // the picture may have just appeared
   }
 
   function pass() {
     if (phase !== 'answering') return;
-    finish({ ...attempt, passed: true });
+    const totalBefore = progress.total;
+    const { levelChange, unlocked } = finish({ ...attempt, passed: true });
     phase = 'passing';
     message = '';
     entry = focusAnswer({ ...entry, answer: '', faded: false });
+    endMoment();
+    robo.calm();
+    if (roboMode === 'standing') roboPlace = 'point'; // so passStep() sends Robo up
     passStep();
+    cheer({ totalBefore, totalAfter: progress.total, levelChange, unlocked,
+      wrongSubmits: attempt.wrongSubmits, hintsUsed: attempt.hintsUsed, passed: true });
   }
 
   function dismissTip() {
@@ -203,6 +331,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   function handleKey(key: Key) {
     if (phase !== 'answering') return;
     unlockNote = '';
+    robo.calm();
     const r = pressKey(entry, key, maxAnswerLength(problem));
     entry = r.state;
     if (key !== 'submit' && message === TRY_AGAIN && !entry.faded) message = '';
@@ -249,6 +378,9 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   window.addEventListener('keydown', onKeyDown);
   sound.setMuted(progress.muted);
   showNext();
+  measureRobo();
+  const onResize = () => measureRobo();
+  window.addEventListener('resize', onResize);
 
   // Re-fit the multiplication picture when .problem-area's own box changes size (rotation, the
   // browser chrome collapsing/expanding, the install tip being dismissed, ...), not just on the
@@ -262,6 +394,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   if (typeof ResizeObserver !== 'undefined') {
     resizeObserver = new ResizeObserver(() => {
       if (pictureHost.childElementCount > 0) fitPicture(pictureHost);
+      measureRobo();
     });
     resizeObserver.observe(problemArea);
   }
@@ -271,7 +404,10 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
       root.removeEventListener('pointerdown', onPointerDown);
       root.removeEventListener('pointerup', unlockSound);
       window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('resize', onResize);
       resizeObserver?.disconnect();
+      robo.el.remove();
+      robo.overlay.remove();
       timers.forEach(clearTimeout);
       timers.clear();
     },
