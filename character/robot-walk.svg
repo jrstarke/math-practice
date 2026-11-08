@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 360" width="600" height="360">
+  <style>
+    .walker { animation: walk 9s linear infinite; }
+    .bob    { animation: bob 0.8s ease-in-out infinite; }
+    .legA, .legB, .armA, .armB { transform-origin: 0 0; }
+    .legA { animation: swingA 0.8s ease-in-out infinite; }
+    .legB { animation: swingB 0.8s ease-in-out infinite; }
+    .armA { animation: armA 0.8s ease-in-out infinite; }
+    .armB { animation: armB 0.8s ease-in-out infinite; }
+    .glow { animation: glow 1.2s ease-in-out infinite; }
+
+    @keyframes walk   { from { transform: translateX(-150px); } to { transform: translateX(750px); } }
+    @keyframes bob    { 0%, 50%, 100% { transform: translateY(0); } 25%, 75% { transform: translateY(-5px); } }
+    @keyframes swingA { 0%, 100% { transform: rotate(24deg); }  50% { transform: rotate(-24deg); } }
+    @keyframes swingB { 0%, 100% { transform: rotate(-24deg); } 50% { transform: rotate(24deg); } }
+    @keyframes armA   { 0%, 100% { transform: rotate(-25deg); } 50% { transform: rotate(20deg); } }
+    @keyframes armB   { 0%, 100% { transform: rotate(-20deg); } 50% { transform: rotate(25deg); } }
+    @keyframes glow   { 0%, 100% { opacity: 0.25; } 50% { opacity: 0.85; } }
+  </style>
+
+  <rect width="600" height="360" fill="#ffffff"/>
+
+  <g stroke="#2b2b2b" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- ground -->
+    <path d="M0 316 C100 310, 200 320, 300 315 S500 310, 600 317" fill="none"/>
+
+    <g class="walker">
+      <g transform="translate(0 100)">
+        <g class="bob">
+          <!-- legs and feet (feet point the way it walks) -->
+          <g transform="translate(-30 140)">
+            <g class="legA">
+              <path d="M0 0 L0 55" fill="none"/>
+              <ellipse cx="10" cy="62" rx="20" ry="12" fill="#2b2b2b"/>
+            </g>
+          </g>
+          <g transform="translate(30 140)">
+            <g class="legB">
+              <path d="M0 0 L0 55" fill="none"/>
+              <ellipse cx="10" cy="62" rx="20" ry="12" fill="#2b2b2b"/>
+            </g>
+          </g>
+
+          <!-- glow and rays -->
+          <circle class="glow" cx="0" cy="-38" r="34" fill="#c8f7c5" stroke="none"/>
+          <path d="M0 -72 L0 -82 M-30 -62 L-37 -69 M30 -62 L37 -69 M-38 -38 L-48 -38 M38 -38 L48 -38" fill="none" stroke="#2fa84f" stroke-width="3"/>
+          <!-- green light -->
+          <path d="M-20 -12 L-20 -38 A20 22 0 0 1 20 -38 L20 -12 Z" fill="#4cd964"/>
+          <path d="M-11 -22 L-11 -38 C-11 -46 -7 -51 -2 -53" fill="none" stroke="#ffffff" stroke-width="3"/>
+          <!-- body -->
+          <path d="M-65 140 L-65 70 A65 70 0 0 1 65 70 L65 140 Z" fill="#ffffff"/>
+          <!-- mount -->
+          <path d="M-28 6.8 L-28 -8 Q-28 -12 -24 -12 L24 -12 Q28 -12 28 -8 L28 6.8 A65 70 0 0 0 -28 6.8 Z" fill="#2b2b2b"/>
+          <!-- face -->
+          <path d="M-18 40 L-18 50 M18 40 L18 50" fill="none"/>
+          <path d="M-22 76 Q0 84 22 78" fill="none"/>
+
+          <!-- arms and hands -->
+          <g transform="translate(-63 82)">
+            <g class="armA">
+              <path d="M0 0 C-10 12 -16 26 -18 40" fill="none"/>
+              <circle cx="-19" cy="51" r="12" fill="#2b2b2b"/>
+            </g>
+          </g>
+          <g transform="translate(63 82)">
+            <g class="armB">
+              <path d="M0 0 C10 12 16 26 18 40" fill="none"/>
+              <circle cx="19" cy="51" r="12" fill="#2b2b2b"/>
+            </g>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

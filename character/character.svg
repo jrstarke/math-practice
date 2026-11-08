@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 320" width="300" height="320">
+  <rect width="300" height="320" fill="#ffffff"/>
+  <g stroke="#2b2b2b" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- ground -->
+    <path d="M30 272 C70 266, 110 276, 150 271 S230 266, 270 273" fill="none"/>
+    <!-- body: straight sides with a smooth arched top -->
+    <path d="M82 271 L82 200 A68 72 0 0 1 218 200 L218 271" fill="#ffffff"/>
+    <!-- glow -->
+    <circle cx="150" cy="96" r="38" fill="#c8f7c5" stroke="none" opacity="0.6"/>
+    <!-- light rays -->
+    <path d="M150 64 L150 54 M118 76 L110 68 M182 76 L190 68 M108 98 L98 98 M192 98 L202 98" fill="none" stroke="#2fa84f" stroke-width="3"/>
+    <!-- green light: taller, with a smooth arched top -->
+    <path d="M128 118 L128 100 A22 24 0 0 1 172 100 L172 118 Z" fill="#4cd964"/>
+    <path d="M137 108 L137 100 C137 93 140 88 146 85" fill="none" stroke="#ffffff" stroke-width="3"/>
+    <!-- mount: bottom edge follows the arch so there's no gap -->
+    <path d="M120 135.4 L120 120 Q120 116 124 116 L176 116 Q180 116 180 120 L180 135.4 A68 72 0 0 0 120 135.4 Z" fill="#2b2b2b"/>
+    <!-- eyes -->
+    <circle cx="138" cy="172" r="3.5" fill="#2b2b2b"/>
+    <circle cx="163" cy="170" r="3.5" fill="#2b2b2b"/>
+    <!-- mouth -->
+    <path d="M138 207 L162 206" fill="none"/>
+    <!-- arms -->
+    <path d="M84 224 C74 228, 68 231, 62 233" fill="none"/>
+    <path d="M216 224 C226 228, 232 231, 238 233" fill="none"/>
+    <!-- black circle hands -->
+    <circle cx="54" cy="236" r="9" fill="#2b2b2b"/>
+    <circle cx="246" cy="236" r="9" fill="#2b2b2b"/>
+  </g>
+</svg>
