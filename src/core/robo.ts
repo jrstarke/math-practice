@@ -9,11 +9,46 @@ export const SURPRISE_CHANCE = 1 / 15;
 /** How big a day celebration is: day 1 waves, 2-4 arms up, 5-9 arms up and a jump, 10+ adds fireworks. */
 export type DayTier = 'wave' | 'arms' | 'jump' | 'fireworks';
 
+/** Level-up celebrations; one is picked at random, never the same twice in a row. Ids are also the scene names. */
+export const LEVEL_UPS = ['high-five', 'jump-together', 'pass', 'dance', 'tower', 'keepy-uppy', 'light-show', 'header', 'cartwheel'] as const;
+export type LevelUpStyle = (typeof LEVEL_UPS)[number];
+
+export const LEVEL_UP_WORDS: Record<LevelUpStyle, string> = {
+  'high-five': 'High five!',
+  'jump-together': 'Level up!',
+  pass: 'Nice pass!',
+  dance: 'You leveled up!',
+  tower: 'Level up!',
+  'keepy-uppy': 'Level up!',
+  'light-show': 'Level up!',
+  header: 'Goal! Level up!',
+  cartwheel: 'Wheee! Level up!',
+};
+
+/** Celebrations for every 20 stars (not the 100s, which are always the conga). */
+export const STAR_STYLES = ['walk', 'walk-friend', 'dribble', 'hop', 'stop-wave', 'ball-ride', 'cartwheel'] as const;
+export type StarStyle = (typeof STAR_STYLES)[number];
+
+/** The longest conga line: more takes too long to cross and stops reading as separate friends. */
+export const CONGA_MAX = 10;
+
+/** Robots in the conga for a 100s milestone: 2 at 100, one more per hundred, up to CONGA_MAX. */
+export function congaSize(milestone: number): number {
+  return Math.min(CONGA_MAX, milestone / 100 + 1);
+}
+
+/** Picks uniformly from the list, skipping the one that played last. Calls the rng once. */
+export function pickStyle<T>(list: readonly T[], last: T | null, rng: Rng): T {
+  const choices = list.filter(x => x !== last);
+  return choices[Math.min(choices.length - 1, Math.floor(rng() * choices.length))];
+}
+
 export type BigMoment =
   | { kind: 'kick'; words: string }
   | { kind: 'day'; days: number; tier: DayTier; words: string }
-  | { kind: 'highFive'; words: string }
-  | { kind: 'walk'; withFriend: boolean; words: string };
+  | { kind: 'levelUp'; style: LevelUpStyle; words: string }
+  | { kind: 'stars'; style: StarStyle; words: string }
+  | { kind: 'conga'; robots: number; words: string };
 
 /** What happened on one finished problem (a right answer or a Pass). */
 export interface RoboOutcome {
@@ -36,6 +71,9 @@ export interface RoboMemory {
   /** A completed day whose celebration couldn't play yet (an unlock's kick went first). */
   pendingDay: number | null;
   lastWasSurprise: boolean;
+  /** The last celebration each group played, so neither plays the same one twice in a row. */
+  lastLevelUp: LevelUpStyle | null;
+  lastStars: StarStyle | null;
 }
 
 export interface RoboDecision {
@@ -45,16 +83,11 @@ export interface RoboDecision {
 }
 
 export function initialRoboMemory(): RoboMemory {
-  return { sinceBig: Infinity, pendingWalk: null, pendingDay: null, lastWasSurprise: false };
+  return { sinceBig: Infinity, pendingWalk: null, pendingDay: null, lastWasSurprise: false, lastLevelUp: null, lastStars: null };
 }
 
 export function walkWords(n: number): string {
   return `You've gotten ${n} questions right! Keep going!`;
-}
-
-/** A walk for the milestone she earned; the words say her count now, which is later if it was held back. */
-function walk(milestone: number, total: number): BigMoment {
-  return { kind: 'walk', withFriend: milestone % 100 === 0, words: walkWords(total) };
 }
 
 export function dayTier(days: number): DayTier {
@@ -79,6 +112,7 @@ export function decideRobo(m: RoboMemory, o: RoboOutcome, rng: Rng): { memory: R
   let pendingWalk = milestone ?? m.pendingWalk;
   let pendingDay = o.dayDone ?? m.pendingDay;
 
+  let { lastLevelUp, lastStars } = m;
   let big: BigMoment | null = null;
   if (o.unlocked.length > 0) {
     big = { kind: 'kick', words: `New: ${o.unlocked.join(' and ')}!` };
@@ -87,9 +121,16 @@ export function decideRobo(m: RoboMemory, o: RoboOutcome, rng: Rng): { memory: R
     big = { kind: 'day', days: pendingDay, tier: dayTier(pendingDay), words: dayWords(pendingDay) };
     pendingDay = null;
   } else if (allowed && o.levelChange === 1) {
-    big = { kind: 'highFive', words: 'High five!' };
+    lastLevelUp = pickStyle(LEVEL_UPS, lastLevelUp, rng);
+    big = { kind: 'levelUp', style: lastLevelUp, words: LEVEL_UP_WORDS[lastLevelUp] };
   } else if (allowed && pendingWalk !== null) {
-    big = walk(pendingWalk, o.totalAfter);
+    // Sized from the milestone she earned; the words say her count now, which is later if it was held back.
+    if (pendingWalk % 100 === 0) {
+      big = { kind: 'conga', robots: congaSize(pendingWalk), words: walkWords(o.totalAfter) };
+    } else {
+      lastStars = pickStyle(STAR_STYLES, lastStars, rng);
+      big = { kind: 'stars', style: lastStars, words: walkWords(o.totalAfter) };
+    }
     pendingWalk = null;
   }
 
@@ -102,7 +143,7 @@ export function decideRobo(m: RoboMemory, o: RoboOutcome, rng: Rng): { memory: R
   const surprise = !big && !line && !o.passed && !m.lastWasSurprise && rng() < SURPRISE_CHANCE;
 
   return {
-    memory: { sinceBig: big ? 0 : s, pendingWalk, pendingDay, lastWasSurprise: surprise },
+    memory: { sinceBig: big ? 0 : s, pendingWalk, pendingDay, lastWasSurprise: surprise, lastLevelUp, lastStars },
     decision: { big, line, surprise },
   };
 }

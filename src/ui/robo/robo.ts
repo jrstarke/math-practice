@@ -121,16 +121,17 @@ export function createRobo(): RoboView {
   }
 
   function standingMoment(big: BigMoment, at: MomentPlace): { node: HTMLElement; ms: number } {
-    if (big.kind === 'walk') {
-      const m = scene(big.withFriend ? 'walk-friend' : 'walk');
+    if (big.kind === 'stars' || big.kind === 'conga') {
+      const withFriend = big.kind === 'conga' || big.style === 'walk-friend';
+      const m = scene(withFriend ? 'walk-friend' : 'walk');
       const walker = div('robo-walker');
       walker.append(slot(cheering(), 'robo-walking', at.size));
-      if (big.withFriend) walker.append(slot(cheering(true), 'robo-walking robo-walking-b', at.size));
+      if (withFriend) walker.append(slot(cheering(true), 'robo-walking robo-walking-b', at.size));
       walker.append(words(big.words));
       m.append(walker);
       return { node: m, ms: MOMENT_MS.walk };
     }
-    if (big.kind === 'highFive') {
+    if (big.kind === 'levelUp') {
       const m = scene('high-five');
       const me = cheering();
       setFigure(me, { arms: 'high-five' });

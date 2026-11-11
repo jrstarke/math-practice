@@ -48,9 +48,9 @@ function mock(): void {
   const at = { mode: 'standing' as const, spot, laneTop: laneTop(stage, size), size, viewportWidth: w, peek: peekPosition(stage, size),
     wordsAt: { x: w / 2, bottom: stage.top + 128, width: w - 32 } };
   const bigs: Record<string, BigMoment> = {
-    walk: { kind: 'walk', withFriend: false, words: "You've gotten 40 questions right! Keep going!" },
-    'walk-friend': { kind: 'walk', withFriend: true, words: "You've gotten 100 questions right! Keep going!" },
-    'high-five': { kind: 'highFive', words: 'High five!' },
+    walk: { kind: 'stars', style: 'walk', words: "You've gotten 40 questions right! Keep going!" },
+    'walk-friend': { kind: 'stars', style: 'walk-friend', words: "You've gotten 100 questions right! Keep going!" },
+    'high-five': { kind: 'levelUp', style: 'high-five', words: 'High five!' },
     kick: { kind: 'kick', words: 'New: division!' },
   };
   for (const days of [1, 3, 7, 12]) bigs[`day-${days}`] = { kind: 'day', days, tier: dayTier(days), words: dayWords(days) };

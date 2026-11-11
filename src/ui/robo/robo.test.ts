@@ -5,9 +5,9 @@ import { createRobo, MOMENT_MS, type MomentPlace, type RoboView } from './robo';
 
 const standing: MomentPlace = { mode: 'standing', spot: { left: 647, top: 932 }, laneTop: 504, size: 136, viewportWidth: 810, peek: { left: 349, top: 504 }, wordsAt: { x: 405, bottom: 188, width: 778 } };
 const peek: MomentPlace = { ...standing, mode: 'peek', spot: null };
-const walk: BigMoment = { kind: 'walk', withFriend: false, words: "You've gotten 40 questions right! Keep going!" };
-const walk100: BigMoment = { kind: 'walk', withFriend: true, words: "You've gotten 100 questions right! Keep going!" };
-const highFive: BigMoment = { kind: 'highFive', words: 'High five!' };
+const walk: BigMoment = { kind: 'stars', style: 'walk', words: "You've gotten 40 questions right! Keep going!" };
+const walk100: BigMoment = { kind: 'stars', style: 'walk-friend', words: "You've gotten 100 questions right! Keep going!" };
+const highFive: BigMoment = { kind: 'levelUp', style: 'high-five', words: 'High five!' };
 const kick: BigMoment = { kind: 'kick', words: 'New: division!' };
 
 let robo: RoboView;
