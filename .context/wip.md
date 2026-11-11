@@ -14,6 +14,12 @@
   double/cut the welcome; red light + hidden try-again words if she returns to an unanswered wrong try; advance timer
   can cut welcome words short; stale storage test names; shots.mjs YESTERDAY off in fall-back hour.
   User pushed to prod too (prod/main = 6c164ad, 2026-11-11).
+- **IN PROGRESS (2026-11-11): Celebration variety.** Random level-up celebrations (9) and 20-star celebrations (7),
+  no repeat in a row per group; 100s keep walk-with-friend, kick stays for unlocks, fireworks stay day-streak only.
+  Spec docs/superpowers/specs/2026-11-11-celebration-variety-design.md, mockups docs/superpowers/mockups/2026-11-11-celebrations/.
+  Approach 1 (decideRobo picks; view has one scene per celebration). Builder check clean. AWAITING USER APPROVAL of the
+  doc → then superpowers:writing-plans. Visual companion: .superpowers/brainstorm/773830-1794424189 (port $PUBLISH_PORT,
+  run start-server.sh with --foreground as a background job, else it dies with its shell).
 - **Next-step candidates** (details further down this file):
   1. Gentler streak — today a hint breaks the 🔥 streak; conflicts with "hints should feel good" (small).
   2. Short sets with a finish line ending in Robo's kick (reverses the "endless" decision; user's call).

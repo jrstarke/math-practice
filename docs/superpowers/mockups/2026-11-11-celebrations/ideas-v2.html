@@ -1,0 +1,423 @@
+<h2>More celebration ideas</h2>
+<p class="subtitle">Each one loops. Tell me in the terminal which ones you'd like in the mix (clicking is optional). Timing and sizes are rough.</p>
+
+<style>
+/* Robo (src/ui/robo/). Safari 15 safe: no container queries, :has(), nesting or inset shorthand. */
+
+.robo-figure { width: 100%; height: 100%; pointer-events: none; }
+.robo-figure svg { display: block; overflow: visible; }
+
+/* Light: colours come from setFigure() as custom properties (LIGHT in drawing.ts). */
+.robo-figure [data-part="light"] { fill: var(--robo-light, #e4e1d8); }
+.robo-figure [data-part="glow"] { fill: var(--robo-glow, transparent); opacity: 0.6; }
+.robo-figure [data-part="rays"] { stroke: var(--robo-rays, transparent); }
+.robo-figure[data-light="off"] [data-part="glow"],
+.robo-figure[data-light="off"] [data-part="rays"],
+.robo-figure[data-light="off"] [data-part="highlight"] { display: none; }
+
+/* Only the variant matching the figure's state shows. */
+.robo-figure [data-part^="eyes-"],
+.robo-figure [data-part^="mouth-"],
+.robo-figure [data-pose] { display: none; }
+.robo-figure[data-look="front"] [data-part="eyes-front"],
+.robo-figure[data-look="up"] [data-part="eyes-up"],
+.robo-figure[data-look="side"] [data-part="eyes-side"],
+.robo-figure[data-mouth="flat"] [data-part="mouth-flat"],
+.robo-figure[data-mouth="smile"] [data-part="mouth-smile"],
+.robo-figure[data-mouth="talk"] [data-part="mouth-talk"],
+.robo-figure[data-arms="down"] [data-pose="down"],
+.robo-figure[data-arms="point"] [data-pose="point"],
+.robo-figure[data-arms="up"] [data-pose="up"],
+.robo-figure[data-arms="high-five"] [data-pose="high-five"] { display: inline; }
+
+/* Signs of life: a blink every few seconds while the light is off, a soft pulse while it's on. */
+.robo-eyes { transform-box: fill-box; transform-origin: center; }
+.robo-figure[data-light="off"] .robo-eyes { animation: robo-blink 4.2s infinite; }
+.robo-figure:not([data-light="off"]) [data-part="glow"] { animation: robo-pulse 1.2s ease-in-out infinite; }
+@keyframes robo-blink {
+  0%, 94%, 100% { transform: scaleY(1); }
+  97% { transform: scaleY(0.1); }
+}
+@keyframes robo-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.85; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .robo-figure[data-light="off"] .robo-eyes,
+  .robo-figure:not([data-light="off"]) [data-part="glow"] { animation: none; }
+}
+
+/* ---- The standing Robo (data-role="robo") ---- */
+.robo {
+  position: fixed; left: 0; top: 0; z-index: 4; pointer-events: none;
+  transition: left 0.3s ease, top 0.3s ease, opacity 0.3s ease;
+}
+.robo[hidden] { display: none; }
+.robo[data-away] { opacity: 0; }
+.robo.robo-hop .robo-figure { animation: robo-hop 0.35s ease-out; }
+.robo.robo-flash [data-part="glow"] { animation: robo-flash 0.6s ease-out; }
+.robo[data-surprise="bounce"] .robo-figure { animation: robo-bounce 1.2s ease-in-out; }
+.robo[data-surprise="wave"] [data-part="arm-right"] .robo-arm { animation: robo-wave 1.2s ease-in-out; }
+.robo-arm, .robo-leg { transform-origin: 0 0; }
+
+/* Robo's own bubble at its spot: above its head, kept within Robo's column so it never covers the pad. */
+.robo-bubble, .robo-words {
+  background: #ffffff; border-radius: 16px; padding: 8px 12px; box-shadow: 0 3px 0 #e6dccb;
+  font-size: 1rem; font-weight: 700; line-height: 1.3; text-align: center; color: #2b2a4c;
+}
+.robo-bubble {
+  position: absolute; bottom: calc(100% + 10px); right: -4px; width: max-content; max-width: 128px;
+}
+.robo-bubble::after {
+  content: ''; position: absolute; right: 44px; bottom: -10px;
+  border: 10px solid transparent; border-bottom: 0; border-top-color: #ffffff;
+}
+.robo-bubble.empty { visibility: hidden; }
+
+/* ---- Moments (data-role="robo-moment") ---- */
+.robo-moment-layer {
+  position: fixed; left: 0; top: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; overflow: hidden;
+}
+.robo-moment-layer * { pointer-events: none; }
+.robo-scene { position: absolute; left: 0; width: 100%; }
+.robo-slot { position: relative; flex: none; }
+.robo-friend svg { transform: scaleX(-1); }
+.robo-words { width: max-content; max-width: 220px; }
+
+/* Walk: across the lane above the controls, 0.8s steps with the walk cycle from robot-walk.svg. */
+.robo-walker {
+  position: absolute; left: 0; top: 0; display: flex; align-items: flex-start; gap: 6px;
+  animation: robo-walk 4s linear forwards;
+}
+.robo-walker .robo-words { align-self: flex-start; margin-top: 6px; }
+.robo-walking .robo-body-group { animation: robo-bob 0.8s ease-in-out infinite; }
+.robo-walking [data-part="leg-left"] .robo-leg { animation: robo-swing-a 0.8s ease-in-out infinite; }
+.robo-walking [data-part="leg-right"] .robo-leg { animation: robo-swing-b 0.8s ease-in-out infinite; }
+.robo-walking [data-part="arm-left"] .robo-arm { animation: robo-arm-a 0.8s ease-in-out infinite; }
+.robo-walking [data-part="arm-right"] .robo-arm { animation: robo-arm-b 0.8s ease-in-out infinite; }
+.robo-walking-b .robo-body-group,
+.robo-walking-b .robo-leg,
+.robo-walking-b .robo-arm { animation-delay: -0.4s; }
+
+/* High five: Robo hops in mid-lane, the friend runs in from the right, they high-five, the friend runs off. */
+.robo-hf-me, .robo-hf-friend { position: absolute; top: 0; }
+.robo-hf-me { left: calc(50% - var(--s, 1) * 100px); animation: robo-pop-in 2.5s ease-out forwards; }
+.robo-hf-friend { left: calc(50% - var(--s, 1) * 6px); animation: robo-run-in 2.5s ease-in-out forwards; }
+[data-moment="high-five"] .robo-words { position: absolute; right: calc(50% + var(--s, 1) * 112px); top: 0; animation: robo-pop-in 2.5s ease-out forwards; }
+
+/* Kick (robot-kick.svg): wind up, kick fast, the ball bounces away across the lane with speed lines. */
+.robo-kicker { position: absolute; top: 0; left: calc(50% - var(--s, 1) * 200px); animation: robo-pop-in 3s ease-out forwards; }
+[data-moment="kick"] .robo-words { position: absolute; right: calc(50% + var(--s, 1) * 212px); top: 0; animation: robo-pop-in 3s ease-out forwards; }
+.robo-kicking [data-part="leg-right"] .robo-leg { animation: robo-kick-leg 3s forwards; }
+.robo-kicking [data-part="arm-left"] .robo-arm { animation: robo-kick-arm-a 3s ease-in-out forwards; }
+.robo-kicking [data-part="arm-right"] .robo-arm { animation: robo-kick-arm-b 3s ease-in-out forwards; }
+.robo-kicking[data-light] [data-part="glow"] { animation: robo-kick-glow 3s ease-in-out forwards; }
+/* The rig is Robo-sized at full scale and shrinks with --s, so the ball's size and flight shrink with Robo. */
+.robo-ball-rig {
+  position: absolute; bottom: 0; left: calc(50% - var(--s, 1) * 200px); width: 112px; height: 136px;
+  transform: scale(var(--s, 1)); transform-origin: 0 100%;
+}
+.robo-ball { position: absolute; top: 108px; left: 76px; width: 50px; height: 29px; animation: robo-fly 3s forwards; }
+.robo-ball svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.robo-ball-spin { transform-box: fill-box; transform-origin: center; animation: robo-spin 3s forwards; }
+.robo-speed { animation: robo-speed 3s forwards; }
+
+/* Day celebration: Robo pops up mid-lane with the words on its left. Day 1 waves; 2-4 arms up; 5-9 also jumps;
+   10+ also has fireworks on its right. A jumping Robo is drawn at 85% so the jump stays inside its slot (the lane is
+   only as tall as the room under the problem). */
+.robo-day-me { position: absolute; top: 0; left: calc(50% - var(--s, 1) * 56px); animation: robo-pop-in 3.5s ease-out forwards; }
+[data-moment="day"] .robo-words {
+  position: absolute; right: calc(50% + var(--s, 1) * 68px); top: 0; max-width: min(260px, calc(50% - var(--s, 1) * 68px - 16px));
+  animation: robo-pop-in 3.5s ease-out forwards;
+}
+[data-tier="wave"] .robo-day-me [data-part="arm-right"] .robo-arm { animation: robo-wave 1.6s ease-in-out 0.4s 2; }
+[data-tier="jump"] .robo-day-me .robo-figure,
+[data-tier="fireworks"] .robo-day-me .robo-figure {
+  transform-origin: 50% 100%; transform: scale(0.85); animation: robo-day-jump 3.5s ease-in-out forwards;
+}
+.robo-fireworks {
+  position: absolute; top: 0; left: calc(50% + var(--s, 1) * 68px); width: 170px; height: 136px;
+  transform: scale(var(--s, 1)); transform-origin: 0 0;
+}
+.robo-fireworks svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.robo-burst { transform-box: fill-box; transform-origin: center; opacity: 0; animation: robo-burst 1.3s ease-out 2; }
+.robo-burst-1 { animation-delay: 0.4s; }
+.robo-burst-2 { animation-delay: 0.75s; }
+.robo-burst-3 { animation-delay: 1.1s; }
+
+/* Peek (small screens): rise out of the controls' top edge, cheer, drop back. */
+.robo-peek { position: absolute; }
+.robo-peek-clip { width: 100%; height: 100%; overflow: hidden; }
+.robo-peek-clip .robo-slot { animation: robo-peek 2.5s ease-in-out forwards; }
+.robo-peek-words {
+  position: absolute; transform: translate(-50%, -100%); max-width: calc(100vw - 32px);
+  animation: robo-fade 2.5s ease-in-out forwards;
+}
+
+@keyframes robo-hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-14px); } }
+@keyframes robo-flash { 0% { opacity: 1; } 100% { opacity: 0.6; } }
+@keyframes robo-bounce {
+  0%, 100% { transform: translateY(0); } 20%, 60% { transform: translateY(-12px); } 40%, 80% { transform: translateY(0); }
+}
+@keyframes robo-wave {
+  0%, 100% { transform: rotate(0deg); } 20%, 50% { transform: rotate(-150deg); } 35%, 65% { transform: rotate(-115deg); }
+  80% { transform: rotate(-150deg); }
+}
+@keyframes robo-walk { from { transform: translateX(-100%); } to { transform: translateX(100vw); } }
+@keyframes robo-bob { 0%, 50%, 100% { transform: translateY(0); } 25%, 75% { transform: translateY(-5px); } }
+@keyframes robo-swing-a { 0%, 100% { transform: rotate(24deg); } 50% { transform: rotate(-24deg); } }
+@keyframes robo-swing-b { 0%, 100% { transform: rotate(-24deg); } 50% { transform: rotate(24deg); } }
+@keyframes robo-arm-a { 0%, 100% { transform: rotate(-25deg); } 50% { transform: rotate(20deg); } }
+@keyframes robo-arm-b { 0%, 100% { transform: rotate(-20deg); } 50% { transform: rotate(25deg); } }
+@keyframes robo-pop-in {
+  0% { opacity: 0; transform: translateY(16px); } 12% { opacity: 1; transform: translateY(-6px); }
+  20%, 88% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(0); }
+}
+@keyframes robo-run-in {
+  0% { transform: translateX(60vw); } 32%, 72% { transform: translateX(0); } 100% { transform: translateX(60vw); }
+}
+@keyframes robo-kick-leg {
+  0%, 20% { transform: rotate(0deg); animation-timing-function: ease-in-out; }
+  38% { transform: rotate(35deg); animation-timing-function: ease-in; }
+  46%, 56% { transform: rotate(-45deg); animation-timing-function: ease-in-out; }
+  70%, 100% { transform: rotate(0deg); }
+}
+@keyframes robo-kick-arm-a { 0%, 30%, 75%, 100% { transform: rotate(0deg); } 46%, 56% { transform: rotate(45deg); } }
+@keyframes robo-kick-arm-b { 0%, 30%, 75%, 100% { transform: rotate(0deg); } 46%, 56% { transform: rotate(-45deg); } }
+@keyframes robo-kick-glow { 0%, 35%, 70%, 100% { opacity: 0.3; } 46%, 56% { opacity: 1; } }
+@keyframes robo-fly {
+  0%, 44% { transform: translate(0, 0); opacity: 1; animation-timing-function: ease-out; }
+  52% { transform: translate(88px, -72px); animation-timing-function: ease-in; }
+  60% { transform: translate(176px, 0); animation-timing-function: ease-out; }
+  66% { transform: translate(231px, -41px); animation-timing-function: ease-in; }
+  72% { transform: translate(286px, 0); animation-timing-function: ease-out; }
+  76% { transform: translate(313px, -18px); animation-timing-function: ease-in; }
+  80% { transform: translate(341px, 0); opacity: 1; animation-timing-function: ease-out; }
+  92%, 100% { transform: translate(380px, 0); opacity: 0; }
+}
+@keyframes robo-spin { 0%, 44% { transform: rotate(0deg); } 90%, 100% { transform: rotate(900deg); } }
+@keyframes robo-speed { 0%, 43% { opacity: 0; } 44%, 60% { opacity: 1; } 80%, 100% { opacity: 0; } }
+@keyframes robo-peek {
+  0% { transform: translateY(100%); } 18%, 82% { transform: translateY(0); } 100% { transform: translateY(100%); }
+}
+@keyframes robo-fade { 0% { opacity: 0; } 15%, 85% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes robo-day-jump {
+  0%, 20%, 40%, 60%, 100% { transform: translateY(0) scale(0.85); }
+  30%, 50% { transform: translateY(-15%) scale(0.85); }
+}
+@keyframes robo-burst {
+  0% { opacity: 0; transform: scale(0.2); } 15% { opacity: 1; } 70% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.1); }
+}
+
+/* Reduce Motion: no walking, hopping, kicking or running; Robo fades in and out instead. */
+@media (prefers-reduced-motion: reduce) {
+  .robo { transition: opacity 0.3s ease; }
+  .robo.robo-hop .robo-figure { animation: robo-fade-in 0.35s ease-out; }
+  .robo[data-surprise="bounce"] .robo-figure,
+  .robo[data-surprise="wave"] .robo-figure { animation: robo-fade-in 0.6s ease-out; }
+  .robo[data-surprise="wave"] [data-part="arm-right"] .robo-arm,
+  .robo-walking .robo-body-group, .robo-walking .robo-leg, .robo-walking .robo-arm,
+  .robo-kicking .robo-leg, .robo-kicking .robo-arm { animation: none; }
+  .robo-walker { left: 50%; transform: translateX(-50%); animation: robo-fade 4s ease-in-out forwards; }
+  .robo-hf-me, .robo-hf-friend, .robo-kicker,
+  [data-moment="high-five"] .robo-words, [data-moment="kick"] .robo-words { animation: robo-fade 2.5s ease-in-out forwards; }
+  .robo-ball { display: none; }
+  .robo-peek-clip .robo-slot { animation: robo-fade 2.5s ease-in-out forwards; }
+  /* Day: no wave, no jump, no flying sparks. Robo and the words fade in and out; the bursts just fade in, still. */
+  .robo-day-me, [data-moment="day"] .robo-words { animation: robo-fade 3.5s ease-in-out forwards; }
+  [data-tier="wave"] .robo-day-me [data-part="arm-right"] .robo-arm { animation: none; }
+  [data-tier="jump"] .robo-day-me .robo-figure,
+  [data-tier="fireworks"] .robo-day-me .robo-figure { animation: none; transform: none; }
+  .robo-burst { animation: robo-fade 3.5s ease-in-out forwards; }
+}
+@keyframes robo-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+.card-image { padding: 0 !important; }
+.stage { position: relative; width: 100%; align-self: stretch; min-height: 170px; background: #fff8ec; overflow: hidden; border-radius: 8px; }
+.stage::after { content: ''; position: absolute; left: 0; right: 0; bottom: 10px; border-top: 2px dashed #e6dccb; }
+.slot { position: absolute; bottom: 8px; width: 82px; height: 100px; }
+.words { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); background: #fff; border-radius: 12px; padding: 4px 10px;
+  font: 700 14px/1.3 system-ui, sans-serif; color: #2b2a4c; box-shadow: 0 2px 0 #e6dccb; white-space: nowrap; z-index: 3; }
+.ball { position: absolute; bottom: 8px; width: 26px; height: 26px; z-index: 2; }
+.ball svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.spin svg { animation: m-spin 0.6s linear infinite; }
+@keyframes m-spin { to { transform: rotate(360deg); } }
+.pool-label { margin: 28px 0 6px; }
+.walker { position: absolute; left: 0; bottom: 8px; width: 82px; height: 100px; }
+.walker .slot { bottom: 0; left: 0; }
+.later { opacity: 0; animation: m-show var(--ms) forwards; }
+@keyframes m-show { 0%, 66% { opacity: 0; } 72%, 100% { opacity: 1; } }
+
+/* Keepy-uppy: four taps off the right foot, then up onto Robo's head. */
+.ku-me { left: calc(50% - 41px); }
+.ku-me [data-part="leg-right"] .robo-leg { animation: m-tap 0.6s ease-out 4; }
+@keyframes m-tap { 0% { transform: rotate(-28deg); } 40%, 100% { transform: rotate(0deg); } }
+.ku-ball { left: calc(50% + 2px); animation: m-keepy 3.6s forwards; }
+@keyframes m-keepy {
+  0% { transform: translate(0, 0); animation-timing-function: ease-out; } 8.3% { transform: translate(0, -60px); animation-timing-function: ease-in; }
+  16.6% { transform: translate(0, 0); animation-timing-function: ease-out; } 25% { transform: translate(0, -60px); animation-timing-function: ease-in; }
+  33.3% { transform: translate(0, 0); animation-timing-function: ease-out; } 41.6% { transform: translate(0, -60px); animation-timing-function: ease-in; }
+  50% { transform: translate(0, 0); animation-timing-function: ease-out; } 60% { transform: translate(-8px, -135px); animation-timing-function: ease-in; }
+  70%, 100% { transform: translate(-15px, -104px); }
+}
+
+/* Take a bow, with the friend clapping. */
+.bw-me { left: calc(50% - 90px); }
+/* Only the body above the hips bends; the feet stay planted. */
+.bw-me .m-upper { transform-box: view-box; transform-origin: 0px 140px; animation: m-bow 3.2s ease-in-out forwards; }
+@keyframes m-bow { 0%, 25% { transform: rotate(0deg); } 40%, 65% { transform: rotate(32deg); } 80%, 100% { transform: rotate(0deg); } }
+.bw-friend { left: calc(50% + 20px); }
+.bw-friend [data-part="arm-left"] .robo-arm { animation: m-clap-l 0.45s ease-in-out infinite alternate; }
+.bw-friend [data-part="arm-right"] .robo-arm { animation: m-clap-r 0.45s ease-in-out infinite alternate; }
+@keyframes m-clap-l { from { transform: rotate(-35deg); } to { transform: rotate(-68deg); } }
+@keyframes m-clap-r { from { transform: rotate(35deg); } to { transform: rotate(68deg); } }
+
+/* Light show: the light runs through new colours (never red) while Robo sways. */
+.ls-me { left: calc(50% - 41px); }
+.ls-me .robo-figure { animation: m-sway 0.8s ease-in-out infinite; transform-origin: 50% 100%; }
+.ls-me [data-part="light"] { animation: m-light 1.6s steps(1) infinite; }
+.ls-me [data-part="glow"] { animation: m-glow 1.6s steps(1) infinite; opacity: 0.7; }
+.ls-me [data-part="rays"] { animation: m-rays 1.6s steps(1) infinite; }
+@keyframes m-sway { 0%, 100% { transform: translateY(0) rotate(-5deg); } 50% { transform: translateY(-8px) rotate(5deg); } }
+@keyframes m-light { 0% { fill: #4cd964; } 25% { fill: #f5b700; } 50% { fill: #4aa3ff; } 75% { fill: #a66cff; } }
+@keyframes m-glow { 0% { fill: #c8f7c5; } 25% { fill: #ffe9a8; } 50% { fill: #cfe6ff; } 75% { fill: #e6d6ff; } }
+@keyframes m-rays { 0% { stroke: #2fa84f; } 25% { stroke: #d99a00; } 50% { stroke: #2a7fd4; } 75% { stroke: #7c45d6; } }
+
+/* Header into a goal: the friend tosses, Robo heads it in. */
+.hd-friend { left: 18px; }
+.hd-me { left: calc(50% - 30px); }
+.hd-me .robo-figure { transform-origin: 50% 90%; animation: m-nod 3.6s ease-in-out forwards; }
+@keyframes m-nod { 0%, 36% { transform: rotate(0deg); } 41% { transform: rotate(-9deg); } 46% { transform: rotate(10deg); } 54%, 100% { transform: rotate(0deg); } }
+.hd-ball { animation: m-header 3.6s forwards; }
+@keyframes m-header {
+  0%, 15% { left: 92px; bottom: 74px; animation-timing-function: ease-out; }
+  30% { left: 38%; bottom: 140px; animation-timing-function: ease-in; }
+  45% { left: calc(50% - 2px); bottom: 104px; animation-timing-function: linear; }
+  62%, 100% { left: calc(100% - 46px); bottom: 34px; }
+}
+.goal { position: absolute; right: 10px; bottom: 10px; width: 46px; height: 64px; border: 3px solid #2b2b2b; border-bottom: 0; border-radius: 4px 4px 0 0;
+  background: repeating-linear-gradient(45deg, transparent 0 7px, #cfc6b5 7px 8px), repeating-linear-gradient(-45deg, transparent 0 7px, #cfc6b5 7px 8px); }
+
+/* 20s: moonwalk — glides backwards while the feet walk forwards. */
+.mw { animation: m-back 4s linear forwards; }
+@keyframes m-back { from { transform: translateX(560px); } to { transform: translateX(-100px); } }
+.mw [data-part="leg-left"] .robo-leg { animation: robo-swing-a 0.8s ease-in-out infinite; }
+.mw [data-part="leg-right"] .robo-leg { animation: robo-swing-b 0.8s ease-in-out infinite; }
+
+/* 20s: conga line — three in a row, bobbing, with a kick every few steps. */
+.cg { width: 220px; animation: m-across 4.4s linear forwards; }
+.cg .slot:nth-child(2) { left: 66px; }
+.cg .slot:nth-child(3) { left: 132px; }
+.cg .slot .robo-figure { animation: m-bob 0.4s ease-in-out infinite; }
+.cg [data-part="leg-right"] .robo-leg { animation: m-conga-kick 1.6s ease-in-out infinite; }
+.cg [data-part="leg-left"] .robo-leg { animation: robo-swing-a 0.8s ease-in-out infinite; }
+@keyframes m-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes m-conga-kick { 0%, 60%, 100% { transform: rotate(0deg); } 75% { transform: rotate(-40deg); } }
+@keyframes m-across { from { transform: translateX(-240px); } to { transform: translateX(560px); } }
+
+/* 20s: ball ride — Robo balances on a big rolling ball. */
+.br { height: 150px; animation: m-across 4.4s linear forwards; }
+.br .slot { bottom: 40px; left: 0; }
+.br .slot .robo-figure { animation: m-balance 0.9s ease-in-out infinite; transform-origin: 50% 100%; }
+@keyframes m-balance { 0%, 100% { transform: rotate(-7deg); } 50% { transform: rotate(7deg); } }
+.br .big-ball { position: absolute; left: 20px; bottom: 0; width: 44px; height: 44px; }
+.br .big-ball svg { animation: m-spin 0.9s linear infinite; }
+</style>
+
+<h3 class="pool-label">Leveling up</h3>
+<div class="cards" data-multiselect>
+  <div class="card" data-choice="lu-keepy" onclick="toggleSelect(this)">
+    <div class="card-image"><div class="stage" data-scene="keepy" data-ms="3600"></div></div>
+    <div class="card-body"><h3>Keepy-uppy</h3><p>Robo taps the ball up four times, then it lands on its head. Arms up. "Level up!"</p></div>
+  </div>
+  <div class="card" data-choice="lu-bow" onclick="toggleSelect(this)">
+    <div class="card-image"><div class="stage" data-scene="bow" data-ms="3200"></div></div>
+    <div class="card-body"><h3>Take a bow</h3><p>Robo bows like a performer while the friend claps. "Ta-da! Level up!"</p></div>
+  </div>
+  <div class="card" data-choice="lu-light" onclick="toggleSelect(this)">
+    <div class="card-image"><div class="stage" data-scene="light" data-ms="3200"></div></div>
+    <div class="card-body"><h3>Light show</h3><p>Robo sways while its light flashes green, yellow, blue and purple (never red). "Level up!"</p></div>
+  </div>
+  <div class="card" data-choice="lu-header" onclick="toggleSelect(this)">
+    <div class="card-image"><div class="stage" data-scene="header" data-ms="3600"></div></div>
+    <div class="card-body"><h3>Header into a goal</h3><p>The friend tosses the ball, Robo heads it into a little net. "Goal! Level up!"</p></div>
+  </div>
+</div>
+
+<h3 class="pool-label">Every 20 stars</h3>
+<div class="cards" data-multiselect>
+  <div class="card" data-choice="st-moonwalk" onclick="toggleSelect(this)">
+    <div class="card-image"><div class="stage" data-scene="moonwalk" data-ms="4000"></div></div>
+    <div class="card-body"><h3>Moonwalk</h3><p>Robo glides backwards across while its feet walk forwards.</p></div>
+  </div>
+  <div class="card" data-choice="st-conga" onclick="toggleSelect(this)">
+    <div class="card-image"><div class="stage" data-scene="conga" data-ms="4400"></div></div>
+    <div class="card-body"><h3>Conga line</h3><p>Robo and two friends bob across in a line, kicking every few steps.</p></div>
+  </div>
+  <div class="card" data-choice="st-ballride" onclick="toggleSelect(this)">
+    <div class="card-image"><div class="stage" data-scene="ballride" data-ms="4400"></div></div>
+    <div class="card-body"><h3>Ball ride</h3><p>Robo balances on top of a big ball as it rolls across.</p></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const FIGURE = "<div class=\"robo-figure\" aria-hidden=\"true\" data-light=\"off\" data-mouth=\"flat\" data-look=\"front\" data-arms=\"down\" style=\"--robo-light: #e4e1d8; --robo-glow: transparent; --robo-rays: transparent;\">\n<svg viewBox=\"-125 -90 250 305\" width=\"100%\" height=\"100%\" preserveAspectRatio=\"xMidYMax meet\" focusable=\"false\" fill=\"none\" stroke=\"#2b2b2b\" stroke-width=\"4\" stroke-linecap=\"round\" stroke-linejoin=\"round\">\n  <g class=\"robo-body-group\">\n    <g data-part=\"leg-left\" transform=\"translate(-30 140)\"><g class=\"robo-leg\">\n      <path d=\"M0 0 L0 55\"></path><ellipse class=\"robo-foot\" cx=\"-6\" cy=\"62\" rx=\"19\" ry=\"12\" fill=\"#2b2b2b\" stroke=\"none\"></ellipse>\n    </g></g>\n    <g data-part=\"leg-right\" transform=\"translate(30 140)\"><g class=\"robo-leg\">\n      <path d=\"M0 0 L0 55\"></path><ellipse class=\"robo-foot\" cx=\"6\" cy=\"62\" rx=\"19\" ry=\"12\" fill=\"#2b2b2b\" stroke=\"none\"></ellipse>\n    </g></g>\n    <circle data-part=\"glow\" cx=\"0\" cy=\"-38\" r=\"34\" stroke=\"none\"></circle>\n    <path data-part=\"rays\" d=\"M0 -72 L0 -82 M-30 -62 L-37 -69 M30 -62 L37 -69 M-38 -38 L-48 -38 M38 -38 L48 -38\" stroke-width=\"3\"></path>\n    <path data-part=\"light\" d=\"M-20 -12 L-20 -38 A20 22 0 0 1 20 -38 L20 -12 Z\"></path>\n    <path data-part=\"highlight\" d=\"M-11 -22 L-11 -38 C-11 -46 -7 -51 -2 -53\" stroke=\"#ffffff\" stroke-width=\"3\"></path>\n    <path data-part=\"body\" d=\"M-65 140 L-65 70 A65 70 0 0 1 65 70 L65 140 Z\" fill=\"#ffffff\"></path>\n    <path data-part=\"mount\" d=\"M-28 6.8 L-28 -8 Q-28 -12 -24 -12 L24 -12 Q28 -12 28 -8 L28 6.8 A65 70 0 0 0 -28 6.8 Z\" fill=\"#2b2b2b\"></path>\n    <g class=\"robo-eyes\">\n      <path data-part=\"eyes-front\" d=\"M-18 40 L-18 50 M18 40 L18 50\"></path>\n      <path data-part=\"eyes-up\" d=\"M-23 32 L-23 42 M13 32 L13 42\"></path>\n      <path data-part=\"eyes-side\" d=\"M-26 40 L-26 50 M10 40 L10 50\"></path>\n    </g>\n    <path data-part=\"mouth-flat\" d=\"M-22 78 L22 78\"></path>\n    <path data-part=\"mouth-smile\" d=\"M-22 76 Q0 86 22 76\"></path>\n    <ellipse data-part=\"mouth-talk\" cx=\"0\" cy=\"80\" rx=\"9\" ry=\"7\" fill=\"#2b2b2b\" stroke=\"none\"></ellipse>\n    <g data-part=\"arm-left\" transform=\"translate(-63 82)\"><g class=\"robo-arm\">\n  <g data-pose=\"down\"><path d=\"M0 0 C-10 12 -16 26 -18 40\"></path><circle cx=\"-19\" cy=\"51\" r=\"12\" fill=\"#2b2b2b\" stroke=\"none\"></circle></g>\n  <g data-pose=\"point\"><path d=\"M0 0 C-18 -2 -34 -14 -42 -32\"></path><circle cx=\"-47\" cy=\"-43\" r=\"12\" fill=\"#2b2b2b\" stroke=\"none\"></circle></g>\n  <g data-pose=\"up\"><path d=\"M0 0 C-14 -6 -24 -22 -28 -42\"></path><circle cx=\"-30\" cy=\"-54\" r=\"12\" fill=\"#2b2b2b\" stroke=\"none\"></circle></g>\n  <g data-pose=\"high-five\"><path d=\"M0 0 C-10 12 -16 26 -18 40\"></path><circle cx=\"-19\" cy=\"51\" r=\"12\" fill=\"#2b2b2b\" stroke=\"none\"></circle></g></g></g>\n    <g data-part=\"arm-right\" transform=\"translate(63 82)\"><g class=\"robo-arm\">\n  <g data-pose=\"down\"><path d=\"M0 0 C10 12 16 26 18 40\"></path><circle cx=\"19\" cy=\"51\" r=\"12\" fill=\"#2b2b2b\" stroke=\"none\"></circle></g>\n  <g data-pose=\"point\"><path d=\"M0 0 C10 12 16 26 18 40\"></path><circle cx=\"19\" cy=\"51\" r=\"12\" fill=\"#2b2b2b\" stroke=\"none\"></circle></g>\n  <g data-pose=\"up\"><path d=\"M0 0 C14 -6 24 -22 28 -42\"></path><circle cx=\"30\" cy=\"-54\" r=\"12\" fill=\"#2b2b2b\" stroke=\"none\"></circle></g>\n  <g data-pose=\"high-five\"><path d=\"M0 0 L30 0 L30 -28\"></path><circle cx=\"30\" cy=\"-42\" r=\"14\" fill=\"#2b2b2b\" stroke=\"none\"></circle></g></g></g>\n  </g>\n</svg></div>";
+  const BALL = '<svg viewBox="-20 -20 40 40" fill="none" stroke="#2b2b2b" stroke-linecap="round" stroke-linejoin="round"><circle cx="0" cy="0" r="18" fill="#ffffff" stroke-width="3"/><path d="M0 -7 L6.66 -2.16 L4.11 5.66 L-4.11 5.66 L-6.66 -2.16 Z" fill="#2b2b2b" stroke-width="2"/><path d="M0 -7 L0 -18 M6.66 -2.16 L17.1 -5.6 M4.11 5.66 L10.6 14.6 M-4.11 5.66 L-10.6 14.6 M-6.66 -2.16 L-17.1 -5.6" stroke-width="2"/></svg>';
+  const STAR = "60 questions right! Keep going!";
+  function fig(opts) {
+    const t = document.createElement('div');
+    t.innerHTML = FIGURE;
+    const f = t.firstElementChild;
+    f.style.setProperty('--robo-light', '#4cd964'); f.style.setProperty('--robo-glow', '#c8f7c5'); f.style.setProperty('--robo-rays', '#2fa84f');
+    f.dataset.light = 'green'; f.dataset.mouth = 'smile'; f.dataset.look = (opts && opts.look) || 'front'; f.dataset.arms = (opts && opts.arms) || 'down';
+    if (opts && opts.friend) f.classList.add('robo-friend');
+    if (opts && opts.cls) f.classList.add(...opts.cls.split(' '));
+    if (opts && opts.bow) {
+      const g = f.querySelector('.robo-body-group');
+      const upper = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      upper.setAttribute('class', 'm-upper');
+      for (const c of [...g.children]) if (!/^leg-/.test(c.getAttribute('data-part') || '')) upper.append(c);
+      g.append(upper);
+    }
+    return f;
+  }
+  function el(cls, ...kids) { const d = document.createElement('div'); d.className = cls; d.append(...kids); return d; }
+  function slot(cls, f) { return el('slot ' + cls, f); }
+  function words(text, laterMs) {
+    const w = el('words'); w.textContent = text;
+    if (laterMs) { w.classList.add('later'); w.style.setProperty('--ms', laterMs + 'ms'); }
+    return w;
+  }
+  function ball(cls) { const b = el('ball ' + cls); b.innerHTML = BALL; return b; }
+  const scenes = {
+    keepy: st => {
+      const me = slot('ku-me', fig());
+      st.append(words('Level up!', 3600), me, ball('ku-ball'));
+      setTimeout(() => { me.firstElementChild.dataset.arms = 'up'; }, 2500);
+    },
+    bow: st => st.append(words('Ta-da! Level up!'), slot('bw-me', fig({ bow: true })), slot('bw-friend', fig({ friend: true }))),
+    light: st => st.append(words('Level up!'), slot('ls-me', fig())),
+    header: st => {
+      const friend = slot('hd-friend', fig({ friend: true, arms: 'up' }));
+      const me = slot('hd-me', fig({ look: 'up' }));
+      st.append(el('goal'), words('Goal! Level up!', 3600), friend, me, ball('hd-ball spin'));
+      setTimeout(() => { friend.firstElementChild.dataset.arms = 'down'; }, 700);
+      setTimeout(() => { me.firstElementChild.dataset.arms = 'up'; me.firstElementChild.dataset.look = 'front'; friend.firstElementChild.dataset.arms = 'up'; }, 2300);
+    },
+    moonwalk: st => st.append(words(STAR), el('walker mw', slot('', fig({ look: 'side' })))),
+    conga: st => st.append(words(STAR), el('walker cg', slot('', fig()), slot('', fig({ friend: true })), slot('', fig()))),
+    ballride: st => {
+      const b = el('big-ball'); b.innerHTML = BALL;
+      st.append(words(STAR), el('walker br', b, slot('', fig({ arms: 'up' }))));
+    },
+  };
+  document.querySelectorAll('.stage').forEach(st => {
+    const play = () => { st.replaceChildren(); scenes[st.dataset.scene](st); };
+    play();
+    setInterval(play, Number(st.dataset.ms) + 900);
+  });
+})();
+</script>
