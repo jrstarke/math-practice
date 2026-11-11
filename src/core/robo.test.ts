@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   CONGA_MAX, LEVEL_UPS, LEVEL_UP_WORDS, STAR_STYLES, congaSize, dayTier, dayWords, decideRobo, initialRoboMemory, pickStyle,
-  welcomeWords, type RoboMemory, type RoboOutcome,
+  walkWords, welcomeWords, type RoboMemory, type RoboOutcome,
 } from './robo';
 import { mulberry32, type Rng } from './rng';
 
@@ -220,6 +220,14 @@ describe('the day streak', () => {
     expect(r[2].decision.big).toEqual({ kind: 'day', days: 4, tier: 'arms', words: dayWords(4) });
     expect(r[2].memory.pendingDay).toBeNull();
     expect(r[3].decision.big).toBeNull();
+  });
+
+  it('a later 20 never replaces a held-back 100 (it still plays its conga); a later hundred does', () => {
+    const start: RoboMemory = { ...initialRoboMemory(), sinceBig: 0, pendingWalk: 100 };
+    const r = run([{ totalBefore: 119, totalAfter: 120 }, {}, {}, {}, { totalBefore: 123, totalAfter: 124 }], never, start);
+    expect(r[0].memory.pendingWalk).toBe(100);
+    expect(r[4].decision.big).toEqual({ kind: 'conga', robots: 2, words: walkWords(124) });
+    expect(decideRobo(start, { ...clean, totalBefore: 199, totalAfter: 200 }, never).memory.pendingWalk).toBe(200);
   });
 
   it('a held-back 100 is still a conga sized from 100, and says the count when it plays', () => {

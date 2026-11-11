@@ -366,5 +366,40 @@ for (const [name, w, h] of views) {
   console.log(`robo-${name}`.padEnd(22), ok ? 'ok' : 'FAIL', ok ? '' : '\n    ' + list.slice(0, 8).join('\n    ') + (list.length > 8 ? `\n    …+${list.length - 8}` : ''));
 }
 
+// ---- Short lane: every celebration on the dev preview with a 56 px lane (the smallest momentSize gives), every
+// animation stepped through 5%..95%: slots, balls, goal and (in scenes that don't rotate them) robots' drawn bodies
+// stay inside the lane. The words are left out: their 3-line box is taller than a 56 px lane (a known, older issue).
+{
+  const scenes = ['high-five', 'jump-together', 'pass', 'dance', 'tower', 'keepy-uppy', 'light-show', 'header', 'cartwheel',
+    ...['walk', 'walk-friend', 'dribble', 'hop', 'stop-wave', 'ball-ride', 'cartwheel'].map(x => `stars-${x}`), 'conga-2', 'conga-10'];
+  const ROTATING = ['cartwheel', 'dance', 'light-show', 'ball-ride', 'header'];
+  const page = await (await browser.newContext({ viewport: { width: 810, height: 1080 } })).newPage();
+  const issues = [];
+  for (const m of scenes) {
+    await page.goto(`${URL}/robo-preview.html?moment=${m}&size=56`);
+    await page.waitForSelector('[data-moment]');
+    const out = await page.evaluate(rotating => {
+      const scene = document.querySelector('.robo-scene');
+      const ms = Math.max(...document.getAnimations().map(a => (a.effect.getComputedTiming().endTime)).filter(Number.isFinite));
+      const sel = rotating.includes(scene.dataset.moment) ? '' : ', .robo-body-group';
+      const found = [];
+      for (let f = 0.05; f < 1; f += 0.05) {
+        for (const a of document.getAnimations()) { a.pause(); a.currentTime = f * ms; }
+        const lane = scene.getBoundingClientRect();
+        for (const e of scene.querySelectorAll(`:is(.robo-slot, .robo-ball, .robo-goal${sel})`)) {
+          const b = e.getBoundingClientRect();
+          const off = Math.max(lane.top - b.top, b.bottom - lane.bottom);
+          if (b.width > 0 && off > 1) { found.push(`${e.getAttribute('class')} ${Math.round(off)}px out at ${Math.round(f * 100)}%`); break; }
+        }
+        if (found.length) break;
+      }
+      return found;
+    }, ROTATING);
+    issues.push(...out.map(o => `${m}: ${o}`));
+  }
+  if (issues.length) failures++;
+  console.log('short-lane'.padEnd(22), issues.length ? 'FAIL\n    ' + issues.join('\n    ') : 'ok');
+}
+
 await browser.close();
 process.exit(failures ? 1 : 0);

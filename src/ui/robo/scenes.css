@@ -20,11 +20,11 @@
 .robo-walking-b .robo-leg,
 .robo-walking-b .robo-arm { animation-delay: -0.4s; }
 
-/* High five: Robo hops in mid-lane, the friend runs in from the right, they high-five, the friend runs off. */
+/* High five: Robo fades in mid-lane (a hop in would poke out of a short lane), the friend runs in from the right, they high-five, the friend runs off. */
 .robo-hf-me, .robo-hf-friend { position: absolute; top: 0; }
-.robo-hf-me { left: calc(50% - var(--s, 1) * 100px); animation: robo-pop-in 2.5s ease-out forwards; }
+.robo-hf-me { left: calc(50% - var(--s, 1) * 100px); animation: robo-fade 2.5s ease-in-out forwards; }
 .robo-hf-friend { left: calc(50% - var(--s, 1) * 6px); animation: robo-run-in 2.5s ease-in-out forwards; }
-[data-moment="high-five"] .robo-words { position: absolute; right: calc(50% + var(--s, 1) * 112px); top: 0; animation: robo-pop-in 2.5s ease-out forwards; }
+[data-moment="high-five"] .robo-words { position: absolute; right: calc(50% + var(--s, 1) * 112px); top: 0; animation: robo-fade 2.5s ease-in-out forwards; }
 
 /* The 100s conga: Robo leads a line of friends with coloured lights, all bobbing, a kick every two steps. Laid out
    right to left so the words lead, then Robo, then the friends; neighbours stand 0.7 robot widths apart. */
@@ -168,8 +168,9 @@
 }
 
 /* ---- 20-star travellers (.robo-walker, inline duration). Tall ones fill the lane and stand on its floor. ---- */
-.robo-hopper, .robo-rider { top: 0; bottom: 0; align-items: flex-end; }
-.robo-hopper > .robo-words, .robo-rider > .robo-words, .robo-cartwheel > .robo-words { align-self: flex-start; }
+/* The dribbler too: its ball sits on the lane floor, not under the (taller) words. */
+.robo-hopper, .robo-rider, .robo-dribbler { top: 0; bottom: 0; align-items: flex-end; }
+.robo-hopper > .robo-words, .robo-rider > .robo-words, .robo-dribbler > .robo-words, .robo-cartwheel > .robo-words { align-self: flex-start; }
 
 /* Dribble: the walk, with the ball rolling along just ahead of Robo's feet. */
 .robo-dr-ball { align-self: flex-end; width: calc(var(--a, 1) * 24px); height: calc(var(--a, 1) * 24px); margin-left: calc(var(--a, 1) * -14px); }

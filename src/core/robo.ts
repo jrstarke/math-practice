@@ -109,7 +109,9 @@ export function decideRobo(m: RoboMemory, o: RoboOutcome, rng: Rng): { memory: R
   // On a Pass Robo is up walking through the steps, so walks and high fives wait for a later answer.
   const allowed = s > COOLDOWN && !o.passed;
   const milestone = o.totalAfter > o.totalBefore && o.totalAfter % 20 === 0 ? o.totalAfter : null;
-  let pendingWalk = milestone ?? m.pendingWalk;
+  // A later 20 never replaces a held-back hundred (its conga still plays); a later hundred does.
+  const keepHundred = m.pendingWalk !== null && m.pendingWalk % 100 === 0 && milestone !== null && milestone % 100 !== 0;
+  let pendingWalk = keepHundred ? m.pendingWalk : (milestone ?? m.pendingWalk);
   let pendingDay = o.dayDone ?? m.pendingDay;
 
   let { lastLevelUp, lastStars } = m;
