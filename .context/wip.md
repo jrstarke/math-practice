@@ -4,9 +4,11 @@
 - **State:** main = e0f8d8f, clean, 552 vitest + tsc green. Robo is MERGED to main (2026-11-08) and the user said it
   looks good. Not pushed by me: user pushes `git push dev main` (math-practice-dev.jamiestarke.com) and later
   `git push prod main` from the host. Don't know yet whether they have pushed.
-- **No task in progress.** The user asked "what's next?"; I gave the list below and recommended: watch her play with
-  Robo for a few days first; meanwhile the gentler streak (small); mental-strategy hints = most valuable big project.
-  Waiting for the user to pick. Start any new feature with superpowers:brainstorming.
+- **IN PROGRESS (2026-11-11): Day streak.** Hide 🔥 (keep counting), Robo welcome on open, 10 right answers/day
+  counts the day, one missed day forgiven, tiered celebrations (wave / arms up / +jump / +fireworks), held-back walks
+  say the current star count. Design: docs/superpowers/specs/2026-11-11-day-streak-design.md (commit 22bcff0),
+  builder check clean. Approach 1 (Robo moment system + progress v7) chosen by user. AWAITING USER APPROVAL of the
+  doc → then superpowers:writing-plans.
 - **Next-step candidates** (details further down this file):
   1. Gentler streak — today a hint breaks the 🔥 streak; conflicts with "hints should feel good" (small).
   2. Short sets with a finish line ending in Robo's kick (reverses the "endless" decision; user's call).
