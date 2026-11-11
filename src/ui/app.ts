@@ -1,4 +1,5 @@
 import { answerOf } from '../core/arith';
+import { localDate } from '../core/days';
 import { focusAnswer, focusScratch, initialEntry, markWrong, pressKey, setScratch, type EntryState, type Key } from '../core/entry';
 import { maxAnswerLength } from '../core/levels';
 import type { Progress } from '../core/progress';
@@ -264,7 +265,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   }
 
   function finish(a: Attempt) {
-    const result = recordResult(progress, problem, a);
+    const result = recordResult(progress, problem, a, localDate(new Date(Date.now())));
     progress = result.progress;
     store.save(progress);
     recent.push(problem);

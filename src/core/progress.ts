@@ -1,10 +1,11 @@
 import { initialOpState, type OpState } from './adaptive';
+import { initialDayStreak, type DayStreak } from './days';
 import type { Op } from './types';
 
 export type OpKey = 'addition' | 'subtraction' | 'multiplication' | 'division';
 
 export interface Progress {
-  version: 6;
+  version: 7;
   unlocked: OpKey[]; // operations in the mix; once unlocked, always unlocked
   addition: OpState;
   subtraction: OpState;
@@ -17,11 +18,15 @@ export interface Progress {
   installTipShown: boolean;
   /** After an unlock, the next `left` problems are the new operation (saved so a reload doesn't lose it). */
   welcome: { op: OpKey; left: number } | null;
+  /** Her days-in-a-row streak (shown only in Robo's words). */
+  day: DayStreak;
+  /** When the app was last hidden (epoch ms), so a reload soon after a short switch isn't a fresh start. */
+  hiddenAt: number | null;
 }
 
 export function defaultProgress(): Progress {
   return {
-    version: 6,
+    version: 7,
     unlocked: ['addition'],
     addition: initialOpState(),
     subtraction: initialOpState(),
@@ -33,6 +38,8 @@ export function defaultProgress(): Progress {
     muted: false,
     installTipShown: false,
     welcome: null,
+    day: initialDayStreak(),
+    hiddenAt: null,
   };
 }
 

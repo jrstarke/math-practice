@@ -1,4 +1,5 @@
 import { pickLevel, update, type LevelChange } from './adaptive';
+import { countRightAnswer } from './days';
 import { generate } from './generator';
 import { targetMs } from './levels';
 import { applyUnlocks, pickOp } from './path';
@@ -30,18 +31,21 @@ export function nextProblem(p: Progress, recent: Problem[], rng: Rng): Problem {
   return problem;
 }
 
-/** Apply a finished problem to progress: streak and total, the welcome countdown, adaptation if it was at the
- * current level, then unlocks. */
-export function recordResult(p: Progress, problem: Problem, a: AttemptInput): { progress: Progress; levelChange: LevelChange; unlocked: OpKey[] } {
+/** Apply a finished problem to progress: streak and total, the day streak (on `today`, a local 'YYYY-MM-DD'), the
+ * welcome countdown, adaptation if it was at the current level, then unlocks. `dayDone` is the new days-in-a-row
+ * count when this answer completes the day. */
+export function recordResult(p: Progress, problem: Problem, a: AttemptInput, today: string): { progress: Progress; levelChange: LevelChange; unlocked: OpKey[]; dayDone: number | null } {
   const clean = a.wrongSubmits === 0 && a.hintsUsed === 0 && !a.passed;
   const streak = clean ? p.streak + 1 : 0;
   const key = opKey(problem.op);
   const welcome = p.welcome && p.welcome.op === key ? (p.welcome.left > 1 ? { ...p.welcome, left: p.welcome.left - 1 } : null) : p.welcome;
-  const progress: Progress = { ...p, streak, bestStreak: Math.max(p.bestStreak, streak), total: p.total + (clean ? 1 : 0), welcome };
+  const counted = a.passed ? { streak: p.day, completed: null } : countRightAnswer(p.day, today);
+  const dayDone = counted.completed;
+  const progress: Progress = { ...p, streak, bestStreak: Math.max(p.bestStreak, streak), total: p.total + (clean ? 1 : 0), welcome, day: counted.streak };
 
-  if (problem.level !== p[key].level) return { progress, levelChange: 0, unlocked: [] };
+  if (problem.level !== p[key].level) return { progress, levelChange: 0, unlocked: [], dayDone };
 
   const { state, change } = update(p[key], score({ ...a, targetMs: targetMs(problem) }));
   progress[key] = state;
-  return { ...applyUnlocks(progress), levelChange: change };
+  return { ...applyUnlocks(progress), levelChange: change, dayDone };
 }

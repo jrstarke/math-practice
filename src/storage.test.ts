@@ -1,5 +1,6 @@
+import { initialDayStreak } from './core/days';
 import { defaultProgress, type OpKey } from './core/progress';
-import { createStore, LEGACY_STORAGE_KEY, STORAGE_KEY, V2_STORAGE_KEY, V3_STORAGE_KEY, V4_STORAGE_KEY, V5_STORAGE_KEY } from './storage';
+import { createStore, LEGACY_STORAGE_KEY, STORAGE_KEY, V2_STORAGE_KEY, V3_STORAGE_KEY, V4_STORAGE_KEY, V5_STORAGE_KEY, V6_STORAGE_KEY } from './storage';
 
 const mem = () => {
   const m = new Map<string, string>();
@@ -16,15 +17,18 @@ const v2 = { ...v1, version: 2, total: 75 };
 const both = ['addition', 'subtraction'];
 const initialMultiplication = { level: 1, window: [], calibrationLeft: 10 };
 const v6Extras = { division: { level: 1, window: [], calibrationLeft: 10 }, welcome: null };
+const v7Extras = { day: initialDayStreak(), hiddenAt: null };
 
-test('defaults are v6 with multiplication and division unstarted and no welcome', () => {
-  expect(defaultProgress()).toMatchObject({ version: 6, unlocked: ['addition'], welcome: null });
+test('defaults are v7 with multiplication and division unstarted, no welcome and no days yet', () => {
+  expect(defaultProgress()).toMatchObject({ version: 7, unlocked: ['addition'], welcome: null });
+  expect(defaultProgress()).toMatchObject({ day: initialDayStreak(), hiddenAt: null });
   expect(defaultProgress().division).toEqual({ level: 1, window: [], calibrationLeft: 10 });
   expect(defaultProgress().multiplication).toEqual({ level: 1, window: [], calibrationLeft: 10 });
 });
 
 test('each version is stored under its own key so older builds never read it', () => {
-  expect(STORAGE_KEY).toBe('math-practice-progress-v6');
+  expect(STORAGE_KEY).toBe('math-practice-progress-v7');
+  expect(V6_STORAGE_KEY).toBe('math-practice-progress-v6');
   expect(V5_STORAGE_KEY).toBe('math-practice-progress-v5');
   expect(V4_STORAGE_KEY).toBe('math-practice-progress-v4');
   expect(V3_STORAGE_KEY).toBe('math-practice-progress-v3');
@@ -35,13 +39,13 @@ test('each version is stored under its own key so older builds never read it', (
 test('migrates a realistic v1 record', () => {
   const s = mem();
   s.m.set(LEGACY_STORAGE_KEY, JSON.stringify(v1));
-  expect(createStore(s).load()).toEqual({ ...v1, version: 6, total: 61, unlocked: both, multiplication: initialMultiplication, ...v6Extras });
+  expect(createStore(s).load()).toEqual({ ...v1, version: 7, total: 61, unlocked: both, multiplication: initialMultiplication, ...v6Extras, ...v7Extras });
 });
 
 test('migrates a v2 record, keeping everything and unlocking both', () => {
   const s = mem();
   s.m.set(V2_STORAGE_KEY, JSON.stringify(v2));
-  expect(createStore(s).load()).toEqual({ ...v2, version: 6, unlocked: both, multiplication: initialMultiplication, ...v6Extras });
+  expect(createStore(s).load()).toEqual({ ...v2, version: 7, unlocked: both, multiplication: initialMultiplication, ...v6Extras, ...v7Extras });
 });
 
 test('v2 player below the threshold keeps subtraction', () => {
@@ -59,7 +63,7 @@ test('v2 is preferred over v1, and both old keys are left untouched by save', ()
   store.save(store.load());
   expect(JSON.parse(s.m.get(V2_STORAGE_KEY)!)).toEqual(v2);
   expect(JSON.parse(s.m.get(LEGACY_STORAGE_KEY)!)).toEqual(v1);
-  expect(JSON.parse(s.m.get(STORAGE_KEY)!)).toMatchObject({ version: 6, total: 75 });
+  expect(JSON.parse(s.m.get(STORAGE_KEY)!)).toMatchObject({ version: 7, total: 75 });
 });
 
 test('migration is stable across reloads before a save, and loading writes nothing', () => {
@@ -75,7 +79,7 @@ test('saving a migrated record writes v5 to the new key and leaves the v1 record
   s.m.set(LEGACY_STORAGE_KEY, JSON.stringify(v1));
   const store = createStore(s);
   store.save({ ...store.load(), streak: 59, bestStreak: 61, total: 62 });
-  expect(JSON.parse(s.m.get(STORAGE_KEY)!)).toMatchObject({ version: 6, total: 62, streak: 59 });
+  expect(JSON.parse(s.m.get(STORAGE_KEY)!)).toMatchObject({ version: 7, total: 62, streak: 59 });
   expect(JSON.parse(s.m.get(LEGACY_STORAGE_KEY)!)).toEqual(v1);
   expect(createStore(s).load()).toMatchObject({ total: 62, streak: 59 });
 });
@@ -86,7 +90,7 @@ test('migrates a v3 record, keeping unlocked exactly as-is', () => {
   delete (v3 as any).multiplication;
   s.m.set(V3_STORAGE_KEY, JSON.stringify(v3));
   const loaded = createStore(s).load();
-  expect(loaded).toEqual({ ...v3, version: 6, multiplication: { level: 1, window: [], calibrationLeft: 10 } });
+  expect(loaded).toEqual({ ...v3, version: 7, multiplication: { level: 1, window: [], calibrationLeft: 10 } });
 });
 
 test('v3 is preferred over v2/v1, and all older keys are left untouched by save', () => {
@@ -97,14 +101,14 @@ test('v3 is preferred over v2/v1, and all older keys are left untouched by save'
   const store = createStore(s);
   store.save(store.load());
   expect(JSON.parse(s.m.get(V3_STORAGE_KEY)!)).toEqual(v3);
-  expect(JSON.parse(s.m.get(STORAGE_KEY)!)).toMatchObject({ version: 6, total: 90 });
+  expect(JSON.parse(s.m.get(STORAGE_KEY)!)).toMatchObject({ version: 7, total: 90 });
 });
 
 test('an invalid v5 record falls back to the older records rather than defaults', () => {
   const s = mem();
   s.m.set(LEGACY_STORAGE_KEY, JSON.stringify(v1));
   s.m.set(STORAGE_KEY, 'not json');
-  expect(createStore(s).load()).toEqual({ ...v1, version: 6, total: 61, unlocked: both, multiplication: initialMultiplication, ...v6Extras });
+  expect(createStore(s).load()).toEqual({ ...v1, version: 7, total: 61, unlocked: both, multiplication: initialMultiplication, ...v6Extras, ...v7Extras });
 });
 
 test('an invalid v5 record falls back to a valid v3 record rather than defaults', () => {
@@ -113,7 +117,7 @@ test('an invalid v5 record falls back to a valid v3 record rather than defaults'
   delete (v3 as any).multiplication;
   s.m.set(V3_STORAGE_KEY, JSON.stringify(v3));
   s.m.set(STORAGE_KEY, 'not json');
-  expect(createStore(s).load()).toEqual({ ...v3, version: 6, multiplication: initialMultiplication });
+  expect(createStore(s).load()).toEqual({ ...v3, version: 7, multiplication: initialMultiplication });
 });
 
 test('round-trips', () => {
@@ -180,7 +184,7 @@ test('migrates a v4 record, keeping every other field exactly', () => {
   const s = mem();
   const v4 = v4Record({ level: 8, window: [1], calibrationLeft: 0 });
   s.m.set(V4_STORAGE_KEY, JSON.stringify(v4));
-  expect(createStore(s).load()).toEqual({ ...v4, version: 6, multiplication: { level: 7, window: [], calibrationLeft: 0 } });
+  expect(createStore(s).load()).toEqual({ ...v4, version: 7, multiplication: { level: 7, window: [], calibrationLeft: 0 } });
 });
 
 test('v4 is preferred over v3, and the v4 key is left untouched by save (safe rollback)', () => {
@@ -193,14 +197,14 @@ test('v4 is preferred over v3, and the v4 key is left untouched by save (safe ro
   const store = createStore(s);
   store.save(store.load());
   expect(JSON.parse(s.m.get(V4_STORAGE_KEY)!)).toEqual(v4);
-  expect(JSON.parse(s.m.get(STORAGE_KEY)!)).toMatchObject({ version: 6, total: 210, multiplication: { level: 8 } });
+  expect(JSON.parse(s.m.get(STORAGE_KEY)!)).toMatchObject({ version: 7, total: 210, multiplication: { level: 8 } });
 });
 
 test('an invalid v5 record falls back to a valid v4 record rather than defaults', () => {
   const s = mem();
   s.m.set(V4_STORAGE_KEY, JSON.stringify(v4Record({ level: 3, window: [], calibrationLeft: 0 })));
   s.m.set(STORAGE_KEY, 'not json');
-  expect(createStore(s).load()).toMatchObject({ version: 6, total: 210, multiplication: { level: 3 } });
+  expect(createStore(s).load()).toMatchObject({ version: 7, total: 210, multiplication: { level: 3 } });
 });
 
 test('missing key → defaults', () => expect(createStore(mem()).load()).toEqual(defaultProgress()));
@@ -273,7 +277,7 @@ const v5Record = {
 test('migrates a realistic v5 record, keeping everything and adding division unstarted', () => {
   const s = mem();
   s.m.set(V5_STORAGE_KEY, JSON.stringify(v5Record));
-  expect(createStore(s).load()).toEqual({ ...v5Record, version: 6, ...v6Extras });
+  expect(createStore(s).load()).toEqual({ ...v5Record, version: 7, ...v6Extras, ...v7Extras });
 });
 
 test('saving after a v5 upgrade writes only the v6 key and leaves the v5 string byte-identical', () => {
@@ -283,7 +287,7 @@ test('saving after a v5 upgrade writes only the v6 key and leaves the v5 string 
   const store = createStore(s);
   store.save(store.load());
   expect(s.m.get(V5_STORAGE_KEY)).toBe(raw);
-  expect(JSON.parse(s.m.get(STORAGE_KEY)!)).toMatchObject({ version: 6, total: 380 });
+  expect(JSON.parse(s.m.get(STORAGE_KEY)!)).toMatchObject({ version: 7, total: 380 });
   expect([...s.m.keys()].sort()).toEqual([STORAGE_KEY, V5_STORAGE_KEY].sort());
 });
 
@@ -291,7 +295,7 @@ test('an invalid v6 record falls back to a valid v5 record', () => {
   const s = mem();
   s.m.set(V5_STORAGE_KEY, JSON.stringify(v5Record));
   s.m.set(STORAGE_KEY, JSON.stringify({ ...defaultProgress(), welcome: { op: 'division', left: 9 } }));
-  expect(createStore(s).load()).toMatchObject({ version: 6, total: 380 });
+  expect(createStore(s).load()).toMatchObject({ version: 7, total: 380 });
 });
 
 test('round-trips a record with division unlocked and a welcome under way', () => {
@@ -303,6 +307,55 @@ test('round-trips a record with division unlocked and a welcome under way', () =
     division: { level: 2, window: [], calibrationLeft: 7 },
     welcome: { op: 'division' as OpKey, left: 2 },
   };
+  createStore(s).save(p);
+  expect(createStore(s).load()).toEqual(p);
+});
+
+/** A v6 save from the build before the day streak. */
+const v6Record = { ...v5Record, version: 6, unlocked: ['addition', 'subtraction', 'multiplication', 'division'],
+  division: { level: 3, window: [1], calibrationLeft: 0 }, welcome: { op: 'division', left: 1 } };
+
+test('migrates a realistic v6 record, keeping everything and adding no days yet', () => {
+  const s = mem();
+  s.m.set(V6_STORAGE_KEY, JSON.stringify(v6Record));
+  expect(createStore(s).load()).toEqual({ ...v6Record, version: 7, ...v7Extras });
+});
+
+test('saving after a v6 upgrade writes only the v7 key and leaves the v6 string byte-identical', () => {
+  const s = mem();
+  const raw = JSON.stringify(v6Record);
+  s.m.set(V6_STORAGE_KEY, raw);
+  const store = createStore(s);
+  store.save(store.load());
+  expect(s.m.get(V6_STORAGE_KEY)).toBe(raw);
+  expect(JSON.parse(s.m.get(STORAGE_KEY)!)).toMatchObject({ version: 7, total: 380, day: initialDayStreak() });
+  expect([...s.m.keys()].sort()).toEqual([STORAGE_KEY, V6_STORAGE_KEY].sort());
+});
+
+test('an invalid v7 record falls back to a valid v6 record', () => {
+  const s = mem();
+  s.m.set(V6_STORAGE_KEY, JSON.stringify(v6Record));
+  s.m.set(STORAGE_KEY, JSON.stringify({ ...defaultProgress(), hiddenAt: 'x' }));
+  expect(createStore(s).load()).toMatchObject({ version: 7, total: 380 });
+});
+
+test.each([
+  { day: { ...initialDayStreak(), date: '2026-13-01x' } },
+  { day: { ...initialDayStreak(), lastDone: 20261111 } },
+  { day: { ...initialDayStreak(), right: -1 } },
+  { day: { ...initialDayStreak(), days: 1.5 } },
+  { day: undefined },
+  { hiddenAt: 'x' },
+  { hiddenAt: undefined },
+])('a v7 record with bad day-streak fields is not loaded: %o', bad => {
+  const s = mem();
+  s.m.set(STORAGE_KEY, JSON.stringify({ ...defaultProgress(), total: 5, ...bad }));
+  expect(createStore(s).load()).toEqual(defaultProgress());
+});
+
+test('a reload mid-day keeps the day count and when the app was hidden', () => {
+  const s = mem();
+  const p = { ...defaultProgress(), day: { date: '2026-11-11', right: 6, days: 3, lastDone: '2026-11-10' }, hiddenAt: 1_762_870_000_000 };
   createStore(s).save(p);
   expect(createStore(s).load()).toEqual(p);
 });
