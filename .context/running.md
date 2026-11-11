@@ -15,7 +15,7 @@
   4. Robo (2026-11-08): the same script ends with a Robo flow per view (thinking, hint ×2, rotate and back, wrong,
      mid-walk / high five / kick with a tap-through-the-pad check). `ROBO_ONLY=1` runs just that (~3 min);
      Since 2026-11-11 it also checks the welcome (fixture hiddenAt: null) and day celebrations day-1/3/7/12 (fixture: 9 right
-     today, N−1 days up to yesterday). Fixtures are progress v7 with hiddenAt: Date.now() so other flows get no welcome;
+     today, N−1 days up to yesterday). Fixtures are progress v8 with hiddenAt: Date.now() so other flows get no welcome;
      `RM=1` runs it with prefers-reduced-motion. Screenshots: out/robo-<view>-<state>.png (her iPad: ipad102-p, ipad102-p-tab).
      Every measured state also checks Robo never overlaps the problem, answer boxes, bubble, picture or controls.
   5. Celebrations (2026-11-11): the Robo flow also plays every level-up style, every 20-star style, conga-2 (total 99)

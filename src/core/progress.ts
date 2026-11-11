@@ -5,7 +5,7 @@ import type { Op } from './types';
 export type OpKey = 'addition' | 'subtraction' | 'multiplication' | 'division';
 
 export interface Progress {
-  version: 7;
+  version: 8;
   unlocked: OpKey[]; // operations in the mix; once unlocked, always unlocked
   addition: OpState;
   subtraction: OpState;
@@ -18,7 +18,7 @@ export interface Progress {
   installTipShown: boolean;
   /** After an unlock, the next `left` problems are the new operation (saved so a reload doesn't lose it). */
   welcome: { op: OpKey; left: number } | null;
-  /** Her days-in-a-row streak (shown only in Robo's words). */
+  /** Her days-in-a-row streak (shown only in Robo's words) and her days practised in total (not shown yet). */
   day: DayStreak;
   /** When the app was last hidden (epoch ms), so a reload soon after a short switch isn't a fresh start. */
   hiddenAt: number | null;
@@ -26,7 +26,7 @@ export interface Progress {
 
 export function defaultProgress(): Progress {
   return {
-    version: 7,
+    version: 8,
     unlocked: ['addition'],
     addition: initialOpState(),
     subtraction: initialOpState(),
