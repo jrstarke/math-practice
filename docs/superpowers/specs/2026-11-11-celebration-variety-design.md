@@ -40,6 +40,11 @@ none of them slows her down or covers her work.
   (cap agreed with the user: a longer line takes too long to cross and stops reading as separate friends). The count
   comes from the milestone she earned (a held-back 100 still gets its own size). Same walking speed as the walk, so a
   longer line takes longer to pass (about 7 s for 10 robots on her iPad). Always the conga — not random.
+  **Coloured lights** (user): Robo leads with its green light; each friend behind it has its own light colour in a
+  **fixed order** (user), so each new hundred adds the next colour at the end of the line: yellow, blue, purple,
+  orange, pink, teal, light blue, lime, lavender (friends 1–9). Never red, and orange/pink kept clearly away from red
+  (my call on the exact shades, with glow and rays to match like `LIGHT` in `drawing.ts`). The coloured lights are
+  only in the conga; friends elsewhere keep the green light.
 - **No repeats in a row**: a group never plays the same celebration twice in a row. (My call.) The rule is per group,
   so a level-up cartwheel may be followed by a 20-star cartwheel; that's rare and harmless.
 
