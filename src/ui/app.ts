@@ -195,7 +195,8 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
 
   /** Hello, at Robo's spot. Never while it's up beside the problem or away on a moment: nothing may cover her work. */
   function greet() {
-    if (roboMode === 'standing' && (roboPlace !== 'spot' || roboAway)) return;
+    // roboWanted: a hint or Pass is showing (on small screens a peek's words would sit on the hint).
+    if (roboWanted || (roboMode === 'standing' && (roboPlace !== 'spot' || roboAway))) return;
     endMoment();
     const ms = robo.greet(welcomeWords(progress.total), momentPlace());
     greeting = roboMode === 'standing';

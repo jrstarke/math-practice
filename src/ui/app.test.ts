@@ -668,6 +668,27 @@ describe('Robo', () => {
     expect(robo(s).dataset.place).toBe('up');
   });
 
+  test('small screens: coming back during a hint does not peek in over it', () => {
+    const s = setup(1, { roboMode: 'peek' }, { ...defaultProgress(), total: 41, hiddenAt: START - 5 * MIN });
+    s.tap('[data-action="hint"]');
+    s.hide();
+    s.away(31 * MIN);
+    s.show();
+    expect(s.q('[data-moment]')).toBeNull();
+  });
+
+  test('coming back while a day celebration is still playing: no welcome, the celebration carries on', () => {
+    const s = setup(1, standing, { ...defaultProgress(), total: 41, hiddenAt: START,
+      day: { date: today, right: 9, days: 2, lastDone: yesterday } });
+    answerRight(s);
+    expect(robo(s).hasAttribute('data-away')).toBe(true);
+    s.hide();
+    s.away(31 * MIN);
+    s.show();
+    expect(sawWelcome(s)).toBe(false);
+    expect(s.q('[data-moment="day"]')).not.toBeNull();
+  });
+
   test('her 10th right answer of the day celebrates the days in a row', () => {
     const s = setup(1, standing, { ...defaultProgress(), total: 41, hiddenAt: START,
       day: { date: today, right: 9, days: 2, lastDone: yesterday } });
