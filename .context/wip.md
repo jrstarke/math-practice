@@ -17,8 +17,9 @@
 - **IN PROGRESS (2026-11-11): Celebration variety.** Random level-up celebrations (9) and 20-star celebrations (7),
   no repeat in a row per group; 100s keep walk-with-friend, kick stays for unlocks, fireworks stay day-streak only.
   Spec docs/superpowers/specs/2026-11-11-celebration-variety-design.md, mockups docs/superpowers/mockups/2026-11-11-celebrations/.
-  Approach 1 (decideRobo picks; view has one scene per celebration). Builder check clean. AWAITING USER APPROVAL of the
-  doc → then superpowers:writing-plans. Visual companion: .superpowers/brainstorm/773830-1794424189 (port $PUBLISH_PORT,
+  Approach 1 (decideRobo picks; view has one scene per celebration). Builder check clean. User APPROVED the design (also: walk-with-friend moved
+  to 20s; 100s = conga growing 2→10 robots, coloured lights fixed order). Plan: docs/superpowers/plans/2026-11-11-celebration-variety.md
+  (6 tasks). AWAITING user review of the plan + execution method. Visual companion: .superpowers/brainstorm/773830-1794424189 (port $PUBLISH_PORT,
   run start-server.sh with --foreground as a background job, else it dies with its shell).
 - **Next-step candidates** (details further down this file):
   1. Gentler streak — today a hint breaks the 🔥 streak; conflicts with "hints should feel good" (small).
