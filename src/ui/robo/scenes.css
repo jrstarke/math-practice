@@ -164,6 +164,46 @@
   75% { transform: translateY(-14%) rotate(270deg); } 100% { transform: translateY(0) rotate(360deg); }
 }
 
+/* ---- 20-star travellers (.robo-walker, inline duration). Tall ones fill the lane and stand on its floor. ---- */
+.robo-hopper, .robo-rider { top: 0; bottom: 0; align-items: flex-end; }
+.robo-hopper > .robo-words, .robo-rider > .robo-words, .robo-cartwheel > .robo-words { align-self: flex-start; }
+
+/* Dribble: the walk, with the ball rolling along just ahead of Robo's feet. */
+.robo-dr-ball { align-self: flex-end; width: calc(var(--a, 1) * 24px); height: calc(var(--a, 1) * 24px); margin-left: calc(var(--a, 1) * -14px); }
+.robo-dr-ball .robo-ball-spin { animation: robo-roll 0.5s linear infinite; }
+
+/* Hop: bouncing across, arms up. Room 1.25. */
+.robo-hop-me .robo-figure { animation: robo-hop-up 0.5s ease-in-out infinite; }
+@keyframes robo-hop-up { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20%); } }
+
+/* Stop and wave: walks to the middle (Robo centred), stops with its feet still, waves, walks on. The legs swing
+   only while it moves (0-30% and 70-100% of 4.5 s). */
+.robo-waver { animation-name: robo-stop; animation-timing-function: linear; }
+.robo-wv-me [data-part="leg-left"] .robo-leg { animation: robo-stop-legs-a 4.5s linear forwards; }
+.robo-wv-me [data-part="leg-right"] .robo-leg { animation: robo-stop-legs-b 4.5s linear forwards; }
+.robo-wv-me [data-part="arm-right"] .robo-arm { animation: robo-wave 1.6s ease-in-out 1.45s 1; }
+@keyframes robo-stop {
+  0% { transform: translateX(-100%); } 30%, 70% { transform: translateX(calc(50vw - var(--a, 1) * 56px)); }
+  100% { transform: translateX(100vw); }
+}
+@keyframes robo-stop-legs-a {
+  0% { transform: rotate(24deg); } 8.9% { transform: rotate(-24deg); } 17.8% { transform: rotate(24deg); }
+  26.7% { transform: rotate(-12deg); } 30%, 70% { transform: rotate(0deg); } 74% { transform: rotate(24deg); }
+  82.9% { transform: rotate(-24deg); } 91.8% { transform: rotate(24deg); } 100% { transform: rotate(-24deg); }
+}
+@keyframes robo-stop-legs-b {
+  0% { transform: rotate(-24deg); } 8.9% { transform: rotate(24deg); } 17.8% { transform: rotate(-24deg); }
+  26.7% { transform: rotate(12deg); } 30%, 70% { transform: rotate(0deg); } 74% { transform: rotate(-24deg); }
+  82.9% { transform: rotate(24deg); } 91.8% { transform: rotate(-24deg); } 100% { transform: rotate(24deg); }
+}
+
+/* Ball ride: Robo, arms up, sways on top of a big rolling ball (Robo 136 + ball 46 = 182 ≤ room 1.35 × 136). */
+.robo-ride { display: flex; flex-direction: column; align-items: center; flex: none; }
+.robo-big-ball { width: calc(var(--a, 1) * 46px); height: calc(var(--a, 1) * 46px); margin-top: calc(var(--a, 1) * -2px); }
+.robo-big-ball .robo-ball-spin { animation: robo-roll 0.9s linear infinite; }
+.robo-br-me .robo-figure { transform-origin: 50% 100%; animation: robo-balance 0.9s ease-in-out infinite; }
+@keyframes robo-balance { 0%, 100% { transform: rotate(-7deg); } 50% { transform: rotate(7deg); } }
+
 /* Reduce Motion: nothing travels, jumps or swings; each scene fades in and out in its final pose. */
 @media (prefers-reduced-motion: reduce) {
   .robo-walking .robo-body-group, .robo-walking .robo-leg, .robo-walking .robo-arm,
@@ -186,4 +226,5 @@
   .robo-scene .robo-figure.robo-arms-later [data-pose="down"] { animation: none; display: none; }
   .robo-scene .robo-figure.robo-arms-later [data-pose="up"] { animation: none; opacity: 1; }
   .robo-cartwheel { animation: robo-fade 3.6s ease-in-out forwards; }
+  .robo-hop-me .robo-figure, .robo-wv-me .robo-leg, .robo-wv-me .robo-arm, .robo-br-me .robo-figure { animation: none; }
 }

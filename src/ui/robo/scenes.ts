@@ -156,16 +156,56 @@ function cartwheel(m: HTMLElement, big: SceneMoment): number {
   return 3600;
 }
 
-const BUILDERS: Partial<Record<SceneName, Builder>> = {
+/** A line that travels across the lane over `ms` (inline, so Reduce Motion's fade lasts as long). */
+function traveller(cls: string, ms: number): HTMLElement {
+  const t = div(`robo-walker ${cls}`);
+  t.style.animationDuration = `${ms}ms`;
+  return t;
+}
+
+/** Walking across with the ball rolling along at Robo's feet. */
+function dribble(m: HTMLElement, big: SceneMoment): number {
+  const t = traveller('robo-dribbler', WALK_MS);
+  t.append(slot(cheering(), 'robo-walking'), ball('robo-dr-ball'), words(big.words));
+  m.append(t);
+  return WALK_MS;
+}
+
+/** Bouncing across, arms up. Room 1.25 for the hops. */
+function hop(m: HTMLElement, big: SceneMoment): number {
+  const t = traveller('robo-hopper', WALK_MS);
+  t.append(slot(arms(cheering(), 'up'), 'robo-hop-me'), words(big.words));
+  m.append(t);
+  return WALK_MS;
+}
+
+/** Walks in, stops in the middle (legs still) and waves at her, then walks on. */
+function stopWave(m: HTMLElement, big: SceneMoment): number {
+  const t = traveller('robo-waver', 4500);
+  t.append(slot(cheering(), 'robo-wv-me'), words(big.words));
+  m.append(t);
+  return 4500;
+}
+
+/** Robo balances, arms up and swaying, on a big ball rolling across. Room 1.35: Robo plus the ball. */
+function ballRide(m: HTMLElement, big: SceneMoment): number {
+  const t = traveller('robo-rider', 4400);
+  const ride = div('robo-ride');
+  ride.append(slot(arms(cheering(), 'up'), 'robo-br-me'), ball('robo-big-ball'));
+  t.append(ride, words(big.words));
+  m.append(t);
+  return 4400;
+}
+
+const BUILDERS: Record<SceneName, Builder> = {
   walk, 'walk-friend': walk, 'high-five': highFive, conga,
   'jump-together': jumpTogether, pass, dance, tower, 'keepy-uppy': keepyUppy, 'light-show': lightShow, header, cartwheel,
+  dribble, hop, 'stop-wave': stopWave, 'ball-ride': ballRide,
 };
 
 /** The scene for a celebration: a .robo-scene with data-moment (the style) and data-room (ROOM). */
 export function buildScene(big: SceneMoment, at: MomentPlace): { node: HTMLElement; ms: number } {
   const name: SceneName = big.kind === 'conga' ? 'conga' : big.style;
   const m = div('robo-scene', { 'data-moment': name, 'data-room': String(ROOM[name]) });
-  // Until every style has its own scene, the rest borrow the walk (stars) or the high five (level-ups).
-  const build = BUILDERS[name] ?? (big.kind === 'levelUp' ? highFive : walk);
-  return { node: m, ms: build(m, big, at) };
+  return { node: m, ms: BUILDERS[name](m, big, at) };
 }

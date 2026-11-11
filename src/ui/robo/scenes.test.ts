@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest';
-import { LEVEL_UP_WORDS, walkWords, type LevelUpStyle } from '../../core/robo';
+import { LEVEL_UP_WORDS, STAR_STYLES, walkWords, type LevelUpStyle } from '../../core/robo';
 import { CONGA_LIGHTS } from './drawing';
 import { createRobo, type MomentPlace, type RoboView } from './robo';
 import { buildScene, congaMs, ROOM } from './scenes';
@@ -126,5 +126,29 @@ describe('level-up scenes', () => {
   it('jump together: both jump with their arms up', () => {
     const { node } = buildScene({ kind: 'levelUp', style: 'jump-together', words: 'Level up!' }, standing);
     expect([...node.querySelectorAll<HTMLElement>('.robo-figure')].map(f => f.dataset.arms)).toEqual(['up', 'up']);
+  });
+});
+
+describe('20-star scenes', () => {
+  for (const style of STAR_STYLES) {
+    it(`${style}: its own scene with the count words, 3.5-5 s`, () => {
+      const { node, ms } = buildScene({ kind: 'stars', style, words: walkWords(60) }, standing);
+      expect(node.dataset.moment).toBe(style);
+      expect(node.querySelectorAll('.robo-figure')).toHaveLength(style === 'walk-friend' ? 2 : 1);
+      expect(node.querySelectorAll('.robo-ball')).toHaveLength(['dribble', 'ball-ride'].includes(style) ? 1 : 0);
+      expect(node.querySelector('[data-role="moment-words"]')!.textContent).toBe(walkWords(60));
+      expect(ms).toBeGreaterThanOrEqual(3500);
+      expect(ms).toBeLessThanOrEqual(5000);
+      for (const l of lights(node)) expect(l).toBe('#4cd964');
+    });
+  }
+
+  it('hop and ball ride: arms up; stop and wave: its own walk that stops (no walking legs class)', () => {
+    const arms = (style: 'hop' | 'ball-ride' | 'stop-wave') =>
+      buildScene({ kind: 'stars', style, words: walkWords(60) }, standing).node.querySelector<HTMLElement>('.robo-figure')!.dataset.arms;
+    expect(arms('hop')).toBe('up');
+    expect(arms('ball-ride')).toBe('up');
+    const wave = buildScene({ kind: 'stars', style: 'stop-wave', words: walkWords(60) }, standing).node;
+    expect(wave.querySelector('.robo-walking')).toBeNull();
   });
 });
