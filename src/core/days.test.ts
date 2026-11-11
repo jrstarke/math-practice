@@ -34,7 +34,7 @@ describe('countRightAnswer', () => {
   it('the 10th right answer of her first day completes day 1; later answers add nothing', () => {
     const r = answers(initialDayStreak(), '2026-11-11', 11);
     expect(r.completed).toEqual([null, null, null, null, null, null, null, null, null, 1, null]);
-    expect(r.streak).toEqual({ date: '2026-11-11', right: 11, days: 1, lastDone: '2026-11-11' });
+    expect(r.streak).toEqual({ date: '2026-11-11', right: 11, days: 1, lastDone: '2026-11-11', practised: 1 });
   });
 
   it('nine answers do not complete the day', () => {
@@ -44,20 +44,20 @@ describe('countRightAnswer', () => {
   });
 
   it('the day after a completed day grows the streak, and the count restarts on the new date', () => {
-    const s: DayStreak = { date: '2026-11-10', right: 10, days: 4, lastDone: '2026-11-10' };
+    const s: DayStreak = { date: '2026-11-10', right: 10, days: 4, lastDone: '2026-11-10', practised: 4 };
     expect(countRightAnswer(s, '2026-11-11').streak).toMatchObject({ date: '2026-11-11', right: 1 });
     const r = answers(s, '2026-11-11', 10);
     expect(r.completed[9]).toBe(5);
-    expect(r.streak).toEqual({ date: '2026-11-11', right: 10, days: 5, lastDone: '2026-11-11' });
+    expect(r.streak).toEqual({ date: '2026-11-11', right: 10, days: 5, lastDone: '2026-11-11', practised: 5 });
   });
 
   it('one missed day is forgiven: the streak waits and grows by one', () => {
-    const s: DayStreak = { date: '2026-11-09', right: 12, days: 4, lastDone: '2026-11-09' };
+    const s: DayStreak = { date: '2026-11-09', right: 12, days: 4, lastDone: '2026-11-09', practised: 4 };
     expect(answers(s, '2026-11-11', 10).completed[9]).toBe(5);
   });
 
   it('two missed days in a row start over at day 1', () => {
-    const s: DayStreak = { date: '2026-11-08', right: 12, days: 4, lastDone: '2026-11-08' };
+    const s: DayStreak = { date: '2026-11-08', right: 12, days: 4, lastDone: '2026-11-08', practised: 4 };
     const r = answers(s, '2026-11-11', 10);
     expect(r.completed[9]).toBe(1);
     expect(r.streak.days).toBe(1);
@@ -73,12 +73,36 @@ describe('countRightAnswer', () => {
   });
 
   it('a clock moved backwards neither grows nor breaks the streak', () => {
-    const s: DayStreak = { date: '2026-11-11', right: 10, days: 3, lastDone: '2026-11-11' };
+    const s: DayStreak = { date: '2026-11-11', right: 10, days: 3, lastDone: '2026-11-11', practised: 3 };
     const back = answers(s, '2026-11-10', 10);
     expect(back.completed.every(c => c === null)).toBe(true);
-    expect(back.streak).toMatchObject({ days: 3, lastDone: '2026-11-11' });
+    expect(back.streak).toMatchObject({ days: 3, lastDone: '2026-11-11', practised: 3 });
     const forward = answers(back.streak, '2026-11-11', 10);
     expect(forward.completed.every(c => c === null)).toBe(true);
-    expect(forward.streak).toMatchObject({ days: 3, lastDone: '2026-11-11' });
+    expect(forward.streak).toMatchObject({ days: 3, lastDone: '2026-11-11', practised: 3 });
+  });
+});
+
+describe('days practised in total', () => {
+  const nine = (lastDone: string): DayStreak => ({ date: '2026-11-11', right: 9, days: 4, lastDone, practised: 7 });
+
+  it('starts at 0', () => {
+    expect(initialDayStreak()).toEqual({ date: null, right: 0, days: 0, lastDone: null, practised: 0 });
+  });
+
+  it('the goal answer counts a day practised, also when the streak starts over', () => {
+    expect(countRightAnswer(nine('2026-11-01'), '2026-11-11').streak).toMatchObject({ days: 1, practised: 8 });
+    expect(countRightAnswer(nine('2026-11-10'), '2026-11-11').streak).toMatchObject({ days: 5, practised: 8 });
+    expect(countRightAnswer(nine('2026-11-09'), '2026-11-11').streak).toMatchObject({ days: 5, practised: 8 });
+  });
+
+  it('the 9th and 11th answers and a second goal on one date do not count', () => {
+    expect(countRightAnswer({ ...nine('2026-11-10'), right: 8 }, '2026-11-11').streak.practised).toBe(7);
+    expect(countRightAnswer({ ...nine('2026-11-10'), right: 10 }, '2026-11-11').streak.practised).toBe(7);
+    expect(countRightAnswer(nine('2026-11-11'), '2026-11-11').streak.practised).toBe(7);
+  });
+
+  it('a backwards clock does not count', () => {
+    expect(countRightAnswer(nine('2026-11-12'), '2026-11-11').streak.practised).toBe(7);
   });
 });

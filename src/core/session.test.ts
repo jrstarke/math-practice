@@ -167,7 +167,7 @@ describe('the day streak', () => {
       done.push(r.dayDone);
     }
     expect(done).toEqual([null, null, null, null, null, null, null, null, null, 1]);
-    expect(p.day).toEqual({ date: TODAY, right: 10, days: 1, lastDone: TODAY });
+    expect(p.day).toEqual({ date: TODAY, right: 10, days: 1, lastDone: TODAY, practised: 1 });
   });
 
   test('a right answer after hints and wrong tries counts toward the day', () => {
@@ -176,7 +176,7 @@ describe('the day streak', () => {
   });
 
   test('a Pass never counts, even as the would-be 10th answer', () => {
-    const p = { ...defaultProgress(), day: { date: TODAY, right: 9, days: 2, lastDone: '2026-11-10' } };
+    const p = { ...defaultProgress(), day: { date: TODAY, right: 9, days: 2, lastDone: '2026-11-10', practised: 2 } };
     const r = recordResult(p, sum, { ...clean, passed: true }, TODAY);
     expect(r.dayDone).toBeNull();
     expect(r.progress.day).toEqual(p.day);

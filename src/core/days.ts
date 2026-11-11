@@ -11,10 +11,13 @@ export interface DayStreak {
   days: number;
   /** The last date she reached the goal. */
   lastDone: string | null;
+  /** Days she reached the goal, in total: never lowered by a missed day or a new streak. Not shown yet; Robo's
+   * world will grow with it. */
+  practised: number;
 }
 
 export function initialDayStreak(): DayStreak {
-  return { date: null, right: 0, days: 0, lastDone: null };
+  return { date: null, right: 0, days: 0, lastDone: null, practised: 0 };
 }
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -46,5 +49,5 @@ export function countRightAnswer(s: DayStreak, today: string): { streak: DayStre
   // Already done today, or the clock went backwards: leave the streak as it is.
   if (gap <= 0) return { streak: counted, completed: null };
   const days = gap <= 2 ? s.days + 1 : 1;
-  return { streak: { ...counted, days, lastDone: today }, completed: days };
+  return { streak: { ...counted, days, lastDone: today, practised: s.practised + 1 }, completed: days };
 }

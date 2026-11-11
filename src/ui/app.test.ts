@@ -717,7 +717,7 @@ describe('Robo', () => {
 
   test('coming back while a day celebration is still playing: no welcome, the celebration carries on', () => {
     const s = setup(1, standing, { ...defaultProgress(), total: 41, hiddenAt: START,
-      day: { date: today, right: 9, days: 2, lastDone: yesterday } });
+      day: { date: today, right: 9, days: 2, lastDone: yesterday, practised: 5 } });
     answerRight(s);
     expect(robo(s).hasAttribute('data-away')).toBe(true);
     s.hide();
@@ -729,11 +729,11 @@ describe('Robo', () => {
 
   test('her 10th right answer of the day celebrates the days in a row', () => {
     const s = setup(1, standing, { ...defaultProgress(), total: 41, hiddenAt: START,
-      day: { date: today, right: 9, days: 2, lastDone: yesterday } });
+      day: { date: today, right: 9, days: 2, lastDone: yesterday, practised: 5 } });
     answerRight(s);
     const m = s.q('[data-moment="day"]')!;
     expect(m.dataset.tier).toBe('arms');
     expect(s.q('[data-role="moment-words"]')!.textContent).toBe('You did your math 3 days in a row! Keep it up!');
-    expect(s.saved.at(-1)!.day).toEqual({ date: today, right: 10, days: 3, lastDone: today });
+    expect(s.saved.at(-1)!.day).toEqual({ date: today, right: 10, days: 3, lastDone: today, practised: 6 });
   });
 });

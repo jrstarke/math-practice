@@ -355,7 +355,7 @@ test.each([
 
 test('a reload mid-day keeps the day count and when the app was hidden', () => {
   const s = mem();
-  const p = { ...defaultProgress(), day: { date: '2026-11-11', right: 6, days: 3, lastDone: '2026-11-10' }, hiddenAt: 1_762_870_000_000 };
+  const p = { ...defaultProgress(), day: { date: '2026-11-11', right: 6, days: 3, lastDone: '2026-11-10', practised: 3 }, hiddenAt: 1_762_870_000_000 };
   createStore(s).save(p);
   expect(createStore(s).load()).toEqual(p);
 });
