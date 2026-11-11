@@ -199,3 +199,58 @@ describe('Robo view', () => {
     expect(robo.overlay.getAttribute('aria-hidden')).toBe('true');
   });
 });
+
+describe('welcome and day celebrations', () => {
+  const words = "Welcome back, let's do some math!";
+  const day = (days: number, tier: 'wave' | 'arms' | 'jump' | 'fireworks'): BigMoment => ({ kind: 'day', days, tier, words: `day ${days}` });
+
+  it('greet: Robo waves at its spot and says the words; it is not away and the moment layer stays empty', () => {
+    expect(robo.greet(words, standing)).toBe(MOMENT_MS.welcome);
+    expect(MOMENT_MS.welcome).toBe(3000);
+    expect(bubble().textContent).toBe(words);
+    expect(robo.el.dataset.surprise).toBe('wave');
+    expect(robo.el.hasAttribute('data-away')).toBe(false);
+    expect(robo.overlay.childElementCount).toBe(0);
+  });
+
+  it('greet on a small screen peeks in with the words', () => {
+    expect(robo.greet(words, peek)).toBe(MOMENT_MS.peek);
+    expect(moment()!.dataset.moment).toBe('peek');
+    expect(robo.overlay.querySelector('[data-role="moment-words"]')!.textContent).toBe(words);
+  });
+
+  it('endMoment after a greet stops the wave', () => {
+    robo.greet(words, standing);
+    robo.endMoment();
+    expect(robo.el.hasAttribute('data-surprise')).toBe(false);
+  });
+
+  it.each(['wave', 'arms', 'jump'] as const)('a %s day plays its tier with the words and no fireworks', tier => {
+    expect(robo.play(day(3, tier), standing)).toBe(MOMENT_MS.day);
+    expect(MOMENT_MS.day).toBe(3500);
+    expect(moment()!.dataset).toMatchObject({ moment: 'day', tier });
+    expect(robo.overlay.querySelector('[data-role="moment-words"]')!.textContent).toBe('day 3');
+    expect(robo.overlay.querySelectorAll('.robo-slot')).toHaveLength(1);
+    expect(robo.overlay.querySelector('.robo-fireworks')).toBeNull();
+    expect(robo.el.hasAttribute('data-away')).toBe(true);
+  });
+
+  it('arms up from day 2; day 1 keeps them down to wave', () => {
+    robo.play(day(1, 'wave'), standing);
+    expect(robo.overlay.querySelector<HTMLElement>('.robo-figure')!.dataset.arms).toBe('down');
+    robo.play(day(2, 'arms'), standing);
+    expect(robo.overlay.querySelector<HTMLElement>('.robo-figure')!.dataset.arms).toBe('up');
+  });
+
+  it('day 10 and up adds fireworks', () => {
+    robo.play(day(12, 'fireworks'), standing);
+    expect(moment()!.dataset.tier).toBe('fireworks');
+    expect(robo.overlay.querySelector('.robo-fireworks')).not.toBeNull();
+  });
+
+  it('a day on a small screen peeks in with the words', () => {
+    robo.play(day(5, 'jump'), peek);
+    expect(moment()!.dataset.moment).toBe('peek');
+    expect(robo.overlay.querySelector('[data-role="moment-words"]')!.textContent).toBe('day 5');
+  });
+});

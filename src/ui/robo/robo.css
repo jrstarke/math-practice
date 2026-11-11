@@ -119,6 +119,29 @@
 .robo-ball-spin { transform-box: fill-box; transform-origin: center; animation: robo-spin 3s forwards; }
 .robo-speed { animation: robo-speed 3s forwards; }
 
+/* Day celebration: Robo pops up mid-lane with the words on its left. Day 1 waves; 2-4 arms up; 5-9 also jumps;
+   10+ also has fireworks on its right. A jumping Robo is drawn at 85% so the jump stays inside its slot (the lane is
+   only as tall as the room under the problem). */
+.robo-day-me { position: absolute; top: 0; left: calc(50% - var(--s, 1) * 56px); animation: robo-pop-in 3.5s ease-out forwards; }
+[data-moment="day"] .robo-words {
+  position: absolute; right: calc(50% + var(--s, 1) * 68px); top: 0; max-width: min(260px, calc(50% - var(--s, 1) * 68px - 16px));
+  animation: robo-pop-in 3.5s ease-out forwards;
+}
+[data-tier="wave"] .robo-day-me [data-part="arm-right"] .robo-arm { animation: robo-wave 1.6s ease-in-out 0.4s 2; }
+[data-tier="jump"] .robo-day-me .robo-figure,
+[data-tier="fireworks"] .robo-day-me .robo-figure {
+  transform-origin: 50% 100%; transform: scale(0.85); animation: robo-day-jump 3.5s ease-in-out forwards;
+}
+.robo-fireworks {
+  position: absolute; top: 0; left: calc(50% + var(--s, 1) * 68px); width: 170px; height: 136px;
+  transform: scale(var(--s, 1)); transform-origin: 0 0;
+}
+.robo-fireworks svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.robo-burst { transform-box: fill-box; transform-origin: center; opacity: 0; animation: robo-burst 1.3s ease-out 2; }
+.robo-burst-1 { animation-delay: 0.4s; }
+.robo-burst-2 { animation-delay: 0.75s; }
+.robo-burst-3 { animation-delay: 1.1s; }
+
 /* Peek (small screens): rise out of the controls' top edge, cheer, drop back. */
 .robo-peek { position: absolute; }
 .robo-peek-clip { width: 100%; height: 100%; overflow: hidden; }
@@ -175,6 +198,14 @@
   0% { transform: translateY(100%); } 18%, 82% { transform: translateY(0); } 100% { transform: translateY(100%); }
 }
 @keyframes robo-fade { 0% { opacity: 0; } 15%, 85% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes robo-day-jump {
+  0%, 20%, 40%, 60%, 100% { transform: translateY(0) scale(0.85); }
+  30%, 50% { transform: translateY(-15%) scale(0.85); }
+}
+@keyframes robo-burst {
+  0% { opacity: 0; transform: scale(0.2); } 15% { opacity: 1; } 70% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.1); }
+}
 
 /* Reduce Motion: no walking, hopping, kicking or running; Robo fades in and out instead. */
 @media (prefers-reduced-motion: reduce) {
@@ -190,5 +221,11 @@
   [data-moment="high-five"] .robo-words, [data-moment="kick"] .robo-words { animation: robo-fade 2.5s ease-in-out forwards; }
   .robo-ball { display: none; }
   .robo-peek-clip .robo-slot { animation: robo-fade 2.5s ease-in-out forwards; }
+  /* Day: no wave, no jump, no flying sparks. Robo and the words fade in and out; the bursts just fade in, still. */
+  .robo-day-me, [data-moment="day"] .robo-words { animation: robo-fade 3.5s ease-in-out forwards; }
+  [data-tier="wave"] .robo-day-me [data-part="arm-right"] .robo-arm { animation: none; }
+  [data-tier="jump"] .robo-day-me .robo-figure,
+  [data-tier="fireworks"] .robo-day-me .robo-figure { animation: none; transform: none; }
+  .robo-burst { animation: robo-fade 3.5s ease-in-out forwards; }
 }
 @keyframes robo-fade-in { from { opacity: 0; } to { opacity: 1; } }

@@ -2,7 +2,7 @@ import type { BigMoment } from '../../core/robo';
 import { createFigure, setFigure } from './drawing';
 import { ROBO_H, ROBO_W, type RoboMode } from './layout';
 
-export const MOMENT_MS = { walk: 4000, highFive: 2500, kick: 3000, peek: 2500, surprise: 1200, flash: 600 } as const;
+export const MOMENT_MS = { walk: 4000, highFive: 2500, kick: 3000, day: 3500, peek: 2500, surprise: 1200, welcome: 3000, flash: 600 } as const;
 
 /** Where a moment can play, measured by app.ts. */
 export interface MomentPlace {
@@ -35,6 +35,9 @@ export interface RoboView {
   /** Re-place the moment that's playing (the next problem may have less room under it). No-op without one. */
   refit(at: MomentPlace): void;
   surprise(): number;
+  /** Hello: Robo waves at its spot and says `words` (or peeks in with them on a small screen). The caller clears the
+   * words with say(''); endMoment() stops the wave. */
+  greet(words: string, at: MomentPlace): number;
   endMoment(): void;
 }
 
@@ -136,6 +139,15 @@ export function createRobo(): RoboView {
       m.append(words(big.words), slot(me, 'robo-hf-me', at.size), slot(friend, 'robo-hf-friend', at.size));
       return { node: m, ms: MOMENT_MS.highFive };
     }
+    if (big.kind === 'day') {
+      const m = scene('day');
+      m.dataset.tier = big.tier;
+      const me = cheering();
+      if (big.tier !== 'wave') setFigure(me, { arms: 'up' });
+      m.append(words(big.words), slot(me, 'robo-day-me', at.size));
+      if (big.tier === 'fireworks') m.append(fireworks());
+      return { node: m, ms: MOMENT_MS.day };
+    }
     const m = scene('kick');
     const kicker = cheering();
     kicker.classList.add('robo-kicking');
@@ -147,7 +159,7 @@ export function createRobo(): RoboView {
     return { node: m, ms: MOMENT_MS.kick };
   }
 
-  function peekMoment(big: BigMoment, at: MomentPlace): HTMLElement[] {
+  function peekMoment(text: string, at: MomentPlace): HTMLElement[] {
     const m = scene('peek', 'robo-scene robo-peek');
     const f = cheering();
     setFigure(f, { arms: 'up' });
@@ -156,7 +168,7 @@ export function createRobo(): RoboView {
     clip.append(slot(f, '', at.size));
     m.append(clip);
     // On a small screen there's no room beside or above Robo, so the words show where hints show.
-    const w = words(big.words);
+    const w = words(text);
     w.classList.add('robo-peek-words');
     return [m, w];
   }
@@ -199,7 +211,7 @@ export function createRobo(): RoboView {
     play(big, at) {
       el.removeAttribute('data-surprise');
       if (at.mode === 'peek') {
-        overlay.replaceChildren(...peekMoment(big, at));
+        overlay.replaceChildren(...peekMoment(big.words, at));
         view.refit(at);
         return MOMENT_MS.peek;
       }
@@ -217,6 +229,16 @@ export function createRobo(): RoboView {
       el.dataset.surprise = surprises++ % 2 === 0 ? 'wave' : 'bounce';
       return MOMENT_MS.surprise;
     },
+    greet(text, at) {
+      if (at.mode === 'peek') {
+        overlay.replaceChildren(...peekMoment(text, at));
+        view.refit(at);
+        return MOMENT_MS.peek;
+      }
+      el.dataset.surprise = 'wave';
+      say(text);
+      return MOMENT_MS.welcome;
+    },
     endMoment() {
       overlay.replaceChildren();
       el.removeAttribute('data-away');
@@ -225,6 +247,29 @@ export function createRobo(): RoboView {
   };
   return view;
 }
+
+/** Bursts of sparks beside Robo for a 10+ day: the box is 170 × 136 at full scale and shrinks with --s like the ball. */
+function fireworks(): HTMLElement {
+  const box = div('robo-fireworks', { 'data-role': 'fireworks' });
+  box.innerHTML = FIREWORKS;
+  return box;
+}
+
+function burst(x: number, y: number, r: number, colour: string, n: number): string {
+  const rays = Array.from({ length: 8 }, (_, i) => {
+    const a = (i * Math.PI) / 4;
+    const p = (k: number) => `${Math.round(x + Math.cos(a) * r * k)} ${Math.round(y + Math.sin(a) * r * k)}`;
+    return `M${p(0.35)} L${p(1)}`;
+  }).join(' ');
+  return `<g class="robo-burst robo-burst-${n}" stroke="${colour}"><path d="${rays}"/><circle cx="${x}" cy="${y}" r="${Math.round(r * 0.12)}" fill="${colour}" stroke="none"/></g>`;
+}
+
+const FIREWORKS = `
+<svg viewBox="0 0 170 136" fill="none" stroke-width="5" stroke-linecap="round" focusable="false">
+  ${burst(48, 40, 34, '#4cd964', 1)}
+  ${burst(126, 58, 30, '#ff5a4f', 2)}
+  ${burst(78, 100, 28, '#f5b700', 3)}
+</svg>`;
 
 /** The soccer ball from robot-kick.svg, with its speed lines. */
 const BALL = `

@@ -1,6 +1,7 @@
 // Dev-only page (robo-preview.html, not part of the build): every pose side by side, for screenshots.
-// ?moment=walk|walk-friend|high-five|kick|peek|surprise|up plays that moment on a mock iPad-upright layout.
-import type { BigMoment } from '../../core/robo';
+// ?moment=walk|walk-friend|high-five|kick|day-1|day-3|day-7|day-12|welcome|peek|surprise|wrong|right|up plays that
+// moment on a mock iPad-upright layout.
+import { dayTier, dayWords, welcomeWords, type BigMoment } from '../../core/robo';
 import { createFigure, setFigure, type Arms, type Light, type Look, type Mouth } from './drawing';
 import { laneTop, peekPosition, spotPosition, type Box } from './layout';
 import { createRobo } from './robo';
@@ -52,8 +53,10 @@ function mock(): void {
     'high-five': { kind: 'highFive', words: 'High five!' },
     kick: { kind: 'kick', words: 'New: division!' },
   };
+  for (const days of [1, 3, 7, 12]) bigs[`day-${days}`] = { kind: 'day', days, tier: dayTier(days), words: dayWords(days) };
   if (moment === 'peek') robo.play(bigs.walk, { ...at, mode: 'peek' });
   else if (moment === 'surprise') robo.surprise();
+  else if (moment === 'welcome') robo.greet(welcomeWords(41), at);
   else if (moment === 'wrong') robo.wrong('Not quite — try again!');
   else if (moment === 'right') robo.right('You figured it out!');
   else if (moment === 'up') { robo.moveTo({ left: w / 2 + 122, top: stage.top + 140 }, 'up'); robo.think(); robo.talk(true); }
