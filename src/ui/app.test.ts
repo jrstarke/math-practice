@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { defaultProgress, type Progress } from '../core/progress';
 import { hintLimit, solve } from '../core/solver';
-import { setup } from './testUtil';
+import { localDate } from '../core/days';
+import { setup, START } from './testUtil';
 
 test('renders a problem and number pad', () => {
   const s = setup();
@@ -29,7 +30,7 @@ test('correct answer records once, plays sound, advances after 1s', () => {
   expect(s.saved).toHaveLength(1);
   expect(s.sound.correct.mock.calls.length + s.sound.levelUp.mock.calls.length).toBe(1);
   expect(s.q('[data-role="answer"]')!.classList.contains('correct')).toBe(true);
-  expect(s.q('[data-role="streak"]')!.textContent).toContain('1');
+  expect(s.saved[0].streak).toBe(1);
   s.advance(1000);
   expect(s.current()).not.toEqual(first);
   expect(s.answerText()).toBe('');
@@ -38,7 +39,7 @@ test('correct answer records once, plays sound, advances after 1s', () => {
 test('total badge shows the saved total and goes up on a clean answer', () => {
   const s = setup(1, {}, { ...defaultProgress(), total: 41, streak: 3 });
   expect(s.q('[data-role="total"]')!.textContent).toBe('⭐ 41');
-  expect(s.q('[data-role="streak"]')!.textContent).toBe('🔥 3');
+  expect(s.q('[data-role="streak"]')).toBeNull(); // hidden for now; still counted
   s.typeAnswer(s.correctAnswer());
   s.tap('[data-key="submit"]');
   expect(s.q('[data-role="total"]')!.textContent).toBe('⭐ 42');
@@ -52,7 +53,7 @@ test('a wrong first try resets the streak but keeps the total', () => {
   s.typeAnswer(s.correctAnswer());
   s.tap('[data-key="submit"]');
   expect(s.q('[data-role="total"]')!.textContent).toBe('⭐ 41');
-  expect(s.q('[data-role="streak"]')!.textContent).toBe('🔥 0');
+  expect(s.saved.at(-1)!.streak).toBe(0);
 });
 
 test('double-tapping submit on a correct answer records only once', () => {
@@ -326,7 +327,8 @@ describe('Robo', () => {
   const answerRight = (s: ReturnType<typeof setup>) => { s.typeAnswer(s.correctAnswer()); s.tap('[data-key="submit"]'); };
   const answerWrong = (s: ReturnType<typeof setup>) => { s.typeAnswer(s.correctAnswer() + 1); s.tap('[data-key="submit"]'); };
   const standing = { roboMode: 'standing' as const };
-  const at39 = () => ({ ...defaultProgress(), total: 39 });
+  // Hidden just now, so no welcome: these tests see only the walk.
+  const at39 = () => ({ ...defaultProgress(), total: 39, hiddenAt: START });
 
   // Rectangles like an upright iPad, so Robo has room to go up beside the problem (jsdom's are all zeros).
   function ipadRects() {
@@ -611,5 +613,68 @@ describe('Robo', () => {
     expect(robo(s).dataset.surprise).toMatch(/^(wave|bounce)$/);
     s.advance(1200);
     expect(robo(s).hasAttribute('data-surprise')).toBe(false);
+  });
+
+  // ---- Welcome and the day streak ----
+  const MIN = 60_000;
+  const today = localDate(new Date(START));
+  const yesterday = localDate(new Date(START - 24 * 60 * MIN));
+  const sawWelcome = (s: ReturnType<typeof setup>) => /some math!$/.test(roboSays(s) ?? '');
+
+  test('opening the app for the first time: Robo waves and says hi', () => {
+    const s = setup(1, standing);
+    expect(roboSays(s)).toBe("Hi! Let's do some math!");
+    expect(robo(s).dataset.surprise).toBe('wave');
+    expect(s.sound.robo).toHaveBeenCalledTimes(1);
+    s.advance(3000);
+    expect(roboSays(s)).toBe('');
+    expect(robo(s).hasAttribute('data-surprise')).toBe(false);
+  });
+
+  test('opening the app again: "Welcome back"; her first key clears the words', () => {
+    const s = setup(1, standing, { ...defaultProgress(), total: 41 });
+    expect(roboSays(s)).toBe("Welcome back, let's do some math!");
+    s.tap('[data-key="1"]');
+    expect(roboSays(s)).toBe('');
+  });
+
+  test('a reload soon after a short switch is not a fresh start', () => {
+    expect(sawWelcome(setup(1, standing, { ...defaultProgress(), total: 41, hiddenAt: START - 5 * MIN }))).toBe(false);
+    expect(sawWelcome(setup(1, standing, { ...defaultProgress(), total: 41, hiddenAt: START - 31 * MIN }))).toBe(true);
+  });
+
+  test('coming back after 30 minutes or more welcomes her; a shorter switch does not', () => {
+    const s = setup(1, standing, { ...defaultProgress(), total: 41, hiddenAt: START - 5 * MIN });
+    s.hide();
+    expect(s.saved.at(-1)!.hiddenAt).toBe(START);
+    s.away(10 * MIN);
+    s.show();
+    expect(sawWelcome(s)).toBe(false);
+    s.hide();
+    s.away(31 * MIN);
+    s.show();
+    expect(roboSays(s)).toBe("Welcome back, let's do some math!");
+  });
+
+  test('coming back while Robo is up with a hint: no welcome, Robo stays beside the problem', () => {
+    ipadRects();
+    const s = setup(1, standing, { ...defaultProgress(), total: 41, hiddenAt: START - 5 * MIN });
+    s.tap('[data-action="hint"]');
+    expect(robo(s).dataset.place).toBe('up');
+    s.hide();
+    s.away(31 * MIN);
+    s.show();
+    expect(sawWelcome(s)).toBe(false);
+    expect(robo(s).dataset.place).toBe('up');
+  });
+
+  test('her 10th right answer of the day celebrates the days in a row', () => {
+    const s = setup(1, standing, { ...defaultProgress(), total: 41, hiddenAt: START,
+      day: { date: today, right: 9, days: 2, lastDone: yesterday } });
+    answerRight(s);
+    const m = s.q('[data-moment="day"]')!;
+    expect(m.dataset.tier).toBe('arms');
+    expect(s.q('[data-role="moment-words"]')!.textContent).toBe('You did your math 3 days in a row! Keep it up!');
+    expect(s.saved.at(-1)!.day).toEqual({ date: today, right: 10, days: 3, lastDone: today });
   });
 });

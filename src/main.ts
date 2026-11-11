@@ -17,6 +17,7 @@ mountApp({
   root: document.getElementById('app')!,
   rng: mulberry32(Date.now()),
   now: () => performance.now(),
+  clock: () => Date.now(),
   store: createStore(safeLocalStorage()),
   sound: createSound(),
   version: __APP_VERSION__,

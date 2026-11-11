@@ -4,7 +4,7 @@ import { focusAnswer, focusScratch, initialEntry, markWrong, pressKey, setScratc
 import { maxAnswerLength } from '../core/levels';
 import type { Progress } from '../core/progress';
 import type { Rng } from '../core/rng';
-import { decideRobo, initialRoboMemory, type BigMoment, type RoboOutcome } from '../core/robo';
+import { decideRobo, initialRoboMemory, welcomeWords, type BigMoment, type RoboOutcome } from '../core/robo';
 import { nextProblem, recordResult, RECENT_LIMIT, type AttemptInput } from '../core/session';
 import { hintLimit, revealState, solve, type RevealState, type Step } from '../core/solver';
 import type { Problem } from '../core/types';
@@ -25,6 +25,8 @@ export interface AppDeps {
   root: HTMLElement;
   rng: Rng;
   now: () => number;
+  /** Wall-clock time (epoch ms) for the day streak's dates and time away. Defaults to Date.now. */
+  clock?: () => number;
   store: ProgressStore;
   sound: SoundPlayer;
   /** iOS exposes navigator.standalone; injectable for tests. */
@@ -41,6 +43,8 @@ export const ADVANCE_MS = 1000;
 export const PASS_STEP_MS = 1500;
 /** Hint/Pass ignore taps this soon after Next, so a double-tap on Next cannot pass the new problem. */
 export const ACTION_GUARD_MS = 400;
+/** Robo welcomes her on opening the app, and on coming back after at least this long away. */
+export const WELCOME_AFTER_MS = 30 * 60 * 1000;
 const TRY_AGAIN = 'Not quite — try again';
 const ROBO_TRY_AGAIN = 'Not quite — try again!';
 
@@ -53,6 +57,7 @@ interface Attempt extends AttemptInput { firstSubmitMs: number }
 export function mountApp(deps: AppDeps): { destroy(): void } {
   const { root, rng, now, store, sound } = deps;
   const nav = deps.nav ?? (navigator as { standalone?: boolean });
+  const clock = deps.clock ?? Date.now;
 
   let progress: Progress = store.load();
   const recent: Problem[] = [];
@@ -78,10 +83,10 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   let momentTimer: ReturnType<typeof setTimeout> | null = null;
   let roboLayout = ''; // where the stage and controls were at the last measure
   let roboAway = false; // a walk, high five or kick is playing in standing mode
+  let greeting = false; // Robo is saying hello at its spot
 
   // Static shell
   const totalEl = el('span', { class: 'total', 'data-role': 'total' });
-  const streakEl = el('span', { class: 'streak', 'data-role': 'streak' });
   const muteBtn = el('button', { type: 'button', class: 'icon-button', 'data-action': 'mute', 'aria-label': 'Sound on or off' });
   const problemHost = el('div');
   const messageEl = el('div', { class: 'message', 'data-role': 'message', 'aria-live': 'polite' });
@@ -97,7 +102,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   const controlsEl = el('section', { class: 'controls' }, actions, createNumberPad());
   const robo = createRobo();
   const appEl = el('div', { class: 'app' },
-      el('header', { class: 'topbar' }, el('div', { class: 'badges' }, totalEl, streakEl),
+      el('header', { class: 'topbar' }, el('div', { class: 'badges' }, totalEl),
         el('div', { class: 'topbar-end' },
           ...(deps.version ? [el('span', { class: 'version', 'data-role': 'version' }, deps.version)] : []), muteBtn)),
       el('main', { class: 'play' },
@@ -179,6 +184,34 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     if (momentTimer) { clearTimeout(momentTimer); timers.delete(momentTimer); momentTimer = null; }
     roboAway = false;
     robo.endMoment();
+    endGreeting();
+  }
+
+  function endGreeting() {
+    if (!greeting) return;
+    greeting = false;
+    robo.say('');
+  }
+
+  /** Hello, at Robo's spot. Never while it's up beside the problem or away on a moment: nothing may cover her work. */
+  function greet() {
+    if (roboMode === 'standing' && (roboPlace !== 'spot' || roboAway)) return;
+    endMoment();
+    const ms = robo.greet(welcomeWords(progress.total), momentPlace());
+    greeting = roboMode === 'standing';
+    sound.robo();
+    momentTimer = later(() => { momentTimer = null; endMoment(); }, ms);
+  }
+
+  const awayLongEnough = () => progress.hiddenAt === null || clock() - progress.hiddenAt >= WELCOME_AFTER_MS;
+
+  function onVisibility() {
+    if (document.visibilityState === 'hidden') {
+      progress = { ...progress, hiddenAt: clock() };
+      store.save(progress);
+    } else if (awayLongEnough()) {
+      greet();
+    }
   }
 
   /** Where a moment can play now: the room under the problem (or picture) on screen. */
@@ -228,7 +261,6 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     const renderFn = problem.op === '×' || problem.op === '÷' ? renderHorizontalProblem : renderColumnProblem;
     renderFn(problemHost, { problem, entry, ghosts: reveal.ghosts, highlight: reveal.column, phase });
     totalEl.textContent = `⭐ ${progress.total}`;
-    streakEl.textContent = `🔥 ${progress.streak}`;
     messageEl.textContent = message || unlockNote;
     messageEl.classList.toggle('good', !message && unlockNote !== '');
     syncMessage();
@@ -265,7 +297,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   }
 
   function finish(a: Attempt) {
-    const result = recordResult(progress, problem, a, localDate(new Date(Date.now())));
+    const result = recordResult(progress, problem, a, localDate(new Date(clock())));
     progress = result.progress;
     store.save(progress);
     recent.push(problem);
@@ -280,14 +312,14 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     }
     if (Number(entry.answer) === answerOf(problem)) {
       const totalBefore = progress.total;
-      const { levelChange, unlocked } = finish(attempt);
+      const { levelChange, unlocked, dayDone } = finish(attempt);
       if (unlocked.length > 0) unlockNote = `New: ${unlocked.join(' and ')}!`;
       if (levelChange === 1 || unlocked.length > 0) sound.levelUp(); else sound.correct();
       phase = 'correct';
       message = '';
       render();
       cheer({ totalBefore, totalAfter: progress.total, levelChange, unlocked,
-        wrongSubmits: attempt.wrongSubmits, hintsUsed: attempt.hintsUsed, passed: false, dayDone: null });
+        wrongSubmits: attempt.wrongSubmits, hintsUsed: attempt.hintsUsed, passed: false, dayDone });
       later(showNext, ADVANCE_MS);
     } else {
       attempt.wrongSubmits++;
@@ -331,7 +363,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   function pass() {
     if (phase !== 'answering') return;
     const totalBefore = progress.total;
-    const { levelChange, unlocked } = finish({ ...attempt, passed: true });
+    const { levelChange, unlocked, dayDone } = finish({ ...attempt, passed: true });
     phase = 'passing';
     message = '';
     entry = focusAnswer({ ...entry, answer: '', faded: false });
@@ -340,7 +372,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     roboWanted = true; // so passStep() sends Robo up
     passStep();
     cheer({ totalBefore, totalAfter: progress.total, levelChange, unlocked,
-      wrongSubmits: attempt.wrongSubmits, hintsUsed: attempt.hintsUsed, passed: true, dayDone: null });
+      wrongSubmits: attempt.wrongSubmits, hintsUsed: attempt.hintsUsed, passed: true, dayDone });
   }
 
   function dismissTip() {
@@ -360,6 +392,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     if (phase !== 'answering') return;
     unlockNote = '';
     robo.calm();
+    endGreeting();
     const r = pressKey(entry, key, maxAnswerLength(problem));
     entry = r.state;
     if (key !== 'submit' && message === TRY_AGAIN && !entry.faded) message = '';
@@ -407,6 +440,8 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   sound.setMuted(progress.muted);
   showNext();
   measureRobo();
+  if (awayLongEnough()) greet();
+  document.addEventListener('visibilitychange', onVisibility);
   const onResize = () => measureRobo();
   window.addEventListener('resize', onResize);
 
@@ -433,6 +468,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
       root.removeEventListener('pointerup', unlockSound);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('resize', onResize);
+      document.removeEventListener('visibilitychange', onVisibility);
       resizeObserver?.disconnect();
       robo.el.remove();
       robo.overlay.remove();
