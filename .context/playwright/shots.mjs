@@ -8,7 +8,9 @@ const views = process.env.VIEWS ? JSON.parse(process.env.VIEWS) : [
   ['ipad-p', 820, 1180], ['ipad-l', 1180, 820], ['ipad-l-tab', 1180, 745], ['ipad102-l-tab', 1080, 740], ['ipad102-p', 810, 1080], ['ipad102-p-tab', 810, 1005], ['se-land', 667, 375], ['ip15-land', 852, 393], ['ip15-land-notch', 852, 393],
   ['ipad6-l', 1024, 768], ['ipad6-l-tabs', 1024, 665], ['ipad102-l-tabs', 1080, 707], ['ipad6-p-tabs', 768, 918],
 ];
-const STORAGE_KEY = 'math-practice-progress-v6';
+const STORAGE_KEY = 'math-practice-progress-v7';
+const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const TODAY = ymd(new Date()), YESTERDAY = ymd(new Date(Date.now() - 86_400_000));
 const ATTEMPT_CAP = 20;
 
 // OP=× (default) or OP=÷ picks the operation under test, at the levels that stress its picture.
@@ -20,7 +22,7 @@ const LEVELS = OP === '÷' ? [1, 2, 6, 7, 8, 9] : [1, 7, 8, 9];
 const nine = { level: 9, window: [], calibrationLeft: 0 };
 function progressFor(level) {
   return {
-    version: 6,
+    version: 7,
     unlocked: ['addition', 'subtraction', 'multiplication', 'division'],
     addition: nine,
     subtraction: nine,
@@ -28,6 +30,8 @@ function progressFor(level) {
     division: OP === '÷' ? { level, window: [], calibrationLeft: 0 } : nine,
     welcome: { op: OP_KEY, left: 3 },
     streak: 12, bestStreak: 12, total: +(process.env.TOTAL ?? 12), muted: false, installTipShown: false,
+    // Hidden just now, so there's no welcome: flows that want one set hiddenAt: null.
+    day: { date: null, right: 0, days: 0, lastDone: null }, hiddenAt: Date.now(),
   };
 }
 
@@ -197,7 +201,10 @@ const roboFixtures = {
     division: { level: 1, window: [1], calibrationLeft: 9 }, welcome: { op: 'division', left: 3 } },
   kick: { ...progressFor(1), unlocked: all9.slice(0, 3), total: 12, division: { level: 1, window: [], calibrationLeft: 10 },
     multiplication: { level: 1, window: [1], calibrationLeft: 9 }, welcome: { op: 'multiplication', left: 3 } },
+  welcome: { ...progressFor(1), total: 39, hiddenAt: null },
 };
+// The next right answer completes day N (9 right today, N - 1 days in a row up to yesterday).
+const dayFixture = n => ({ ...progressFor(1), total: 12, day: { date: TODAY, right: 9, days: n - 1, lastDone: YESTERDAY } });
 
 async function open(name, w, h, progress) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true, isMobile: w < 1000, reducedMotion: RM ? 'reduce' : 'no-preference' });
@@ -233,7 +240,7 @@ const momentCheck = page => page.evaluate(() => {
   const at = document.elementFromPoint(k.left + k.width / 2, k.top + k.height / 2);
   if (!document.querySelector('[data-key="5"]').contains(at)) issues.push('a tap on 5 does not reach the key');
   if (!document.querySelector('[data-moment]')) issues.push('no moment playing');
-  const parts = [...document.querySelectorAll('[data-role="robo-moment"] .robo-slot, [data-role="robo-moment"] .robo-words')]
+  const parts = [...document.querySelectorAll('[data-role="robo-moment"] .robo-slot, [data-role="robo-moment"] .robo-words, [data-role="robo-moment"] .robo-fireworks')]
     .map(e => e.getBoundingClientRect()).filter(b => b.width > 0);
   for (const [n, b] of [['problem', r('.problem')], ['answer', r('[data-role="answer"]')], ['controls', r('.controls')]]) {
     if (parts.some(p => hit(p, b))) issues.push(`moment over ${n}`);
@@ -267,7 +274,17 @@ for (const [name, w, h] of views) {
   await snap(page, 'wrong'); await shot(page, 'wrong');
   add('errors', errors); await ctx.close();
 
-  for (const [moment, fixture, wait] of [['walk', roboFixtures.walk, 1600], ['high-five', roboFixtures.highFive, 1000], ['kick', roboFixtures.kick, 1500]]) {
+  // Welcome: Robo says hello at its spot (or peeks in), covering nothing.
+  ({ ctx, page, errors } = await open(name, w, h, roboFixtures.welcome));
+  await page.waitForTimeout(500);
+  const hello = await page.evaluate(() => [document.querySelector('[data-role="robo-bubble"]')?.textContent ?? '',
+    document.querySelector('[data-role="moment-words"]')?.textContent ?? '']);
+  if (!hello.some(t => t === "Welcome back, let's do some math!")) add('welcome', [`no welcome words (${hello.join(' | ')})`]);
+  await snap(page, 'welcome'); await shot(page, 'welcome');
+  add('errors', errors); await ctx.close();
+
+  const days = [1, 3, 7, 12].map(n => [`day-${n}`, dayFixture(n), 1200]);
+  for (const [moment, fixture, wait] of [['walk', roboFixtures.walk, 1600], ['high-five', roboFixtures.highFive, 1000], ['kick', roboFixtures.kick, 1500], ...days]) {
     ({ ctx, page, errors } = await open(name, w, h, fixture));
     await answerNow(page);
     await page.waitForTimeout(wait);
