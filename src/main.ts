@@ -13,6 +13,14 @@ function safeLocalStorage(): Storage | null {
   }
 }
 
+/** Dev only (stripped from builds): ?roboRng=<0..1> makes Robo's random picks fixed, so the layout check can play a
+ * chosen celebration. Style k of a group of n (fresh memory) is (k + 0.5) / n. */
+function devRoboRng(): (() => number) | undefined {
+  if (!import.meta.env.DEV) return undefined;
+  const v = Number(new URLSearchParams(location.search).get('roboRng') ?? NaN);
+  return v >= 0 && v < 1 ? () => v : undefined;
+}
+
 mountApp({
   root: document.getElementById('app')!,
   rng: mulberry32(Date.now()),
@@ -21,6 +29,7 @@ mountApp({
   store: createStore(safeLocalStorage()),
   sound: createSound(),
   version: __APP_VERSION__,
+  roboRng: devRoboRng(),
 });
 
 registerSW({

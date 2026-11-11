@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { defaultProgress, type Progress } from '../core/progress';
+import { defaultProgress, type OpKey, type Progress } from '../core/progress';
 import { hintLimit, solve } from '../core/solver';
 import { localDate } from '../core/days';
 import { setup, START } from './testUtil';
@@ -451,6 +451,44 @@ describe('Robo', () => {
     expect(message(s).textContent).toBe('New: division!');
     expect(message(s).classList.contains('sr-only')).toBe(true);
     expect(s.sound.levelUp).toHaveBeenCalledOnce();
+  });
+
+  const divisionLevelUp = () => ({
+    ...defaultProgress(),
+    unlocked: ['addition', 'subtraction', 'multiplication', 'division'] as OpKey[],
+    addition: { level: 9, window: [], calibrationLeft: 0 },
+    subtraction: { level: 9, window: [], calibrationLeft: 0 },
+    multiplication: { level: 9, window: [], calibrationLeft: 0 },
+    division: { level: 1, window: [1], calibrationLeft: 9 },
+    welcome: { op: 'division' as OpKey, left: 1 },
+  });
+
+  test("Robo's pick plays its scene: 0 picks the walk and the high five, 0.99 the cartwheel", () => {
+    const first = setup(1, { ...standing, roboRng: () => 0 }, at39());
+    answerRight(first);
+    expect(first.q('[data-moment="walk"]')).not.toBeNull();
+    const up = setup(1, { ...standing, roboRng: () => 0 }, divisionLevelUp());
+    answerRight(up);
+    expect(up.q('[data-moment="high-five"]')).not.toBeNull();
+    const last = setup(1, { ...standing, roboRng: () => 0.99 }, at39());
+    answerRight(last);
+    expect(last.q('[data-moment="cartwheel"]')).not.toBeNull();
+    expect(last.q('[data-role="moment-words"]')!.textContent).toBe("You've gotten 40 questions right! Keep going!");
+  });
+
+  test('a level-up that plays a tall scene (the tower) plays it', () => {
+    const s = setup(1, { ...standing, roboRng: () => 4.5 / 9 }, divisionLevelUp());
+    answerRight(s);
+    expect(s.q('[data-moment="tower"]')).not.toBeNull();
+    expect(s.root.querySelectorAll('[data-moment="tower"] .robo-figure')).toHaveLength(3);
+  });
+
+  test('reaching 100 stars plays the conga with 2 robots', () => {
+    const s = setup(1, standing, { ...defaultProgress(), total: 99, hiddenAt: START });
+    answerRight(s);
+    expect(s.q('[data-moment="conga"]')).not.toBeNull();
+    expect(s.root.querySelectorAll('[data-moment="conga"] .robo-figure')).toHaveLength(2);
+    expect(s.q('[data-role="moment-words"]')!.textContent).toBe("You've gotten 100 questions right! Keep going!");
   });
 
   test('tapping Hint during a walk ends the walk and sends Robo up', () => {
