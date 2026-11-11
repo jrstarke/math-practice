@@ -13,7 +13,7 @@
   on her first tap if iOS keeps audio suspended (CHECK ON IPAD); update reload right after a welcomed resume can
   double/cut the welcome; red light + hidden try-again words if she returns to an unanswered wrong try; advance timer
   can cut welcome words short; stale storage test names; shots.mjs YESTERDAY off in fall-back hour.
-  NOT on prod yet — user pushes `git push prod main` from the host when ready.
+  User pushed to prod too (prod/main = 6c164ad, 2026-11-11).
 - **Next-step candidates** (details further down this file):
   1. Gentler streak — today a hint breaks the 🔥 streak; conflicts with "hints should feel good" (small).
   2. Short sets with a finish line ending in Robo's kick (reverses the "endless" decision; user's call).
