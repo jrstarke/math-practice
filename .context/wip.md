@@ -7,8 +7,8 @@
 - **IN PROGRESS (2026-11-11): Day streak.** Hide 🔥 (keep counting), Robo welcome on open, 10 right answers/day
   counts the day, one missed day forgiven, tiered celebrations (wave / arms up / +jump / +fireworks), held-back walks
   say the current star count. Design: docs/superpowers/specs/2026-11-11-day-streak-design.md (commit 22bcff0),
-  builder check clean. Approach 1 (Robo moment system + progress v7) chosen by user. AWAITING USER APPROVAL of the
-  doc → then superpowers:writing-plans.
+  builder check clean, user APPROVED the design. Plan: docs/superpowers/plans/2026-11-11-day-streak.md (6 tasks).
+  AWAITING user review of the plan + choice of execution method (subagent-driven vs native).
 - **Next-step candidates** (details further down this file):
   1. Gentler streak — today a hint breaks the 🔥 streak; conflicts with "hints should feel good" (small).
   2. Short sets with a finish line ending in Robo's kick (reverses the "endless" decision; user's call).
