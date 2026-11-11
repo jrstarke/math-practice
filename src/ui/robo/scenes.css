@@ -13,6 +13,9 @@
 .robo-walking [data-part="leg-right"] .robo-leg { animation: robo-swing-b 0.8s ease-in-out infinite; }
 .robo-walking [data-part="arm-left"] .robo-arm { animation: robo-arm-a 0.8s ease-in-out infinite; }
 .robo-walking [data-part="arm-right"] .robo-arm { animation: robo-arm-b 0.8s ease-in-out infinite; }
+/* A swinging leg dips its toe ~1% of Robo's height below the feet line: lift walkers 1% so it stays on the lane floor
+   (the bob's top then just meets the drawing's top edge). */
+.robo-walking .robo-figure, .robo-wv-me .robo-figure { transform: translateY(-1%); }
 .robo-walking-b .robo-body-group,
 .robo-walking-b .robo-leg,
 .robo-walking-b .robo-arm { animation-delay: -0.4s; }
@@ -206,6 +209,8 @@
 
 /* Reduce Motion: nothing travels, jumps or swings; each scene fades in and out in its final pose. */
 @media (prefers-reduced-motion: reduce) {
+  /* Every arm and leg in a scene stands still (more specific than any scene's own limb rule, kick included). */
+  .robo-moment-layer .robo-scene [data-part] .robo-leg, .robo-moment-layer .robo-scene [data-part] .robo-arm { animation: none; }
   .robo-walking .robo-body-group, .robo-walking .robo-leg, .robo-walking .robo-arm,
   .robo-conga-step .robo-body-group, .robo-conga-step .robo-leg, .robo-conga-step .robo-arm { animation: none; }
   /* The walker's inline animation-duration (the conga's) carries over to the fade. */

@@ -191,7 +191,8 @@ for (const level of process.env.ROBO_ONLY ? [] : LEVELS) {
   }
 }
 // ---- Robo flow, once per view: thinking, up with a hint (then rotated and back), wrong (red), and mid-moment
-// frames for a walk (40th star), a high five (division level-up) and a kick (division unlock). RM=1 runs it with
+// frames for a walk (40th star), a high five (division level-up) and a kick (division unlock), then every
+// celebration (each level-up and 20-star style, conga-2 and conga-10) forced with ?roboRng. RM=1 runs it with
 // prefers-reduced-motion. Screenshots: OUT/robo-<view>-<state>.png
 const RM = !!process.env.RM;
 const all9 = ['addition', 'subtraction', 'multiplication', 'division'];
@@ -206,7 +207,7 @@ const roboFixtures = {
 // The next right answer completes day N (9 right today, N - 1 days in a row up to yesterday).
 const dayFixture = n => ({ ...progressFor(1), total: 12, day: { date: TODAY, right: 9, days: n - 1, lastDone: YESTERDAY } });
 
-async function open(name, w, h, progress) {
+async function open(name, w, h, progress, query = '') {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true, isMobile: w < 1000, reducedMotion: RM ? 'reduce' : 'no-preference' });
   const page = await ctx.newPage();
   const errors = [];
@@ -216,7 +217,7 @@ async function open(name, w, h, progress) {
     let first = true; const real = Date.now;
     Date.now = () => (first ? (first = false, 7919) : real());
   }, [progress, STORAGE_KEY]);
-  await page.goto(URL);
+  await page.goto(URL + query);
   await page.waitForSelector('[data-role="answer"]', { state: 'attached' });
   await page.waitForTimeout(300); // first ResizeObserver measure
   return { ctx, page, errors };
@@ -240,10 +241,31 @@ const momentCheck = page => page.evaluate(() => {
   const at = document.elementFromPoint(k.left + k.width / 2, k.top + k.height / 2);
   if (!document.querySelector('[data-key="5"]').contains(at)) issues.push('a tap on 5 does not reach the key');
   if (!document.querySelector('[data-moment]')) issues.push('no moment playing');
-  const parts = [...document.querySelectorAll('[data-role="robo-moment"] .robo-slot, [data-role="robo-moment"] .robo-words, [data-role="robo-moment"] .robo-fireworks')]
+  const parts = [...document.querySelectorAll('[data-role="robo-moment"] :is(.robo-slot, .robo-words, .robo-fireworks, .robo-ball, .robo-goal)')]
     .map(e => e.getBoundingClientRect()).filter(b => b.width > 0);
-  for (const [n, b] of [['problem', r('.problem')], ['answer', r('[data-role="answer"]')], ['controls', r('.controls')]]) {
+  for (const [n, b] of [['problem', r('.problem')], ['answer', r('[data-role="answer"]')], ['bubble', r('[data-role="bubble"]:not(.empty)')],
+    ['picture', r('.picture-host svg')], ['controls', r('.controls')]]) {
     if (parts.some(p => hit(p, b))) issues.push(`moment over ${n}`);
+  }
+  // Nothing above or below the lane (the scene's box). Robots' drawn bodies count too in scenes that don't rotate
+  // them (a rotated box overstates the drawing; cartwheel/sway/rock/balance are checked by eye and by sums).
+  const ROTATING = ['cartwheel', 'dance', 'light-show', 'ball-ride', 'header'];
+  for (const scene of document.querySelectorAll('[data-role="robo-moment"] .robo-scene')) {
+    const lane = scene.getBoundingClientRect();
+    const sel = ROTATING.includes(scene.dataset.moment) ? '' : ', .robo-body-group';
+    for (const e of scene.querySelectorAll(`:is(.robo-slot, .robo-words, .robo-fireworks, .robo-ball, .robo-goal${sel})`)) {
+      const b = e.getBoundingClientRect();
+      if (b.width > 0 && (b.top < lane.top - 1 || b.bottom > lane.bottom + 1)) {
+        issues.push(`moment outside lane (${e.getAttribute('class')} ${Math.round(b.top - lane.top)}/${Math.round(b.bottom - lane.bottom)})`);
+        break;
+      }
+    }
+  }
+  // Reduce Motion: only fades, appear/disappear and colour changes may run during a moment.
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const still = ['robo-fade', 'robo-fade-in', 'robo-show', 'robo-hide', 'robo-ls-light', 'robo-ls-glow', 'robo-ls-rays', 'robo-pulse', 'robo-kick-glow'];
+    const moving = [...new Set(document.getAnimations().map(x => x.animationName).filter(n => n && !still.includes(n)))];
+    if (moving.length) issues.push(`moves under Reduce Motion: ${moving.join(', ')}`);
   }
   return issues;
 });
@@ -298,6 +320,42 @@ for (const [name, w, h] of views) {
       const left = await page.evaluate(() => document.querySelectorAll('[data-moment]').length);
       if (left) add('walk rotated', ['a moment is still playing after rotating']);
       await snap(page, 'walk rotated', null);
+    }
+    add('errors', errors); await ctx.close();
+  }
+
+  // Every celebration, forced with the dev-only ?roboRng (style k of n is (k + 0.5) / n), checked at ~40% and ~70%.
+  const LEVEL_UPS = [['high-five', 2500], ['jump-together', 2800], ['pass', 3200], ['dance', 3200], ['tower', 3600],
+    ['keepy-uppy', 3800], ['light-show', 3200], ['header', 3800], ['cartwheel', 3600]];
+  const STARS = [['walk', 4000], ['walk-friend', 4000], ['dribble', 4000], ['hop', 4000], ['stop-wave', 4500], ['ball-ride', 4400], ['cartwheel', 3600]];
+  const congaMs = n => Math.round(4000 * (w + 112 * (1 + 0.7 * (n - 1)) + 226) / (w + 338));
+  const celebrations = [
+    ...LEVEL_UPS.map(([style, ms], k) => [style, ms, roboFixtures.highFive, (k + 0.5) / 9]),
+    ...STARS.map(([style, ms], k) => [style, ms, roboFixtures.walk, (k + 0.5) / 7]),
+    ['conga', congaMs(2), { ...progressFor(1), total: 99 }, 0.5, 2],
+    ['conga', congaMs(10), { ...progressFor(1), total: 899 }, 0.5, 10],
+  ];
+  for (const [style, fullMs, fixture, pick, robots] of celebrations) {
+    const tag = robots ? `conga-${robots}` : `${fixture === roboFixtures.walk ? 'stars' : 'level'}-${style}`;
+    ({ ctx, page, errors } = await open(name, w, h, fixture, `?roboRng=${pick}`));
+    await answerNow(page);
+    await page.waitForTimeout(50);
+    const [moment, peeking, count] = await page.evaluate(() => [document.querySelector('[data-moment]')?.dataset.moment,
+      document.querySelector('[data-role="robo"]').hidden, document.querySelectorAll('[data-role="robo-moment"] .robo-figure').length]);
+    if (moment !== (peeking ? 'peek' : style)) add(tag, [`played ${moment}, not ${style}`]);
+    if (robots && !peeking && count !== robots) add(tag, [`${count} robots, not ${robots}`]);
+    const ms = peeking ? 2500 : fullMs;
+    await page.waitForTimeout(0.4 * ms - 50);
+    add(`${tag} 40%`, await momentCheck(page));
+    await shot(page, `${tag}-40`);
+    await page.waitForTimeout(0.3 * ms);
+    add(`${tag} 70%`, await momentCheck(page));
+    if (robots === 10) {
+      // Review Focus 4: rotating mid-conga ends it like any moment.
+      await page.setViewportSize({ width: h, height: w });
+      await page.waitForTimeout(400);
+      if (await page.evaluate(() => document.querySelectorAll('[data-moment]').length)) add('conga rotated', ['a moment is still playing after rotating']);
+      await snap(page, 'conga rotated', null);
     }
     add('errors', errors); await ctx.close();
   }

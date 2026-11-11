@@ -18,7 +18,15 @@
      today, N−1 days up to yesterday). Fixtures are progress v7 with hiddenAt: Date.now() so other flows get no welcome;
      `RM=1` runs it with prefers-reduced-motion. Screenshots: out/robo-<view>-<state>.png (her iPad: ipad102-p, ipad102-p-tab).
      Every measured state also checks Robo never overlaps the problem, answer boxes, bubble, picture or controls.
-  - Robo poses/moments preview (dev only, not built): /robo-preview.html and /robo-preview.html?moment=walk|walk-friend|high-five|kick|day-1|day-3|day-7|day-12|welcome|peek|surprise|wrong|right|up
+  5. Celebrations (2026-11-11): the Robo flow also plays every level-up style, every 20-star style, conga-2 (total 99)
+     and conga-10 (total 899) per view, forced with the dev-only URL value ?roboRng=<0..1> (src/main.ts; stripped from
+     builds): style k of a group of n is (k + 0.5) / n (level-ups n=9, 20 stars n=7, order as LEVEL_UPS / STAR_STYLES in
+     src/core/robo.ts). momentCheck at ~40% and ~70%: nothing over problem/answer/bubble/picture/controls, nothing above or
+     below the lane (slots, words, balls, goal; robots' drawn bodies too except in rotating scenes: cartwheel, dance,
+     light-show, ball-ride, header), right data-moment, conga robot count; conga-10 also rotates mid-moment.
+     Screenshots out/robo-<view>-<level|stars>-<style>-40.png, robo-<view>-conga-<n>-40.png. A fixed roboRng below 1/15
+     also makes surprises fire on clean answers (harmless for the check).
+  - Robo poses/moments preview (dev only, not built): /robo-preview.html and /robo-preview.html?moment=walk|walk-friend|<level-up style>|stars-<20-star style>|conga-2|conga-5|conga-10|kick|day-1|day-3|day-7|day-12|welcome|peek|surprise|wrong|right|up (&size=68 for a short lane)
   - Gotchas: $PUBLISH_PORT may already be taken by another process — then Vite picks the next port (check dev.log) and the
     URL must match. Vite's file watcher can miss edits on the /workspace mount: if a run looks like old code,
     `curl -s $URL/src/ui/app.ts | grep <new code>` and restart Vite with `--force`. Never `pkill -f "vite --host"`
