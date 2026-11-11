@@ -4,7 +4,7 @@
 - **State:** main = e0f8d8f, clean, 552 vitest + tsc green. Robo is MERGED to main (2026-11-08) and the user said it
   looks good. Not pushed by me: user pushes `git push dev main` (math-practice-dev.jamiestarke.com) and later
   `git push prod main` from the host. Don't know yet whether they have pushed.
-- **DONE, awaiting merge choice (2026-11-11): Day streak** on branch feat/day-streak (HEAD 5b15554, 601 vitest, tsc,
+- **MERGED to main + pushed to dev by the user (2026-11-11): Day streak** (main 6b8d5ae; built on feat/day-streak, deleted; 601 vitest, tsc,
   build, Playwright ROBO_ONLY + RM + full: only se-tab cell 31<38). Hide 🔥 (still counted), Robo welcome on open / after
   30+ min away, 10 right answers/day counts the day, one missed day forgiven, tiers wave/arms/jump/fireworks, held-back
   walks say the current count. Progress v7 (key math-practice-progress-v7, adds day + hiddenAt).
@@ -13,7 +13,7 @@
   on her first tap if iOS keeps audio suspended (CHECK ON IPAD); update reload right after a welcomed resume can
   double/cut the welcome; red light + hidden try-again words if she returns to an unanswered wrong try; advance timer
   can cut welcome words short; stale storage test names; shots.mjs YESTERDAY off in fall-back hour.
-  Asked user: merge locally / PR / keep. User pushes dev/prod from the host.
+  NOT on prod yet — user pushes `git push prod main` from the host when ready.
 - **Next-step candidates** (details further down this file):
   1. Gentler streak — today a hint breaks the 🔥 streak; conflicts with "hints should feel good" (small).
   2. Short sets with a finish line ending in Robo's kick (reverses the "endless" decision; user's call).
