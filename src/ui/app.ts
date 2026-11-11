@@ -287,7 +287,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
       message = '';
       render();
       cheer({ totalBefore, totalAfter: progress.total, levelChange, unlocked,
-        wrongSubmits: attempt.wrongSubmits, hintsUsed: attempt.hintsUsed, passed: false });
+        wrongSubmits: attempt.wrongSubmits, hintsUsed: attempt.hintsUsed, passed: false, dayDone: null });
       later(showNext, ADVANCE_MS);
     } else {
       attempt.wrongSubmits++;
@@ -340,7 +340,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     roboWanted = true; // so passStep() sends Robo up
     passStep();
     cheer({ totalBefore, totalAfter: progress.total, levelChange, unlocked,
-      wrongSubmits: attempt.wrongSubmits, hintsUsed: attempt.hintsUsed, passed: true });
+      wrongSubmits: attempt.wrongSubmits, hintsUsed: attempt.hintsUsed, passed: true, dayDone: null });
   }
 
   function dismissTip() {
