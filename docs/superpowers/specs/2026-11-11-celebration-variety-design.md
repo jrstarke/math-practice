@@ -29,12 +29,17 @@ none of them slows her down or covers her work.
 - **Every 20 stars** (not multiples of 100): one of these, picked at random, all saying today's words
   "You've gotten N questions right! Keep going!" (N = her count when it plays, as today):
   1. **Walk across** — today's.
-  2. **Dribble across** — walking with the ball rolling along in front.
-  3. **Hop across** — bouncing across with arms up.
-  4. **Stop and wave** — walks in, **stops (feet still, user's note)**, waves at her, walks on.
-  5. **Conga line** — Robo and two friends bob across in a line, a kick every few steps.
+  2. **Walk with the friend** — today's 100s walk, moved down to the 20s (user).
+  3. **Dribble across** — walking with the ball rolling along in front.
+  4. **Hop across** — bouncing across with arms up.
+  5. **Stop and wave** — walks in, **stops (feet still, user's note)**, waves at her, walks on.
   6. **Ball ride** — Robo balances (swaying, arms up) on a big ball rolling across.
   7. **Cartwheel** — as above, with the count words (user: in both groups).
+- **Every 100 stars: a growing conga line** (user): Robo and friends bob across in a line, a kick every few steps, with
+  today's count words. One robot per hundred, starting at 2: 100 → 2 robots, 200 → 3, … 900 → 10, and 10 from then on
+  (cap agreed with the user: a longer line takes too long to cross and stops reading as separate friends). The count
+  comes from the milestone she earned (a held-back 100 still gets its own size). Same walking speed as the walk, so a
+  longer line takes longer to pass (about 7 s for 10 robots on her iPad). Always the conga — not random.
 - **No repeats in a row**: a group never plays the same celebration twice in a row. (My call.) The rule is per group,
   so a level-up cartwheel may be followed by a 20-star cartwheel; that's rare and harmless.
 
@@ -42,8 +47,7 @@ none of them slows her down or covers her work.
 
 - No change to **when** celebrations play: cooldown (4 problems), held-back 20-star celebrations, priority
   (kick > day > level-up > 20 stars), level-ups during cooldown skipped — all as today.
-- No change to the **100s** (walk with the friend), the **unlock kick**, or the **day streak** (its fireworks stay
-  exclusive to it — user).
+- No change to the **unlock kick** or the **day streak** (its fireworks stay exclusive to it — user).
 - Not chosen by the user from the mockups: take a bow, moonwalk. Not part of this.
 - No sound changes beyond today's beep-boop per moment. No shop, unlocks, settings or collection of celebrations.
 
@@ -84,7 +88,8 @@ none of them slows her down or covers her work.
   level-up (that plays) / a 20-star milestone (that plays): pick uniformly at random among the group **except the
   one that group played last**. Memory lives in Robo's in-memory memory (`RoboMemory`); a reload starts afresh.
   (My call: in memory is fine — a repeat right after a reload is harmless.)
-- The 100s: always the walk with the friend (not part of the random group).
+- The 100s: always the conga line, sized from the earned milestone: `min(10, milestone / 100 + 1)` robots (not part
+  of the random group).
 - The chosen celebration and its words are part of the `BigMoment` the view receives. 20-star words use the count
   at play time (unchanged from today).
 
@@ -97,8 +102,9 @@ none of them slows her down or covers her work.
 - Durations in line with today's moments (2.5–4.5 s). Words show for the whole celebration except where a reveal is
   the point (tower, keepy-uppy, header: words appear at the payoff).
 - Robo's light is green and smiling throughout, except the light show's colour cycle (green, yellow, blue, purple).
-- **Third robot** (tower, conga): drawn exactly like the friend (the child's art has identical robots). This lifts the Robo
-  spec's "no new characters beyond Robo and its friend" for these two scenes (the user chose them).
+- **More robots** (tower: 3; conga: 2–10): every robot besides Robo is drawn exactly like the friend (the child's art
+  has identical robots). This lifts the Robo spec's "no new characters beyond Robo and its friend" for these scenes
+  (the user chose them). Robo leads the conga line.
 - **Goal** (header): a small net drawn in the same line style (dark outline, light mesh), at the lane's far side.
 - **Stop and wave**: the legs swing only while moving; they stand still while it waves.
 - **Tower**: Robo jumps up from the side and lands standing on the two friends' heads; arms go up on landing.
@@ -110,8 +116,9 @@ none of them slows her down or covers her work.
   positions (my call). The light show may still change colour (not motion).
 
 ### Testing
-- Core: picking is uniform over the group minus the last one; never the same twice in a row; 100s always the walk
-  with the friend; each group's list exactly as above; the cooldown/priority/held-back rules are unchanged.
+- Core: picking is uniform over the group minus the last one; never the same twice in a row; 100s always the conga
+  with 2 robots at 100, 3 at 200, 10 at 900 and 1000+ (and a held-back 100 keeps its earned size); each group's list
+  exactly as above; the cooldown/priority/held-back rules are unchanged.
 - View (jsdom): each celebration builds its scene (the right `data-moment`, actors, ball/goal where needed, words).
 - Dev preview page: one `?moment=` per celebration.
 - Playwright layout check: every celebration in every view (standing, peek, Reduce Motion), mid-moment: nothing over
