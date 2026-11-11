@@ -43,9 +43,19 @@ export const BALL = `
   </g>
 </svg>`;
 
-/** A ball (class robo-ball, which the layout check looks for), with the speed lines hidden unless a scene shows them. */
+/** The same ball on its own, filling a square box. */
+const ROUND_BALL = `
+<svg viewBox="-20 -20 40 40" fill="none" stroke="#2b2b2b" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+  <g class="robo-ball-spin">
+    <circle cx="0" cy="0" r="18" fill="#ffffff" stroke-width="3"/>
+    <path d="M0 -7 L6.66 -2.16 L4.11 5.66 L-4.11 5.66 L-6.66 -2.16 Z" fill="#2b2b2b" stroke-width="2"/>
+    <path d="M0 -7 L0 -18 M6.66 -2.16 L17.1 -5.6 M4.11 5.66 L10.6 14.6 M-4.11 5.66 L-10.6 14.6 M-6.66 -2.16 L-17.1 -5.6" stroke-width="2"/>
+  </g>
+</svg>`;
+
+/** A scene's ball (class robo-ball, which the layout check looks for). */
 export function ball(cls = ''): HTMLElement {
   const b = div(`robo-ball ${cls}`.trim());
-  b.innerHTML = BALL;
+  b.innerHTML = ROUND_BALL;
   return b;
 }

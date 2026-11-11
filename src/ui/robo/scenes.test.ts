@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest';
-import { walkWords } from '../../core/robo';
+import { LEVEL_UP_WORDS, walkWords, type LevelUpStyle } from '../../core/robo';
 import { CONGA_LIGHTS } from './drawing';
 import { createRobo, type MomentPlace, type RoboView } from './robo';
 import { buildScene, congaMs, ROOM } from './scenes';
@@ -102,5 +102,29 @@ describe('room factor in the Robo view', () => {
     expect((112 * (1 + 0.7 * 9) + 226) * fit).toBeLessThanOrEqual(778 + 1);
     robo.play({ kind: 'conga', robots: 2, words: walkWords(100) }, standing);
     expect(robo.overlay.querySelector<HTMLElement>('[data-moment]')!.style.getPropertyValue('--fit')).toBe('1');
+  });
+});
+
+describe('level-up scenes', () => {
+  const expected: [LevelUpStyle, number][] = [
+    ['jump-together', 2], ['pass', 2], ['dance', 1], ['tower', 3], ['keepy-uppy', 1], ['light-show', 1], ['header', 2], ['cartwheel', 1],
+  ];
+  for (const [style, figures] of expected) {
+    it(`${style}: its own scene, ${figures} robot(s), its words, 2.5-4.5 s`, () => {
+      const { node, ms } = buildScene({ kind: 'levelUp', style, words: LEVEL_UP_WORDS[style] }, standing);
+      expect(node.dataset.moment).toBe(style);
+      expect(node.querySelectorAll('.robo-figure')).toHaveLength(figures);
+      expect(node.querySelectorAll('.robo-ball')).toHaveLength(['pass', 'keepy-uppy', 'header'].includes(style) ? 1 : 0);
+      expect(node.querySelectorAll('.robo-goal')).toHaveLength(style === 'header' ? 1 : 0);
+      expect(node.querySelector('[data-role="moment-words"]')!.textContent).toBe(LEVEL_UP_WORDS[style]);
+      expect(ms).toBeGreaterThanOrEqual(2500);
+      expect(ms).toBeLessThanOrEqual(4500);
+      if (style !== 'light-show') for (const l of lights(node)) expect(l).toBe('#4cd964');
+    });
+  }
+
+  it('jump together: both jump with their arms up', () => {
+    const { node } = buildScene({ kind: 'levelUp', style: 'jump-together', words: 'Level up!' }, standing);
+    expect([...node.querySelectorAll<HTMLElement>('.robo-figure')].map(f => f.dataset.arms)).toEqual(['up', 'up']);
   });
 });

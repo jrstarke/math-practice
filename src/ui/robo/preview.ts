@@ -1,7 +1,7 @@
 // Dev-only page (robo-preview.html, not part of the build): every pose side by side, for screenshots.
-// ?moment=walk|walk-friend|high-five|kick|day-1|day-3|day-7|day-12|welcome|peek|surprise|wrong|right|up plays that
+// ?moment=walk|walk-friend|<any level-up style>|conga-2|conga-5|conga-10|kick|day-1|day-3|day-7|day-12|welcome|peek|surprise|wrong|right|up plays that
 // moment on a mock iPad-upright layout.
-import { dayTier, dayWords, walkWords, welcomeWords, type BigMoment } from '../../core/robo';
+import { LEVEL_UPS, LEVEL_UP_WORDS, dayTier, dayWords, walkWords, welcomeWords, type BigMoment } from '../../core/robo';
 import { createFigure, setFigure, type Arms, type Light, type Look, type Mouth } from './drawing';
 import { laneTop, peekPosition, spotPosition, type Box } from './layout';
 import { createRobo } from './robo';
@@ -53,6 +53,7 @@ function mock(): void {
     'high-five': { kind: 'levelUp', style: 'high-five', words: 'High five!' },
     kick: { kind: 'kick', words: 'New: division!' },
   };
+  for (const style of LEVEL_UPS) bigs[style] = { kind: 'levelUp', style, words: LEVEL_UP_WORDS[style] };
   for (const robots of [2, 5, 10]) bigs[`conga-${robots}`] = { kind: 'conga', robots, words: walkWords(robots * 100 - 100) };
   for (const days of [1, 3, 7, 12]) bigs[`day-${days}`] = { kind: 'day', days, tier: dayTier(days), words: dayWords(days) };
   if (moment === 'peek') robo.play(bigs.walk, { ...at, mode: 'peek' });

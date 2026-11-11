@@ -2,7 +2,7 @@
 import type { BigMoment, LevelUpStyle, StarStyle } from '../../core/robo';
 import { CONGA_LIGHTS, setFigure, paintLight } from './drawing';
 import { ROBO_W } from './layout';
-import { cheering, div, slot, words } from './pieces';
+import { ball, cheering, div, slot, words } from './pieces';
 import type { MomentPlace } from './robo';
 import './scenes.css';
 
@@ -70,8 +70,95 @@ function conga(m: HTMLElement, big: SceneMoment, at: MomentPlace): number {
   return ms;
 }
 
+/** A scene that stays in the middle of the lane: it fades in and out over `ms` (scenes.css .robo-stay). Its inner
+ * moves have the same length written in scenes.css. */
+function stay(m: HTMLElement, ms: number): number {
+  m.classList.add('robo-stay');
+  m.style.animationDuration = `${ms}ms`;
+  return ms;
+}
+
+/** Words that appear at the scene's payoff (its --payoff in scenes.css), not from the start. */
+function laterWords(text: string): HTMLElement {
+  const w = words(text);
+  w.classList.add('robo-later');
+  return w;
+}
+
+/** A figure that throws its arms up at the scene's payoff (--payoff). */
+function armsUpLater(f: HTMLElement): HTMLElement {
+  f.classList.add('robo-arms-later');
+  return f;
+}
+
+function arms(f: HTMLElement, a: 'up' | 'high-five'): HTMLElement {
+  setFigure(f, { arms: a });
+  return f;
+}
+
+function jumpTogether(m: HTMLElement, big: SceneMoment): number {
+  m.append(words(big.words), slot(arms(cheering(), 'up'), 'robo-jt-me'), slot(arms(cheering(true), 'up'), 'robo-jt-friend'));
+  return stay(m, 2800);
+}
+
+/** Robo kicks (the unlock kick's wind-up) and the ball rolls across to the friend, who jumps for joy. */
+function pass(m: HTMLElement, big: SceneMoment): number {
+  const kicker = cheering();
+  kicker.classList.add('robo-kicking');
+  m.append(words(big.words), slot(kicker, 'robo-ps-me'), ball('robo-ps-ball'), slot(armsUpLater(cheering(true)), 'robo-ps-friend'));
+  return stay(m, 3200);
+}
+
+function dance(m: HTMLElement, big: SceneMoment): number {
+  m.append(words(big.words), slot(cheering(), 'robo-dn-me'));
+  return stay(m, 3200);
+}
+
+/** Two friends side by side; Robo runs in and jumps up to stand on their heads; all arms up, then the words. */
+function tower(m: HTMLElement, big: SceneMoment): number {
+  m.append(
+    laterWords(big.words),
+    slot(armsUpLater(cheering(true)), 'robo-tw-a'),
+    slot(armsUpLater(cheering(true)), 'robo-tw-b'),
+    slot(armsUpLater(cheering()), 'robo-tw-top'),
+  );
+  return stay(m, 3600);
+}
+
+/** Four taps off Robo's foot, then the ball lands on its head: arms up, then the words. */
+function keepyUppy(m: HTMLElement, big: SceneMoment): number {
+  m.append(laterWords(big.words), slot(armsUpLater(cheering()), 'robo-ku-me'), ball('robo-ku-ball'));
+  return stay(m, 3800);
+}
+
+/** Robo sways while its light runs green, yellow, blue, purple (scenes.css; never red). */
+function lightShow(m: HTMLElement, big: SceneMoment): number {
+  m.append(words(big.words), slot(cheering(), 'robo-ls-me'));
+  return stay(m, 3200);
+}
+
+/** The friend tosses the ball up, Robo heads it into a small net: arms up, then the words. */
+function header(m: HTMLElement, big: SceneMoment): number {
+  const me = armsUpLater(cheering());
+  setFigure(me, { look: 'up' });
+  m.append(
+    div('robo-goal'), laterWords(big.words),
+    slot(arms(cheering(true), 'up'), 'robo-hd-friend'), slot(me, 'robo-hd-me'), ball('robo-hd-ball'),
+  );
+  return stay(m, 3800);
+}
+
+/** Robo cartwheels across the lane twice, arms up like a star, with the words alongside (level-up or 20 stars). */
+function cartwheel(m: HTMLElement, big: SceneMoment): number {
+  const wheel = div('robo-walker robo-cartwheel');
+  wheel.append(slot(arms(cheering(), 'up'), 'robo-cw-me'), words(big.words));
+  m.append(wheel);
+  return 3600;
+}
+
 const BUILDERS: Partial<Record<SceneName, Builder>> = {
   walk, 'walk-friend': walk, 'high-five': highFive, conga,
+  'jump-together': jumpTogether, pass, dance, tower, 'keepy-uppy': keepyUppy, 'light-show': lightShow, header, cartwheel,
 };
 
 /** The scene for a celebration: a .robo-scene with data-moment (the style) and data-room (ROOM). */

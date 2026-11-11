@@ -93,10 +93,11 @@
   position: absolute; bottom: 0; left: calc(50% - var(--s, 1) * 200px); width: 112px; height: 136px;
   transform: scale(var(--s, 1)); transform-origin: 0 100%;
 }
-.robo-ball { position: absolute; top: 108px; left: 76px; width: 50px; height: 29px; animation: robo-fly 3s forwards; }
+.robo-ball-rig .robo-ball { position: absolute; top: 108px; left: 76px; width: 50px; height: 29px; animation: robo-fly 3s forwards; }
 .robo-ball svg { display: block; width: 100%; height: 100%; overflow: visible; }
-.robo-ball-spin { transform-box: fill-box; transform-origin: center; animation: robo-spin 3s forwards; }
-.robo-speed { animation: robo-speed 3s forwards; }
+.robo-ball-spin { transform-box: fill-box; transform-origin: center; }
+.robo-ball-rig .robo-ball-spin { animation: robo-spin 3s forwards; }
+.robo-ball-rig .robo-speed { animation: robo-speed 3s forwards; }
 
 /* Day celebration: Robo pops up mid-lane with the words on its left. Day 1 waves; 2-4 arms up; 5-9 also jumps;
    10+ also has fireworks on its right. A jumping Robo is drawn at 85% so the jump stays inside its slot (the lane is
