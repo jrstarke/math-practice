@@ -12,6 +12,30 @@ export const LIGHT: Record<Light, { light: string; glow: string | null; rays: st
   red: { light: '#ff5a4f', glow: '#ffd2cc', rays: '#d9362b' },
 };
 
+export interface LightColours { light: string; glow: string; rays: string }
+
+/** The conga friends' lights, friend 1 to 9 in this fixed order: each new hundred adds the next one at the end of the
+ * line. Never red; the orange and pink stay well away from it. */
+export const CONGA_LIGHTS: readonly LightColours[] = [
+  { light: '#f5c400', glow: '#fff0a8', rays: '#c99a00' }, // yellow
+  { light: '#3d8bff', glow: '#cfe2ff', rays: '#1f5fc4' }, // blue
+  { light: '#a259ff', glow: '#e6d4ff', rays: '#7339c4' }, // purple
+  { light: '#ff9a1f', glow: '#ffe0b8', rays: '#c76a00' }, // orange
+  { light: '#ff6fcf', glow: '#ffd6f1', rays: '#c23d98' }, // pink
+  { light: '#1fc7b6', glow: '#c4f4ef', rays: '#138c80' }, // teal
+  { light: '#6fd3ff', glow: '#d9f4ff', rays: '#2f9fcf' }, // light blue
+  { light: '#b6e61e', glow: '#ecfac2', rays: '#7fa30f' }, // lime
+  { light: '#c9a7ff', glow: '#f0e6ff', rays: '#8f6ad1' }, // lavender
+];
+
+/** A lit light in any colour: data-light stays 'green' so the glow and rays show as for any lit light. */
+export function paintLight(f: HTMLElement, c: LightColours): void {
+  f.dataset.light = 'green';
+  f.style.setProperty('--robo-light', c.light);
+  f.style.setProperty('--robo-glow', c.glow);
+  f.style.setProperty('--robo-rays', c.rays);
+}
+
 const HAND = 'fill="#2b2b2b" stroke="none"';
 
 // Each arm hangs from a joint (outer <g> keeps the translate) and its poses sit in inner <g>s, which CSS may

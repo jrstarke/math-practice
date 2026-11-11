@@ -1,6 +1,8 @@
 import type { BigMoment } from '../../core/robo';
 import { createFigure, setFigure } from './drawing';
 import { ROBO_H, ROBO_W, type RoboMode } from './layout';
+import { BALL, cheering, div, slot, words } from './pieces';
+import { buildScene, congaLength } from './scenes';
 
 export const MOMENT_MS = { walk: 4000, highFive: 2500, kick: 3000, day: 3500, peek: 2500, surprise: 1200, welcome: 3000, flash: 600 } as const;
 
@@ -41,40 +43,11 @@ export interface RoboView {
   endMoment(): void;
 }
 
-function div(cls: string, attrs: Record<string, string> = {}): HTMLElement {
-  const d = document.createElement('div');
-  d.className = cls;
-  for (const [k, v] of Object.entries(attrs)) d.setAttribute(k, v);
-  return d;
-}
-
 /** Restart a one-shot CSS animation class. */
 function retrigger(node: HTMLElement, cls: string) {
   node.classList.remove(cls);
   void node.offsetWidth;
   node.classList.add(cls);
-}
-
-function words(text: string): HTMLElement {
-  const w = div('robo-words', { 'data-role': 'moment-words' });
-  w.textContent = text;
-  return w;
-}
-
-function cheering(friend = false): HTMLElement {
-  const f = createFigure();
-  setFigure(f, { light: 'green', mouth: 'smile' });
-  if (friend) f.classList.add('robo-friend');
-  return f;
-}
-
-/** A box Robo's shape, `size` tall, holding one figure (the drawing scales to fill it). */
-function slot(f: HTMLElement, cls = '', size = ROBO_H): HTMLElement {
-  const s = div(`robo-slot ${cls}`.trim());
-  s.style.width = `${Math.round(ROBO_W * size / ROBO_H)}px`;
-  s.style.height = `${size}px`;
-  s.append(f);
-  return s;
 }
 
 export function createRobo(): RoboView {
@@ -97,20 +70,30 @@ export function createRobo(): RoboView {
     return div(cls, { 'data-moment': kind });
   }
 
-  /** Size and place a moment's layer, its Robos and (peek) its words for `at`. */
+  /** Size and place a moment's layer, its Robos and (peek) its words for `at`. The layer is the lane's height; a
+   * scene with a room factor (data-room) draws its Robos that much smaller, and --a is their scale for CSS offsets. */
   function fit(m: HTMLElement, at: MomentPlace) {
     const peeking = m.dataset.moment === 'peek';
-    const width = Math.round(ROBO_W * at.size / ROBO_H);
+    const room = Number(m.dataset.room ?? 1) || 1;
+    const height = Math.round(at.size / room);
+    const width = Math.round(ROBO_W * height / ROBO_H);
     m.style.top = `${peeking ? at.peek.top : at.laneTop}px`;
     m.style.height = `${at.size}px`;
     m.style.setProperty('--s', String(Math.round(at.size / ROBO_H * 1000) / 1000));
+    m.style.setProperty('--a', String(Math.round(at.size / ROBO_H / room * 1000) / 1000));
     if (peeking) {
       m.style.left = `${at.peek.left}px`;
       m.style.width = `${width}px`;
     }
-    for (const s of m.querySelectorAll<HTMLElement>('.robo-slot')) {
+    const slots = m.querySelectorAll<HTMLElement>('.robo-slot');
+    for (const s of slots) {
       s.style.width = `${width}px`;
-      s.style.height = `${at.size}px`;
+      s.style.height = `${height}px`;
+    }
+    if (m.dataset.moment === 'conga') {
+      // Under Reduce Motion the line stands still, centred: --fit shrinks it to the screen width (scenes.css).
+      const fit = Math.min(1, (at.viewportWidth - 32) / congaLength(slots.length, width));
+      m.style.setProperty('--fit', String(Math.floor(fit * 1000) / 1000));
     }
     const w = overlay.querySelector<HTMLElement>('.robo-peek-words');
     if (w) {
@@ -121,25 +104,7 @@ export function createRobo(): RoboView {
   }
 
   function standingMoment(big: BigMoment, at: MomentPlace): { node: HTMLElement; ms: number } {
-    if (big.kind === 'stars' || big.kind === 'conga') {
-      const withFriend = big.kind === 'conga' || big.style === 'walk-friend';
-      const m = scene(withFriend ? 'walk-friend' : 'walk');
-      const walker = div('robo-walker');
-      walker.append(slot(cheering(), 'robo-walking', at.size));
-      if (withFriend) walker.append(slot(cheering(true), 'robo-walking robo-walking-b', at.size));
-      walker.append(words(big.words));
-      m.append(walker);
-      return { node: m, ms: MOMENT_MS.walk };
-    }
-    if (big.kind === 'levelUp') {
-      const m = scene('high-five');
-      const me = cheering();
-      setFigure(me, { arms: 'high-five' });
-      const friend = cheering(true);
-      setFigure(friend, { arms: 'high-five' });
-      m.append(words(big.words), slot(me, 'robo-hf-me', at.size), slot(friend, 'robo-hf-friend', at.size));
-      return { node: m, ms: MOMENT_MS.highFive };
-    }
+    if (big.kind === 'levelUp' || big.kind === 'stars' || big.kind === 'conga') return buildScene(big, at);
     if (big.kind === 'day') {
       const m = scene('day');
       m.dataset.tier = big.tier;
@@ -153,7 +118,7 @@ export function createRobo(): RoboView {
     const kicker = cheering();
     kicker.classList.add('robo-kicking');
     const ball = div('robo-ball');
-    ball.innerHTML = BALL;
+    ball.innerHTML = BALL; // the kick's ball flies inside a rig that scales with Robo
     const ballRig = div('robo-ball-rig'); // scales the ball and its flight with Robo
     ballRig.append(ball);
     m.append(words(big.words), slot(kicker, 'robo-kicker', at.size), ballRig);
@@ -270,15 +235,4 @@ const FIREWORKS = `
   ${burst(48, 40, 34, '#4cd964', 1)}
   ${burst(126, 58, 30, '#ff5a4f', 2)}
   ${burst(78, 100, 28, '#f5b700', 3)}
-</svg>`;
-
-/** The soccer ball from robot-kick.svg, with its speed lines. */
-const BALL = `
-<svg viewBox="-60 -24 84 48" width="84" height="48" fill="none" stroke="#2b2b2b" stroke-linecap="round" stroke-linejoin="round" focusable="false">
-  <g class="robo-speed"><path d="M-24 -10 L-50 -10 M-28 1 L-58 1 M-24 12 L-46 12" stroke-width="3"/></g>
-  <g class="robo-ball-spin">
-    <circle cx="0" cy="0" r="18" fill="#ffffff" stroke-width="3"/>
-    <path d="M0 -7 L6.66 -2.16 L4.11 5.66 L-4.11 5.66 L-6.66 -2.16 Z" fill="#2b2b2b" stroke-width="2"/>
-    <path d="M0 -7 L0 -18 M6.66 -2.16 L17.1 -5.6 M4.11 5.66 L10.6 14.6 M-4.11 5.66 L-10.6 14.6 M-6.66 -2.16 L-17.1 -5.6" stroke-width="2"/>
-  </g>
 </svg>`;

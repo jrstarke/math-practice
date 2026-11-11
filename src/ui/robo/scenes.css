@@ -1,0 +1,46 @@
+/* Robo's celebrations (scenes.ts). Safari 15 safe: no container queries, :has(), nesting or inset shorthand.
+   Shared keyframes (robo-walk, robo-bob, robo-pop-in, robo-fade, …) live in robo.css.
+   --s is Robo's scale in the lane; --a is the scale of this scene's robots (--s ÷ its room factor), for offsets. */
+
+/* Walk: across the lane above the controls, 0.8s steps with the walk cycle from robot-walk.svg. */
+.robo-walker {
+  position: absolute; left: 0; top: 0; display: flex; align-items: flex-start; gap: 6px;
+  animation: robo-walk 4s linear forwards;
+}
+.robo-walker > .robo-words { align-self: flex-start; margin-top: 6px; }
+.robo-walking .robo-body-group { animation: robo-bob 0.8s ease-in-out infinite; }
+.robo-walking [data-part="leg-left"] .robo-leg { animation: robo-swing-a 0.8s ease-in-out infinite; }
+.robo-walking [data-part="leg-right"] .robo-leg { animation: robo-swing-b 0.8s ease-in-out infinite; }
+.robo-walking [data-part="arm-left"] .robo-arm { animation: robo-arm-a 0.8s ease-in-out infinite; }
+.robo-walking [data-part="arm-right"] .robo-arm { animation: robo-arm-b 0.8s ease-in-out infinite; }
+.robo-walking-b .robo-body-group,
+.robo-walking-b .robo-leg,
+.robo-walking-b .robo-arm { animation-delay: -0.4s; }
+
+/* High five: Robo hops in mid-lane, the friend runs in from the right, they high-five, the friend runs off. */
+.robo-hf-me, .robo-hf-friend { position: absolute; top: 0; }
+.robo-hf-me { left: calc(50% - var(--s, 1) * 100px); animation: robo-pop-in 2.5s ease-out forwards; }
+.robo-hf-friend { left: calc(50% - var(--s, 1) * 6px); animation: robo-run-in 2.5s ease-in-out forwards; }
+[data-moment="high-five"] .robo-words { position: absolute; right: calc(50% + var(--s, 1) * 112px); top: 0; animation: robo-pop-in 2.5s ease-out forwards; }
+
+/* The 100s conga: Robo leads a line of friends with coloured lights, all bobbing, a kick every two steps. Laid out
+   right to left so the words lead, then Robo, then the friends; neighbours stand 0.7 robot widths apart. */
+.robo-conga { flex-direction: row-reverse; }
+.robo-conga > .robo-slot + .robo-slot { margin-right: calc(var(--a, 1) * -33.6px - 6px); }
+.robo-conga-step .robo-body-group { animation: robo-bob 0.8s ease-in-out infinite; }
+.robo-conga-step [data-part="leg-left"] .robo-leg { animation: robo-swing-a 0.8s ease-in-out infinite; }
+.robo-conga-step [data-part="leg-right"] .robo-leg { animation: robo-conga-kick 1.6s ease-in-out infinite; }
+.robo-conga-step [data-part="arm-left"] .robo-arm { animation: robo-arm-a 0.8s ease-in-out infinite; }
+.robo-conga-step [data-part="arm-right"] .robo-arm { animation: robo-arm-b 0.8s ease-in-out infinite; }
+@keyframes robo-conga-kick { 0%, 60%, 100% { transform: rotate(0deg); } 75% { transform: rotate(-40deg); } }
+
+/* Reduce Motion: nothing travels, jumps or swings; each scene fades in and out in its final pose. */
+@media (prefers-reduced-motion: reduce) {
+  .robo-walking .robo-body-group, .robo-walking .robo-leg, .robo-walking .robo-arm,
+  .robo-conga-step .robo-body-group, .robo-conga-step .robo-leg, .robo-conga-step .robo-arm { animation: none; }
+  /* The walker's inline animation-duration (the conga's) carries over to the fade. */
+  .robo-walker { left: 50%; transform: translateX(-50%); animation: robo-fade 4s ease-in-out forwards; }
+  .robo-conga { transform: translateX(-50%) scale(var(--fit, 1)); transform-origin: 50% 0; }
+  .robo-hf-me, .robo-hf-friend,
+  [data-moment="high-five"] .robo-words { animation: robo-fade 2.5s ease-in-out forwards; }
+}

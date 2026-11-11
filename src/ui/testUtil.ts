@@ -17,7 +17,7 @@ export function setup(seed = 1, overrides: Partial<AppDeps> = {}, initial: Progr
   let wall = START;
   const store: ProgressStore = { load: () => initial, save: p => void saved.push(p) };
   const sound = { unlock: vi.fn(), correct: vi.fn(), wrong: vi.fn(), levelUp: vi.fn(), robo: vi.fn(), setMuted: vi.fn() };
-  const app = mountApp({ root, rng: mulberry32(seed), now: () => t, clock: () => wall, store, sound, roboRng: () => 0.99, ...overrides });
+  const app = mountApp({ root, rng: mulberry32(seed), now: () => t, clock: () => wall, store, sound, roboRng: () => 0.1, ...overrides });
 
   const q = (sel: string) => root.querySelector<HTMLElement>(sel);
   const tap = (sel: string) => q(sel)!.dispatchEvent(new Event('pointerdown', { bubbles: true }));

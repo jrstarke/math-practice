@@ -81,27 +81,6 @@
 .robo-friend svg { transform: scaleX(-1); }
 .robo-words { width: max-content; max-width: 220px; }
 
-/* Walk: across the lane above the controls, 0.8s steps with the walk cycle from robot-walk.svg. */
-.robo-walker {
-  position: absolute; left: 0; top: 0; display: flex; align-items: flex-start; gap: 6px;
-  animation: robo-walk 4s linear forwards;
-}
-.robo-walker .robo-words { align-self: flex-start; margin-top: 6px; }
-.robo-walking .robo-body-group { animation: robo-bob 0.8s ease-in-out infinite; }
-.robo-walking [data-part="leg-left"] .robo-leg { animation: robo-swing-a 0.8s ease-in-out infinite; }
-.robo-walking [data-part="leg-right"] .robo-leg { animation: robo-swing-b 0.8s ease-in-out infinite; }
-.robo-walking [data-part="arm-left"] .robo-arm { animation: robo-arm-a 0.8s ease-in-out infinite; }
-.robo-walking [data-part="arm-right"] .robo-arm { animation: robo-arm-b 0.8s ease-in-out infinite; }
-.robo-walking-b .robo-body-group,
-.robo-walking-b .robo-leg,
-.robo-walking-b .robo-arm { animation-delay: -0.4s; }
-
-/* High five: Robo hops in mid-lane, the friend runs in from the right, they high-five, the friend runs off. */
-.robo-hf-me, .robo-hf-friend { position: absolute; top: 0; }
-.robo-hf-me { left: calc(50% - var(--s, 1) * 100px); animation: robo-pop-in 2.5s ease-out forwards; }
-.robo-hf-friend { left: calc(50% - var(--s, 1) * 6px); animation: robo-run-in 2.5s ease-in-out forwards; }
-[data-moment="high-five"] .robo-words { position: absolute; right: calc(50% + var(--s, 1) * 112px); top: 0; animation: robo-pop-in 2.5s ease-out forwards; }
-
 /* Kick (robot-kick.svg): wind up, kick fast, the ball bounces away across the lane with speed lines. */
 .robo-kicker { position: absolute; top: 0; left: calc(50% - var(--s, 1) * 200px); animation: robo-pop-in 3s ease-out forwards; }
 [data-moment="kick"] .robo-words { position: absolute; right: calc(50% + var(--s, 1) * 212px); top: 0; animation: robo-pop-in 3s ease-out forwards; }
@@ -214,12 +193,9 @@
   .robo[data-surprise="bounce"] .robo-figure,
   .robo[data-surprise="wave"] .robo-figure { animation: robo-fade-in 0.6s ease-out; }
   .robo[data-surprise="wave"] [data-part="arm-right"] .robo-arm,
-  .robo-walking .robo-body-group, .robo-walking .robo-leg, .robo-walking .robo-arm,
   .robo-kicking .robo-leg, .robo-kicking .robo-arm { animation: none; }
-  .robo-walker { left: 50%; transform: translateX(-50%); animation: robo-fade 4s ease-in-out forwards; }
-  .robo-hf-me, .robo-hf-friend, .robo-kicker,
-  [data-moment="high-five"] .robo-words, [data-moment="kick"] .robo-words { animation: robo-fade 2.5s ease-in-out forwards; }
-  .robo-ball { display: none; }
+  .robo-kicker, [data-moment="kick"] .robo-words { animation: robo-fade 2.5s ease-in-out forwards; }
+  [data-moment="kick"] .robo-ball { display: none; }
   .robo-peek-clip .robo-slot { animation: robo-fade 2.5s ease-in-out forwards; }
   /* Day: no wave, no jump, no flying sparks. Robo and the words fade in and out; the bursts just fade in, still. */
   .robo-day-me, [data-moment="day"] .robo-words { animation: robo-fade 3.5s ease-in-out forwards; }
