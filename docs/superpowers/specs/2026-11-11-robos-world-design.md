@@ -121,8 +121,11 @@ Parts 2 and 3 get their own designs. Part 1 must not block them (see Constraints
 - **Panning**: a 20-star celebration pans across about one screen of her world; the day streak and the 100s conga,
   being bigger, may pan further and show more of it (builder: keep each under about 8 s in all, slide included).
   With a one-area world there's nothing to pan: it plays in place.
-- **Skipping** (my call): a tap during a world celebration ends it early and brings the math back, so it never
-  holds her up. A pick can't be skipped this way (it waits; see Picks).
+- **Skipping** (user): only a dedicated **skip button ("»")** ends a world celebration early and brings the math
+  back; taps anywhere else do nothing, so an accidental tap never cuts a celebration short ("I could see her getting
+  sad if she accidentally taps and suddenly she loses a celebration"). The button sits in a corner away from where
+  the keys were (my call: top right), at least 44 px, plain and quiet so it doesn't invite tapping. Picks have no
+  skip button (a pick waits; see Picks).
 - **While it plays** the math isn't on screen, so nothing can be answered; her place in the problem (typed digits,
   hint state) is kept and is exactly as she left it when the math slides back.
 - **Level-ups and the unlock kick** play in the strip over the blurred world, as today.
@@ -171,7 +174,7 @@ Parts 2 and 3 get their own designs. Part 1 must not block them (see Constraints
   only once the world exists; the 7 star styles, conga and day tiers still chosen as today.
 - Storage: v8 → v9 migration, v9 validation (kinds, areas, depths in range), rollback leaves v8 untouched.
 - View (jsdom): world layers built from saved items, far-to-near order, mountain on the horizon, blur class behind
-  the math only, slide-away and back, tap-to-skip, pick flow (choose, place, move, OK), Reduce Motion classes.
+  the math only, slide-away and back, the skip button ends it while a tap elsewhere does not, pick flow (choose, place, move, OK), Reduce Motion classes.
 - Playwright layout check: world celebrations and the pick on her iPad and a phone, upright and landscape: math fully
   off screen during, back exactly as before after; nothing of the world over the problem/keys behind the math beyond
   the blurred background; pick buttons and OK reachable; Reduce Motion.
