@@ -139,7 +139,9 @@ Parts 2 and 3 get their own designs. Part 1 must not block them (see Constraints
   Shown as big buttons with the drawing and its name. She taps one.
 - **Placing**: "Tap where it goes!" She taps the ground; the thing appears there at the size its depth gives it. She
   can tap again to move it, and swipe left/right to place it in an older area. An OK button places it for good. Robo
-  cheers beside it ("It's perfect!"), then the math slides back.
+  cheers beside it and says one of several happy lines, picked at random (`roboRng`) and never the same twice in a
+  row (user): "That's awesome!", "That looks great!", "Cool!" (user's), plus "It's perfect!", "I love it!", "Wow!"
+  (my additions). Then the math slides back.
 - **Never lost** (my call): the offer (which three) and an unfinished pick are saved. If she closes the app or it
   reloads mid-pick, the same pick opens again after her next right answer. If she somehow has more than one pick
   owed, they come one at a time, one per right answer.
@@ -169,7 +171,7 @@ Parts 2 and 3 get their own designs. Part 1 must not block them (see Constraints
 
 ## Testing
 
-- Core: when a pick is owed (4 → 5 practised, not 4, not on a non-completing answer, 10 owed twice if two picks
+- Core: the placing line is one of the six and never repeats twice in a row; when a pick is owed (4 → 5 practised, not 4, not on a non-completing answer, 10 owed twice if two picks
   are pending, one per answer); offers are three distinct kinds; a saved offer survives a reload; world celebrations
   only once the world exists; the 7 star styles, conga and day tiers still chosen as today.
 - Storage: v8 → v9 migration, v9 validation (kinds, areas, depths in range), rollback leaves v8 untouched.
