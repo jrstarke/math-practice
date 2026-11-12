@@ -92,7 +92,9 @@ Parts 2 and 3 get their own designs. Part 1 must not block them (see Constraints
 
 ### The world
 - **Shape**: one long strip of land seen from the side and a little above: sky above a horizon, ground below. It's
-  made of **areas**, each one screen wide. It starts with one area; a new empty area opens to the right of the newest
+  made of **areas** of one fixed shape: her iPad held upright (3 wide by 4 tall). (My call, after the builder check:
+  a fixed shape means a rotation or another screen never stretches or squashes her world, and saved positions mean
+  the same thing everywhere — part 3's roads depend on that.) It starts with one area; a new empty area opens to the right of the newest
   when the newest has enough things in it (builder: a count around 8, tuned so an area looks full but not cramped).
 - **Depth**: where she places a thing sets how far away it is: higher on the ground (nearer the horizon) is farther
   and drawn smaller; lower is nearer and bigger. Things are drawn far-to-near, so nearer things overlap farther ones.
@@ -103,7 +105,10 @@ Parts 2 and 3 get their own designs. Part 1 must not block them (see Constraints
 - **Look** (my call, to confirm with her on a mockup): the robots' style — dark `#2b2b2b` rounded outlines, simple
   shapes, no shading — with soft flat colours for the world (sky blue, grass green, lake blue, lilac mountains), as in
   the mockups. The sky/ground with sun is the empty world she starts with.
-- **Behind the math** she sees the area she most recently placed something in, blurred, with a veil (as in
+- **On screen** the world is scaled so its height fills the screen's height. On her iPad upright that's exactly one
+  area; wider screens (landscape, a desktop) show more of the world on either side; narrower ones (a phone upright)
+  show the middle of an area, and placing there uses the same swipe as moving between areas.
+- **Behind the math** she sees the area she most recently placed something in (centred on it), blurred, with a veil (as in
   `world-idea-v2`). It's still: no animation, no sun moving.
 
 ### World celebrations
@@ -136,6 +141,9 @@ Parts 2 and 3 get their own designs. Part 1 must not block them (see Constraints
   reloads mid-pick, the same pick opens again after her next right answer. If she somehow has more than one pick
   owed, they come one at a time, one per right answer.
 - **Placed is permanent**: nothing she places is moved, removed or replaced by the app.
+- **Where a reopened pick ranks** (my call, after the builder check): after the unlock kick and the day celebration,
+  ahead of level-ups and stars; it ignores the cooldown. A level-up that loses to it is dropped and stars wait, as
+  they do today when something bigger plays.
 
 ### Reduce Motion
 - No sliding, panning or travelling: the math fades out as the world fades into focus, the celebration plays as it
@@ -143,7 +151,8 @@ Parts 2 and 3 get their own designs. Part 1 must not block them (see Constraints
 
 ### Small screens and landscape
 - The same world and celebrations on phones and in landscape (my call): the whole screen slides away, so the strip's
-  size limits don't apply. The world's height is the screen's; areas are one screen wide in whatever orientation.
+  size limits don't apply. The world is scaled to the screen's height (see The world), so a rotation shows more or
+  less of it, never a stretched version.
   A rotation during a world celebration ends it (as moments end on rotation today); during a pick, the pick stays
   open and re-lays out.
 
