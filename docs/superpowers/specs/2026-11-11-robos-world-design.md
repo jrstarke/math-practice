@@ -35,8 +35,9 @@ Parts 2 and 3 get their own designs. Part 1 must not block them (see Constraints
   5. Picks are never lost: one she doesn't finish (app closed, reload) is offered again (see Picks).
 - **Things she can add in part 1** (the child's list, minus roads and vehicles, which are part 3): **tree, bush,
   mountain, lake, house**. As many of each as she likes.
-- **Behind the math**: from then on, the world fills the app's background, blurred and still, with a light veil so
-  the problem, keys and buttons stay as easy to read as now.
+- **Behind the math**: from then on, the world fills the app's background, blurred and still, with the problem on a
+  soft white card and only a light veil over the world, so the problem, keys and buttons stay as easy to read as now
+  (user, after trying it on her iPad: "both more vibrant, and also simultaneously seems less distracting").
 - **World celebrations**: every 20 stars (all 7 styles), every 100 stars (the conga) and the day streak (all its
   tiers, fireworks included) slide the math away and play in the world, panning across part of it; then the math
   slides back. Picks happen inside the day celebration that earns them.
@@ -78,11 +79,10 @@ Parts 2 and 3 get their own designs. Part 1 must not block them (see Constraints
 ## Approaches
 
 1. **SVG and CSS, the way Robo is built (chosen by the user).** The world is a wide vector drawing behind the app;
-   each item is a small SVG drawing in the robots' marker-sketch style, placed from saved data. Blur is a CSS filter
-   on the visible slice only; the slide-away and the pan are CSS movement; world celebrations reuse Robo's scenes at a
-   bigger size. Same tools and tests as Robo; crisp at any size; friends and vehicles slot in later. Cost: blur on a
-   large drawing can be heavy on an iPad, kept cheap by blurring only the screen-sized slice, once, with nothing
-   animating behind it; checked on her iPad early.
+   each item is a small SVG drawing in the robots' marker-sketch style, placed from saved data. The blur is baked
+   into a picture (see Behind the math); the slide-away and the pan are CSS movement; world celebrations reuse Robo's
+   scenes at a bigger size. Same tools and tests as Robo; crisp at any size; friends and vehicles slot in later. Cost:
+   a live blur is heavy on an iPad — checked: see Behind the math.
 2. A canvas drawing. Smooth with any number of things, but a different way of drawing from the rest of the app,
    Robo and friends drawn twice or layered awkwardly, harder to test, more up-front work for a benefit she won't need
    for a long time. Not chosen.
@@ -108,8 +108,16 @@ Parts 2 and 3 get their own designs. Part 1 must not block them (see Constraints
 - **On screen** the world is scaled so its height fills the screen's height. On her iPad upright that's exactly one
   area; wider screens (landscape, a desktop) show more of the world on either side; narrower ones (a phone upright)
   show the middle of an area, and placing there uses the same swipe as moving between areas.
-- **Behind the math** she sees the area she most recently placed something in (centred on it), blurred, with a veil (as in
-  `world-idea-v2`). It's still: no animation, no sun moving.
+- **Behind the math** she sees the area she most recently placed something in (centred on it), blurred. It's still:
+  no animation, no sun moving.
+  - **The card** (user): the problem sits on a soft white card (rounded, ~92% white, the app's key shadow), drawn
+    behind the problem without changing its layout; empty answer boxes are tinted warm cream so they still read as
+    boxes on the white card. When a multiplication/division picture shows, the card covers it too (my call). A light
+    veil (~15% cream) softens the world everywhere else.
+  - **How it's blurred** (tested on her iPad, 2026-11-11): the world is blurred **once into a picture** (an SVG image
+    with the blur inside it, redrawn only when the world changes) on **its own layer** (`will-change: transform`).
+    A live CSS `filter: blur()` made Robo's hop up beside the problem visibly stutter on her iPad; the baked, layered
+    version was smooth. Anything that moves over the world must not force it to repaint.
 
 ### World celebrations
 - **Which**: every 20 stars (its 7 styles from the celebration-variety spec), every 100 stars (the conga), the day
@@ -180,7 +188,24 @@ Parts 2 and 3 get their own designs. Part 1 must not block them (see Constraints
 - Playwright layout check: world celebrations and the pick on her iPad and a phone, upright and landscape: math fully
   off screen during, back exactly as before after; nothing of the world over the problem/keys behind the math beyond
   the blurred background; pick buttons and OK reachable; Reduce Motion.
-- On her iPad (early, before building much on it): blur cost behind the math, and the slide-away smoothness.
+- On her iPad: the slide-away smoothness (the blur cost behind the math was checked with a throwaway build on
+  2026-11-11; see Behind the math).
+
+## Delivery in releases (user agreed)
+
+Each release is useful on its own, gets its own short plan, and goes to dev then prod.
+
+1. **Her first pick (the core loop).** The world appears on day 5 practised: three choices, tap to place, Robo's
+   cheer line; tree, bush, mountain, lake, house; afterwards the world sits blurred behind the math with the card.
+   One area, no panning. Celebrations stay in the strip for now. The pick may show **on top of the app** (covering
+   it) instead of sliding the math away; the slide-away comes with release 2. Aim: before her 5th day practised (a
+   late release only means the pick waits for her).
+2. **Celebrations move into her world.** The slide-away and the » skip button; the day streak, every 20 stars and
+   the 100s conga play in the world (no panning yet); Reduce Motion fades.
+3. **A world that grows.** New areas open to the right, the swipe while placing, celebrations pan across what she's
+   built. Needed once her first area fills (about 8 things, ~40 days practised).
+
+Then part 2 (her friends move in) and part 3 (roads and vehicles), each sliced the same way.
 
 ## Left to the builder
 
