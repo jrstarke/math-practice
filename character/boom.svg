@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520" width="400" height="520">
+  <rect width="400" height="520" fill="#ffffff"/>
+  <g stroke="#2b2b2b" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- ground -->
+    <path d="M70 496 C130 491, 180 499, 230 494 S310 491, 340 497" fill="none"/>
+
+    <!-- legs with L-shaped feet pointing outward -->
+    <path d="M140 410 L156 410 L156 494 L116 494 L116 478 L140 478 Z" fill="#ffffff"/>
+    <path d="M244 410 L260 410 L260 478 L284 478 L284 494 L244 494 Z" fill="#ffffff"/>
+
+    <!-- arms: curved tubes (dark outline with a white center) -->
+    <path d="M164 280 C120 272, 102 240, 108 196" fill="none" stroke-width="18"/>
+    <path d="M164 280 C120 272, 102 240, 108 196" fill="none" stroke="#ffffff" stroke-width="11"/>
+    <path d="M236 280 C280 272, 298 240, 292 196" fill="none" stroke-width="18"/>
+    <path d="M236 280 C280 272, 298 240, 292 196" fill="none" stroke="#ffffff" stroke-width="11"/>
+
+    <!-- body: wide at the bottom, narrow at the top -->
+    <path d="M168 250 L232 250 L306 420 L94 420 Z" fill="#ffffff"/>
+
+    <!-- clamp hands: a back block with two jaws (top and bottom) that open to the outer side -->
+    <rect x="64" y="150" width="44" height="16" fill="#ffffff"/>
+    <rect x="64" y="180" width="44" height="16" fill="#ffffff"/>
+    <rect x="100" y="150" width="34" height="46" fill="#ffffff"/>
+    <rect x="107" y="128" width="20" height="22" fill="#ffffff"/>
+    <path d="M114 133 L114 146 M120 133 L120 146" fill="none" stroke-width="2.5"/>
+    <rect x="292" y="150" width="44" height="16" fill="#ffffff"/>
+    <rect x="292" y="180" width="44" height="16" fill="#ffffff"/>
+    <rect x="266" y="150" width="34" height="46" fill="#ffffff"/>
+    <rect x="273" y="128" width="20" height="22" fill="#ffffff"/>
+    <path d="M280 133 L280 146 M286 133 L286 146" fill="none" stroke-width="2.5"/>
+
+    <!-- round head -->
+    <circle cx="200" cy="200" r="62" fill="#ffffff"/>
+    <!-- eyes -->
+    <path d="M182 180 L182 204 M218 180 L218 204" fill="none"/>
+    <!-- smile -->
+    <path d="M186 226 C186 248, 214 248, 214 226" fill="none"/>
+
+    <!-- light: glow, rays, dome and mount -->
+    <circle cx="200" cy="102" r="34" fill="#c8f7c5" stroke="none" opacity="0.6"/>
+    <path d="M200 62 L200 52 M170 74 L163 67 M230 74 L237 67 M160 102 L150 102 M240 102 L250 102" fill="none" stroke="#2fa84f" stroke-width="3"/>
+    <path d="M182 128 L182 100 A18 20 0 0 1 218 100 L218 128 Z" fill="#4cd964"/>
+    <path d="M190 120 L190 100 C190 93 193 88 198 86" fill="none" stroke="#ffffff" stroke-width="3"/>
+    <!-- mount: bottom edge follows the round head so there's no gap -->
+    <path d="M176 142.8 L176 130 Q176 126 180 126 L220 126 Q224 126 224 130 L224 142.8 A62 62 0 0 0 176 142.8 Z" fill="#2b2b2b"/>
+  </g>
+</svg>

@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 560" width="400" height="560">
+  <rect width="400" height="560" fill="#ffffff"/>
+  <g stroke="#2b2b2b" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- ground -->
+    <path d="M90 533 C140 529, 180 536, 220 532 S290 529, 320 534" fill="none"/>
+
+    <!-- leg -->
+    <rect x="192" y="418" width="16" height="52" fill="#ffffff"/>
+    <!-- unicycle wheel -->
+    <circle cx="200" cy="500" r="32" fill="#ffffff"/>
+    <path d="M200 468 L200 532 M168 500 L232 500 M177.4 477.4 L222.6 522.6 M222.6 477.4 L177.4 522.6" fill="none" stroke-width="2.5"/>
+    <circle cx="200" cy="500" r="8" fill="#2b2b2b"/>
+
+    <!-- arms: thick tubes that bend up at the elbow -->
+    <rect x="62" y="212" width="14" height="79" fill="#ffffff"/>
+    <rect x="69" y="284" width="78" height="14" fill="#ffffff"/>
+    <rect x="324" y="212" width="14" height="79" fill="#ffffff"/>
+    <rect x="253" y="284" width="78" height="14" fill="#ffffff"/>
+    <!-- elbow joints -->
+    <circle cx="69" cy="291" r="10" fill="#ffffff"/>
+    <circle cx="69" cy="291" r="3" fill="#2b2b2b" stroke="none"/>
+    <circle cx="331" cy="291" r="10" fill="#ffffff"/>
+    <circle cx="331" cy="291" r="3" fill="#2b2b2b" stroke="none"/>
+    <!-- U-shaped claw hands -->
+    <path d="M36 150 L50 150 L50 198 L88 198 L88 150 L102 150 L102 212 L36 212 Z" fill="#ffffff"/>
+    <path d="M298 150 L312 150 L312 198 L350 198 L350 150 L364 150 L364 212 L298 212 Z" fill="#ffffff"/>
+
+    <!-- body -->
+    <rect x="145" y="258" width="110" height="162" fill="#ffffff"/>
+
+    <!-- head -->
+    <rect x="112" y="120" width="176" height="140" fill="#ffffff"/>
+
+    <!-- goggle strap around the head -->
+    <path d="M112 157 L288 157 M112 173 L288 173" fill="none" stroke-width="3"/>
+    <!-- goggles -->
+    <rect x="146" y="139" width="50" height="54" rx="20" fill="#e6f4fb"/>
+    <rect x="204" y="139" width="50" height="54" rx="20" fill="#e6f4fb"/>
+    <path d="M196 163 L204 163" fill="none"/>
+    <!-- eyes inside the goggles -->
+    <ellipse cx="172" cy="166" rx="9" ry="16" fill="#ffffff" stroke-width="2.5"/>
+    <ellipse cx="228" cy="166" rx="9" ry="16" fill="#ffffff" stroke-width="2.5"/>
+    <circle cx="173" cy="169" r="4" fill="#2b2b2b" stroke="none"/>
+    <circle cx="229" cy="169" r="4" fill="#2b2b2b" stroke="none"/>
+    <!-- smile -->
+    <path d="M184 214 C184 240, 216 240, 216 214" fill="none"/>
+
+    <!-- light: glow, rays, dome and mount -->
+    <circle cx="200" cy="74" r="40" fill="#c8f7c5" stroke="none" opacity="0.6"/>
+    <path d="M200 30 L200 20 M166 44 L158 36 M234 44 L242 36 M152 74 L142 74 M248 74 L258 74" fill="none" stroke="#2fa84f" stroke-width="3"/>
+    <path d="M176 106 L176 70 A24 26 0 0 1 224 70 L224 106 Z" fill="#4cd964"/>
+    <path d="M186 96 L186 72 C186 63 190 57 196 54" fill="none" stroke="#ffffff" stroke-width="3"/>
+    <rect x="166" y="102" width="68" height="18" rx="5" fill="#2b2b2b"/>
+  </g>
+</svg>

@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-200 -80 800 610" width="800" height="610">
+  <style>
+    .move, .tilt, .lean, .bob, .propL, .propR, .shadow { transform-box: view-box; }
+    .move   { animation: move 10s ease-in-out infinite; }
+    .bob    { animation: bob 1.2s ease-in-out infinite; }
+    .tilt   { transform-origin: 200px 360px; animation: tilt 10s ease-in-out infinite; }
+    .lean   { transform-origin: 340px 500px; animation: lean 10s ease-in-out infinite; }
+    .propL  { transform-origin: 90px 142px; animation: spinP 10s linear infinite; }
+    .propR  { transform-origin: 310px 142px; animation: spinP 10s linear infinite; }
+    .shadow { transform-origin: 200px 506px; animation: shadow 10s ease-in-out infinite; }
+    .glow   { animation: glow 1.4s ease-in-out infinite; }
+
+    /* glide right, stop, lift off, fly left, fly back, land */
+    @keyframes move {
+      0%, 5%    { transform: translate(0px, 0px); }
+      25%, 40%  { transform: translate(140px, 0px); }
+      50%       { transform: translate(140px, -160px); }
+      60%       { transform: translate(-130px, -190px); }
+      70%       { transform: translate(0px, -170px); }
+      84%, 100% { transform: translate(0px, 0px); }
+    }
+    /* gentle hover bob, gliding or flying */
+    @keyframes bob { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-5px); } }
+    /* while gliding, lean forward from the front corner of the base */
+    @keyframes lean {
+      0%, 5%    { transform: rotate(0deg); }
+      9%, 21%   { transform: rotate(4deg); }
+      26%       { transform: rotate(-1deg); }
+      29%, 100% { transform: rotate(0deg); }
+    }
+    /* while flying, tilt into the direction of travel */
+    @keyframes tilt {
+      0%, 50%   { transform: rotate(0deg); }
+      53%, 57%  { transform: rotate(-12deg); }
+      61%       { transform: rotate(4deg); }
+      64%, 67%  { transform: rotate(8deg); }
+      71%, 100% { transform: rotate(0deg); }
+    }
+    /* shadow follows along the ground and shrinks when flying high */
+    @keyframes shadow {
+      0%, 5%    { transform: translateX(0px) scale(1); opacity: 1; }
+      25%, 40%  { transform: translateX(140px) scale(1); opacity: 1; }
+      50%       { transform: translateX(140px) scale(0.55); opacity: 0.5; }
+      60%       { transform: translateX(-130px) scale(0.5); opacity: 0.45; }
+      70%       { transform: translateX(0px) scale(0.52); opacity: 0.5; }
+      84%, 100% { transform: translateX(0px) scale(1); opacity: 1; }
+    }
+    @keyframes spinP {
+      0% { transform: rotate(0deg); }
+      30% { transform: rotate(0deg); }
+      33% { transform: rotate(90deg); }
+      36% { transform: rotate(360deg); }
+      39% { transform: rotate(900deg); }
+      42% { transform: rotate(1620deg); }
+      43% { transform: rotate(1890deg); }
+      44% { transform: rotate(2160deg); }
+      45% { transform: rotate(2430deg); }
+      46% { transform: rotate(2700deg); }
+      47% { transform: rotate(2970deg); }
+      48% { transform: rotate(3240deg); }
+      49% { transform: rotate(3510deg); }
+      50% { transform: rotate(3780deg); }
+      51% { transform: rotate(4050deg); }
+      52% { transform: rotate(4320deg); }
+      53% { transform: rotate(4590deg); }
+      54% { transform: rotate(4860deg); }
+      55% { transform: rotate(5130deg); }
+      56% { transform: rotate(5400deg); }
+      57% { transform: rotate(5670deg); }
+      58% { transform: rotate(5940deg); }
+      59% { transform: rotate(6210deg); }
+      60% { transform: rotate(6480deg); }
+      61% { transform: rotate(6750deg); }
+      62% { transform: rotate(7020deg); }
+      63% { transform: rotate(7290deg); }
+      64% { transform: rotate(7560deg); }
+      65% { transform: rotate(7830deg); }
+      66% { transform: rotate(8100deg); }
+      67% { transform: rotate(8370deg); }
+      68% { transform: rotate(8640deg); }
+      69% { transform: rotate(8910deg); }
+      70% { transform: rotate(9180deg); }
+      71% { transform: rotate(9450deg); }
+      72% { transform: rotate(9720deg); }
+      73% { transform: rotate(9990deg); }
+      74% { transform: rotate(10260deg); }
+      75% { transform: rotate(10530deg); }
+      76% { transform: rotate(10800deg); }
+      77% { transform: rotate(11070deg); }
+      78% { transform: rotate(11340deg); }
+      81% { transform: rotate(11840deg); }
+      84% { transform: rotate(12140deg); }
+      87% { transform: rotate(12300deg); }
+      89% { transform: rotate(12360deg); }
+      100% { transform: rotate(12360deg); }
+    }
+    @keyframes glow { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.85; } }
+  </style>
+  <rect x="-200" y="-80" width="800" height="610" fill="#ffffff"/>
+  <g stroke="#2b2b2b" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- ground -->
+    <path d="M-180 508 C-60 503, 60 512, 200 506 S440 503, 580 509" fill="none"/>
+    <!-- shadow -->
+    <ellipse class="shadow" cx="200" cy="510" rx="120" ry="8" fill="#2b2b2b" stroke="none" opacity="0.15"/>
+    <g class="move"><g class="bob"><g class="tilt"><g class="lean">
+    <!-- lower arms: thin lines with black oval hands -->
+    <path d="M172 404 C120 400, 92 384, 92 352" fill="none"/>
+    <path d="M228 404 C280 400, 308 384, 308 352" fill="none"/>
+    <ellipse cx="92" cy="332" rx="16" ry="22" fill="#2b2b2b"/>
+    <ellipse cx="308" cy="332" rx="16" ry="22" fill="#2b2b2b"/>
+
+    <!-- gliding base -->
+    <path d="M128 380 L272 380 L340 500 L60 500 Z" fill="#ffffff"/>
+
+    <!-- propeller arms: tubes from the top corners that bend up -->
+    <path d="M124 245 L97 245 L97 180 L83 180 L83 259 L124 259 Z" fill="#ffffff"/>
+    <path d="M276 245 L303 245 L303 180 L317 180 L317 259 L276 259 Z" fill="#ffffff"/>
+    <!-- rounded caps -->
+    <path d="M80 184 L80 172 A10 12 0 0 1 100 172 L100 184 Z" fill="#ffffff"/>
+    <path d="M300 184 L300 172 A10 12 0 0 1 320 172 L320 184 Z" fill="#ffffff"/>
+    <!-- propeller shafts -->
+    <path d="M90 160 L90 144 M310 160 L310 144" fill="none" stroke-width="3"/>
+    <!-- three-blade propellers -->
+    <g class="propL">
+      <ellipse cx="90" cy="130" rx="6" ry="12" fill="#ffffff" stroke-width="2.5"/>
+      <ellipse cx="90" cy="130" rx="6" ry="12" fill="#ffffff" stroke-width="2.5" transform="rotate(120 90 142)"/>
+      <ellipse cx="90" cy="130" rx="6" ry="12" fill="#ffffff" stroke-width="2.5" transform="rotate(240 90 142)"/>
+      <circle cx="90" cy="142" r="3.5" fill="#2b2b2b" stroke="none"/>
+    </g>
+    <g class="propR">
+      <ellipse cx="310" cy="130" rx="6" ry="12" fill="#ffffff" stroke-width="2.5"/>
+      <ellipse cx="310" cy="130" rx="6" ry="12" fill="#ffffff" stroke-width="2.5" transform="rotate(120 310 142)"/>
+      <ellipse cx="310" cy="130" rx="6" ry="12" fill="#ffffff" stroke-width="2.5" transform="rotate(240 310 142)"/>
+      <circle cx="310" cy="142" r="3.5" fill="#2b2b2b" stroke="none"/>
+    </g>
+
+    <!-- head, about the same size as Beep's -->
+    <rect x="122" y="230" width="156" height="150" fill="#ffffff"/>
+    <!-- eyes -->
+    <path d="M174 256 L174 282 M226 256 L226 282" fill="none"/>
+    <!-- smile -->
+    <path d="M184 324 C184 352, 216 352, 216 324" fill="none"/>
+
+    <!-- light: glow, rays, dome and mount -->
+    <circle class="glow" cx="200" cy="190" r="34" fill="#c8f7c5" stroke="none"/>
+    <path d="M200 150 L200 140 M170 162 L163 155 M230 162 L237 155 M160 190 L150 190 M240 190 L250 190" fill="none" stroke="#2fa84f" stroke-width="3"/>
+    <path d="M180 216 L180 190 A20 22 0 0 1 220 190 L220 216 Z" fill="#4cd964"/>
+    <path d="M189 208 L189 190 C189 182 192 177 197 174" fill="none" stroke="#ffffff" stroke-width="3"/>
+    <rect x="172" y="214" width="56" height="16" rx="5" fill="#2b2b2b"/>
+    </g></g></g></g>
+  </g>
+</svg>
