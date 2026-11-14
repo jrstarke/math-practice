@@ -29,3 +29,5 @@
   rotation.
 - 2026-11-13: Always use the visual companion (browser mockups) when brainstorming — start it without asking (user:
   "always :)"). Show mockups beside any playback of something she'll look at.
+- 2026-11-14: Robo's world horizon = about a third down (y=120 of 360), more ground (user: "more ground"); sketch mockups used 42%. In spec (commit 993f1ed). Tune by eye on a mockup in release 1.
+- 2026-11-14 (later): horizon changed again to 25% down (y=90 of 360; user: "the 25 to give more space to play"); small mountains plus a few smaller scenery-only hills in front; a one-zone kind dims the rest while placing (mountain = horizon band, tree/bush/house = ground, lake = open ground); she can switch among the three offered picks before OK; blur numbers (stdDeviation 2, card 92%, veil 15%) written into the spec. Mockup: .superpowers/brainstorm/1106-1794639231/content/world-25-hills-placing.html.

@@ -96,15 +96,23 @@ Parts 2 and 3 get their own designs. Part 1 must not block them (see Constraints
   a fixed shape means a rotation or another screen never stretches or squashes her world, and saved positions mean
   the same thing everywhere — part 3's roads depend on that.) It starts with one area; a new empty area opens to the right of the newest
   when the newest has enough things in it (builder: a count around 8, tuned so an area looks full but not cramped).
-- **Horizon** (user: "more ground"): about **a third of the way down** (y=120 of an area's 360), so the sky is the top
-  third and the ground the bottom two thirds. The mockups' 42% (y=150) was a sketch value. Confirm on a mockup in
-  release 1; tune by eye, but keep the ground the larger part.
+- **Horizon** (user: "more ground", then "the 25 to give more space to play"): **a quarter of the way down** (y=90 of an
+  area's 360), so the sky is the top quarter and the ground the bottom three quarters. Earlier values (42% in the first
+  sketches, then a third) were tried on mockups and dropped. Tune by eye in release 1, but keep the ground the larger part.
+- **Far edge** (user): small lilac mountains on the horizon, with **a few smaller, softer hills in front of them**
+  (lighter greens, a bit lower than the mountains' peaks). The hills are scenery only, part of the empty world: she
+  can't place or move them, and they're not a sixth kind (my call; the user hasn't asked for placeable hills).
 - **Depth**: where she places a thing sets how far away it is: higher on the ground (nearer the horizon) is farther
   and drawn smaller; lower is nearer and bigger. Things are drawn far-to-near, so nearer things overlap farther ones.
   (User: "something further up towards the horizon is further away, and something lower is closer and bigger".)
 - **Kinds and how they sit** (my calls): tree, bush and house stand on the ground where she taps; a lake lies flat
   on the ground where she taps; a **mountain** always sits on the horizon (only where along it is chosen), as
   mountains far away do.
+- **Where each kind may go** (user): a kind that fits only one zone dims the rest of the world while she places it, so
+  the bright part shows where it can go. A mountain lights up only the horizon band (the sky and the ground dim);
+  a tree, bush or house lights up the ground (the sky dims); a lake lights up open ground (builder's call how much of
+  the ground; a lake shouldn't sit on the horizon strip). A tap on a dimmed part does nothing (my call: no error, the
+  ghost stays where it was). A mountain tapped on the band snaps to the horizon line, keeping only where along it.
 - **Look** (my call, to confirm with her on a mockup): the robots' style — dark `#2b2b2b` rounded outlines, simple
   shapes, no shading — with soft flat colours for the world (sky blue, grass green, lake blue, lilac mountains), as in
   the mockups. The sky/ground with sun is the empty world she starts with.
@@ -117,6 +125,10 @@ Parts 2 and 3 get their own designs. Part 1 must not block them (see Constraints
     behind the problem without changing its layout; empty answer boxes are tinted warm cream so they still read as
     boxes on the white card. When a multiplication/division picture shows, the card covers it too (my call). A light
     veil (~15% cream) softens the world everywhere else.
+  - **The numbers** (from the dev spike the user tested; the 2026-11-14 mockup used them): blur `stdDeviation` 2 in
+    the area's 270×360 units (scaled with the world), card 92% white, veil 15% cream, sky gradient `#bfe6ff` at the top
+    to `#eaf7ff` at the horizon, ground `#d8efc4`, lake `#8fd0f0`–`#9fd4f2`. A light blur: shapes stay recognisable,
+    only the edges soften.
   - **How it's blurred** (tested on her iPad, 2026-11-11): the world is blurred **once into a picture** (an SVG image
     with the blur inside it, redrawn only when the world changes) on **its own layer** (`will-change: transform`).
     A live CSS `filter: blur()` made Robo's hop up beside the problem visibly stutter on her iPad; the baked, layered
@@ -148,7 +160,10 @@ Parts 2 and 3 get their own designs. Part 1 must not block them (see Constraints
   slides away to reveal the empty world, then the pick).
 - **Choosing**: three different kinds, picked at random with `roboRng` from the five (my call: three, so it's quick).
   Shown as big buttons with the drawing and its name. She taps one.
-- **Placing**: "Tap where it goes!" She taps the ground; the thing appears there at the size its depth gives it. She
+- **Placing**: "Tap where it goes!" She taps the bright part (see "Where each kind may go"); the thing appears there at
+  the size its depth gives it. **Before she places it she can choose another of the three** (user): the three
+  choices stay on screen under the world; tapping a different one swaps the ghost for that kind, and the dimming
+  changes to match its zone. Nothing is placed or lost until OK, and the offer stays the same three. She
   can tap again to move it, and swipe left/right to place it in an older area. An OK button places it for good. Robo
   cheers beside it and says one of several happy lines, picked at random (`roboRng`) and never the same twice in a
   row (user): "That's awesome!", "That looks great!", "Cool!" (user's), plus "It's perfect!", "I love it!", "Wow!"
@@ -186,7 +201,7 @@ Parts 2 and 3 get their own designs. Part 1 must not block them (see Constraints
   are pending, one per answer); offers are three distinct kinds; a saved offer survives a reload; world celebrations
   only once the world exists; the 7 star styles, conga and day tiers still chosen as today.
 - Storage: v8 → v9 migration, v9 validation (kinds, areas, depths in range), rollback leaves v8 untouched.
-- View (jsdom): world layers built from saved items, far-to-near order, mountain on the horizon, blur class behind
+- View (jsdom): world layers built from saved items, far-to-near order, mountain on the horizon, only the allowed zone bright per kind (a tap on a dimmed part does nothing), switching the pick before OK swaps the ghost and the dimming, blur class behind
   the math only, slide-away and back, the skip button ends it while a tap elsewhere does not, pick flow (choose, place, move, OK), Reduce Motion classes.
 - Playwright layout check: world celebrations and the pick on her iPad and a phone, upright and landscape: math fully
   off screen during, back exactly as before after; nothing of the world over the problem/keys behind the math beyond

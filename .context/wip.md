@@ -1,6 +1,13 @@
 # WIP (updated 2026-11-13)
 
 ## >>> RESUME HERE (updated 2026-11-13, handed off to a new machine)
+- **Session 2026-11-14 (before container restart):** summarised the design for the user; user asked for more ground →
+  horizon set to a third down and committed (993f1ed, local on feat/robos-world, NOT pushed to prod remote).
+  Still waiting on design approval. Wrote a horizon mockup (sketch 42% vs 33% vs behind-the-math) at
+  .superpowers/brainstorm/2545-1794638035/content/horizon.html; user hadn't seen it yet — $PUBLISH_PORT was UNSET this
+  session, so the server picked random port 58366 (maybe unreachable). After restart: check `echo $PUBLISH_PORT`, restart
+  the visual companion on it (see New machine setup), show horizon.html again (copy to a new file name), then on approval
+  → writing-plans for release 1. If the mockup is liked, copy it into docs/superpowers/mockups/2026-11-11-robos-world/.
 - **Branch to work on: `feat/robos-world`** (pushed to the `prod` remote as a branch; only `main` deploys). It holds
   main's characters commit plus the Robo's world design and mockups. Local `main` = 4cebb75 (characters, prod/main + 1).
 - **Waiting on the user: approval of the Robo's world design**
