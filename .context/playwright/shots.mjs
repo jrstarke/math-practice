@@ -8,7 +8,7 @@ const views = process.env.VIEWS ? JSON.parse(process.env.VIEWS) : [
   ['ipad-p', 820, 1180], ['ipad-l', 1180, 820], ['ipad-l-tab', 1180, 745], ['ipad102-l-tab', 1080, 740], ['ipad102-p', 810, 1080], ['ipad102-p-tab', 810, 1005], ['se-land', 667, 375], ['ip15-land', 852, 393], ['ip15-land-notch', 852, 393],
   ['ipad6-l', 1024, 768], ['ipad6-l-tabs', 1024, 665], ['ipad102-l-tabs', 1080, 707], ['ipad6-p-tabs', 768, 918],
 ];
-const STORAGE_KEY = 'math-practice-progress-v8';
+const STORAGE_KEY = 'math-practice-progress-v9';
 const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const TODAY = ymd(new Date()), YESTERDAY = ymd(new Date(Date.now() - 86_400_000));
 const ATTEMPT_CAP = 20;
@@ -22,7 +22,7 @@ const LEVELS = OP === '÷' ? [1, 2, 6, 7, 8, 9] : [1, 7, 8, 9];
 const nine = { level: 9, window: [], calibrationLeft: 0 };
 function progressFor(level) {
   return {
-    version: 8,
+    version: 9,
     unlocked: ['addition', 'subtraction', 'multiplication', 'division'],
     addition: nine,
     subtraction: nine,
@@ -32,6 +32,7 @@ function progressFor(level) {
     streak: 12, bestStreak: 12, total: +(process.env.TOTAL ?? 12), muted: false, installTipShown: false,
     // Hidden just now, so there's no welcome: flows that want one set hiddenAt: null.
     day: { date: null, right: 0, days: 0, lastDone: null, practised: 0 }, hiddenAt: Date.now(),
+    world: { items: [], picksUsed: 0, offer: null },
   };
 }
 

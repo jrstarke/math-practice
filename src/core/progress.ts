@@ -1,11 +1,12 @@
 import { initialOpState, type OpState } from './adaptive';
 import { initialDayStreak, type DayStreak } from './days';
 import type { Op } from './types';
+import { initialWorld, type WorldState } from './world';
 
 export type OpKey = 'addition' | 'subtraction' | 'multiplication' | 'division';
 
 export interface Progress {
-  version: 8;
+  version: 9;
   unlocked: OpKey[]; // operations in the mix; once unlocked, always unlocked
   addition: OpState;
   subtraction: OpState;
@@ -22,11 +23,13 @@ export interface Progress {
   day: DayStreak;
   /** When the app was last hidden (epoch ms), so a reload soon after a short switch isn't a fresh start. */
   hiddenAt: number | null;
+  /** Robo's world: what she has placed, the picks used and the pick on offer. */
+  world: WorldState;
 }
 
 export function defaultProgress(): Progress {
   return {
-    version: 8,
+    version: 9,
     unlocked: ['addition'],
     addition: initialOpState(),
     subtraction: initialOpState(),
@@ -40,6 +43,7 @@ export function defaultProgress(): Progress {
     welcome: null,
     day: initialDayStreak(),
     hiddenAt: null,
+    world: initialWorld(),
   };
 }
 

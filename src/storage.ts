@@ -1,12 +1,14 @@
 import { initialOpState } from './core/adaptive';
 import { initialDayStreak, type DayStreak } from './core/days';
+import { isValidWorld, initialWorld } from './core/world';
 import { defaultProgress, type OpKey, type Progress } from './core/progress';
 
 /**
  * Each version lives under its own key, so an older build never reads a newer record and resets her progress.
  * Older keys are read once to migrate and never written, so a rollback still finds the last save it understands.
  */
-export const STORAGE_KEY = 'math-practice-progress-v8';
+export const STORAGE_KEY = 'math-practice-progress-v9';
+export const V8_STORAGE_KEY = 'math-practice-progress-v8';
 export const V7_STORAGE_KEY = 'math-practice-progress-v7';
 export const V6_STORAGE_KEY = 'math-practice-progress-v6';
 export const V5_STORAGE_KEY = 'math-practice-progress-v5';
@@ -44,8 +46,10 @@ function hasValidCommonFields(x: Record<string, unknown>): boolean {
     && typeof x.installTipShown === 'boolean';
 }
 
+/** v9 added Robo's world. */
+type ProgressV8 = Omit<Progress, 'version' | 'world'> & { version: 8 };
 /** v8 added days practised in total to the day streak. */
-type ProgressV7 = Omit<Progress, 'version' | 'day'> & { version: 7; day: Omit<DayStreak, 'practised'> };
+type ProgressV7 = Omit<ProgressV8, 'version' | 'day'> & { version: 7; day: Omit<DayStreak, 'practised'> };
 /** v7 added the day streak and when the app was last hidden. */
 type ProgressV6 = Omit<ProgressV7, 'version' | 'day' | 'hiddenAt'> & { version: 6 };
 /** v6 added division and the unlock welcome. */
@@ -138,11 +142,16 @@ function isValidProgressV7(x: unknown): x is ProgressV7 {
   return isObj(x) && x.version === 7 && hasValidV6Fields(x) && isValidDayStreakV7(x.day) && isValidHiddenAt(x.hiddenAt);
 }
 
-export function isValidProgress(x: unknown): x is Progress {
+function isValidProgressV8(x: unknown): x is ProgressV8 {
   return isObj(x) && x.version === 8 && hasValidV6Fields(x) && isValidDayStreak(x.day) && isValidHiddenAt(x.hiddenAt);
 }
 
-/** Fields v6, v7 and v8 share. */
+export function isValidProgress(x: unknown): x is Progress {
+  return isObj(x) && x.version === 9 && hasValidV6Fields(x) && isValidDayStreak(x.day) && isValidHiddenAt(x.hiddenAt)
+    && isValidWorld(x.world);
+}
+
+/** Fields v6, v7, v8 and v9 share. */
 function hasValidV6Fields(x: Record<string, unknown>): boolean {
   return hasValidCommonFields(x)
     && isValidOpState(x.multiplication) && isValidOpState(x.division)
@@ -192,8 +201,13 @@ function upgradeV6(p: ProgressV6): ProgressV7 {
 }
 
 /** v7 players' days in a row are a floor on the days they've practised (the streak is that new), so they count. */
-function upgradeV7(p: ProgressV7): Progress {
+function upgradeV7(p: ProgressV7): ProgressV8 {
   return { ...p, version: 8, day: { ...p.day, practised: p.day.days } };
+}
+
+/** v8 players start with an empty world; her first pick arrives once she has practised enough days. */
+function upgradeV8(p: ProgressV8): Progress {
+  return { ...p, version: 9, world: initialWorld() };
 }
 
 function readJson(storage: KV, key: string): unknown {
@@ -211,20 +225,22 @@ export function createStore(storage: KV | null): ProgressStore {
       try {
         const current = readJson(storage, STORAGE_KEY);
         if (isValidProgress(current)) return current;
+        const v8 = readJson(storage, V8_STORAGE_KEY);
+        if (isValidProgressV8(v8)) return upgradeV8(v8);
         const v7 = readJson(storage, V7_STORAGE_KEY);
-        if (isValidProgressV7(v7)) return upgradeV7(v7);
+        if (isValidProgressV7(v7)) return upgradeV8(upgradeV7(v7));
         const v6 = readJson(storage, V6_STORAGE_KEY);
-        if (isValidProgressV6(v6)) return upgradeV7(upgradeV6(v6));
+        if (isValidProgressV6(v6)) return upgradeV8(upgradeV7(upgradeV6(v6)));
         const v5 = readJson(storage, V5_STORAGE_KEY);
-        if (isValidProgressV5(v5)) return upgradeV7(upgradeV6(upgradeV5(v5)));
+        if (isValidProgressV5(v5)) return upgradeV8(upgradeV7(upgradeV6(upgradeV5(v5))));
         const v4 = readJson(storage, V4_STORAGE_KEY);
-        if (isValidProgressV4(v4)) return upgradeV7(upgradeV6(upgradeV5(upgradeV4(v4))));
+        if (isValidProgressV4(v4)) return upgradeV8(upgradeV7(upgradeV6(upgradeV5(upgradeV4(v4)))));
         const v3 = readJson(storage, V3_STORAGE_KEY);
-        if (isValidProgressV3(v3)) return upgradeV7(upgradeV6(upgradeV5(upgradeV4(upgradeV3(v3)))));
+        if (isValidProgressV3(v3)) return upgradeV8(upgradeV7(upgradeV6(upgradeV5(upgradeV4(upgradeV3(v3))))));
         const v2 = readJson(storage, V2_STORAGE_KEY);
-        if (isValidProgressV2(v2)) return upgradeV7(upgradeV6(upgradeV5(upgradeV4(upgradeV3(upgradeV2(v2))))));
+        if (isValidProgressV2(v2)) return upgradeV8(upgradeV7(upgradeV6(upgradeV5(upgradeV4(upgradeV3(upgradeV2(v2)))))));
         const v1 = readJson(storage, LEGACY_STORAGE_KEY);
-        return isValidProgressV1(v1) ? upgradeV7(upgradeV6(upgradeV5(upgradeV4(upgradeV3(upgradeV2(upgradeV1(v1))))))) : defaultProgress();
+        return isValidProgressV1(v1) ? upgradeV8(upgradeV7(upgradeV6(upgradeV5(upgradeV4(upgradeV3(upgradeV2(upgradeV1(v1)))))))) : defaultProgress();
       } catch {
         return defaultProgress();
       }
