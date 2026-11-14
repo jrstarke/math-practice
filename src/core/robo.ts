@@ -61,6 +61,8 @@ export interface RoboOutcome {
   passed: boolean;
   /** The new days-in-a-row count when this answer completed the day, else null. */
   dayDone: number | null;
+  /** A pick is owed after this answer was recorded (the caller computes it). Ignored on a Pass. */
+  pickOwed: boolean;
 }
 
 /** In memory only: a reload starting afresh is fine. */
@@ -80,6 +82,8 @@ export interface RoboDecision {
   big: BigMoment | null;
   line: string | null;
   surprise: boolean;
+  /** The app opens the pick after any moment here finishes. */
+  pick: boolean;
 }
 
 export function initialRoboMemory(): RoboMemory {
@@ -107,7 +111,9 @@ export function welcomeWords(total: number): string {
 export function decideRobo(m: RoboMemory, o: RoboOutcome, rng: Rng): { memory: RoboMemory; decision: RoboDecision } {
   const s = m.sinceBig + 1;
   // On a Pass Robo is up walking through the steps, so walks and high fives wait for a later answer.
-  const allowed = s > COOLDOWN && !o.passed;
+  // A pick outranks level-ups and stars: those are dropped (a milestone stays pending) and the cooldown doesn't apply.
+  const pick = o.pickOwed && !o.passed;
+  const allowed = s > COOLDOWN && !o.passed && !pick;
   const milestone = o.totalAfter > o.totalBefore && o.totalAfter % 20 === 0 ? o.totalAfter : null;
   // A later 20 never replaces a held-back hundred (its conga still plays); a later hundred does.
   const keepHundred = m.pendingWalk !== null && m.pendingWalk % 100 === 0 && milestone !== null && milestone % 100 !== 0;
@@ -137,15 +143,15 @@ export function decideRobo(m: RoboMemory, o: RoboOutcome, rng: Rng): { memory: R
   }
 
   let line: string | null = null;
-  if (!big && !o.passed) {
+  if (!big && !o.passed && !pick) {
     if (o.hintsUsed > 0) line = 'You figured it out!';
     else if (o.wrongSubmits > 0) line = 'You got it!';
   }
 
-  const surprise = !big && !line && !o.passed && !m.lastWasSurprise && rng() < SURPRISE_CHANCE;
+  const surprise = !big && !line && !o.passed && !pick && !m.lastWasSurprise && rng() < SURPRISE_CHANCE;
 
   return {
     memory: { sinceBig: big ? 0 : s, pendingWalk, pendingDay, lastWasSurprise: surprise, lastLevelUp, lastStars },
-    decision: { big, line, surprise },
+    decision: { big, line, surprise, pick },
   };
 }

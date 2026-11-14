@@ -5,7 +5,7 @@ import {
 } from './robo';
 import { mulberry32, type Rng } from './rng';
 
-const clean: RoboOutcome = { totalBefore: 10, totalAfter: 11, levelChange: 0, unlocked: [], wrongSubmits: 0, hintsUsed: 0, passed: false, dayDone: null };
+const clean: RoboOutcome = { totalBefore: 10, totalAfter: 11, levelChange: 0, unlocked: [], wrongSubmits: 0, hintsUsed: 0, passed: false, dayDone: null, pickOwed: false };
 const never: Rng = () => 0.99;
 const throws: Rng = () => { throw new Error('rng should not be called'); };
 
@@ -21,12 +21,12 @@ function run(outcomes: Partial<RoboOutcome>[], rng: Rng = never, start: RoboMemo
 
 describe('decideRobo', () => {
   it('a clean answer has no big moment, no line', () => {
-    expect(decideRobo(initialRoboMemory(), clean, never).decision).toEqual({ big: null, line: null, surprise: false });
+    expect(decideRobo(initialRoboMemory(), clean, never).decision).toEqual({ big: null, line: null, surprise: false, pick: false });
   });
 
   it('right after a wrong try says "You got it!"', () => {
     const d = decideRobo(initialRoboMemory(), { ...clean, totalAfter: 10, wrongSubmits: 1 }, never).decision;
-    expect(d).toEqual({ big: null, line: 'You got it!', surprise: false });
+    expect(d).toEqual({ big: null, line: 'You got it!', surprise: false, pick: false });
   });
 
   it('right after hints says "You figured it out!", also when there were wrong tries too', () => {
@@ -37,7 +37,7 @@ describe('decideRobo', () => {
 
   it('Pass has no line and no surprise', () => {
     const d = decideRobo(initialRoboMemory(), { ...clean, totalAfter: 10, passed: true, hintsUsed: 3 }, () => 0).decision;
-    expect(d).toEqual({ big: null, line: null, surprise: false });
+    expect(d).toEqual({ big: null, line: null, surprise: false, pick: false });
   });
 
   it('reaching 40 stars plays a star celebration with the milestone words', () => {
@@ -260,6 +260,61 @@ describe('celebration choice', () => {
     expect(pickStyle(['a', 'b', 'c'], null, () => 0)).toBe('a');
     expect(pickStyle(['a', 'b', 'c'], 'a', () => 0)).toBe('b');
     expect(pickStyle(['a', 'b', 'c'], 'c', () => 0.99)).toBe('b');
+  });
+
+  describe('a pick that is owed', () => {
+    it('with nothing else plays no big moment and opens the pick', () => {
+      const d = decideRobo(initialRoboMemory(), { ...clean, pickOwed: true }, throws).decision;
+      expect(d).toEqual({ big: null, line: null, surprise: false, pick: true });
+    });
+
+    it('keeps an unlock kick', () => {
+      const d = decideRobo(initialRoboMemory(), { ...clean, pickOwed: true, unlocked: ['division'] }, never).decision;
+      expect(d.big?.kind).toBe('kick');
+      expect(d.pick).toBe(true);
+    });
+
+    it('keeps the day moment', () => {
+      const d = decideRobo(initialRoboMemory(), { ...clean, pickOwed: true, dayDone: 3 }, never).decision;
+      expect(d.big?.kind).toBe('day');
+      expect(d.pick).toBe(true);
+    });
+
+    it('drops a level-up and does not use up a style', () => {
+      const r = decideRobo({ ...initialRoboMemory(), lastLevelUp: 'dance' }, { ...clean, pickOwed: true, levelChange: 1 }, throws);
+      expect(r.decision.big).toBeNull();
+      expect(r.decision.pick).toBe(true);
+      expect(r.memory.lastLevelUp).toBe('dance');
+    });
+
+    it('holds a star milestone for later', () => {
+      const first = decideRobo(initialRoboMemory(), { ...clean, pickOwed: true, totalBefore: 39, totalAfter: 40 }, throws);
+      expect(first.decision.big).toBeNull();
+      expect(first.decision.pick).toBe(true);
+      expect(first.memory.pendingWalk).toBe(40);
+      const next = decideRobo({ ...first.memory, sinceBig: 10 }, { ...clean, totalBefore: 40, totalAfter: 41 }, () => 0);
+      expect(next.decision.big?.kind).toBe('stars');
+      expect(next.decision.pick).toBe(false);
+    });
+
+    it('does not wait for the cooldown and only resets it when a big moment played', () => {
+      const m = { ...initialRoboMemory(), sinceBig: 0 };
+      const r = decideRobo(m, { ...clean, pickOwed: true }, throws);
+      expect(r.decision.pick).toBe(true);
+      expect(r.memory.sinceBig).toBe(1);
+      const k = decideRobo(m, { ...clean, pickOwed: true, unlocked: ['division'] }, never);
+      expect(k.memory.sinceBig).toBe(0);
+    });
+
+    it('is not opened on a Pass', () => {
+      const d = decideRobo(initialRoboMemory(), { ...clean, pickOwed: true, passed: true }, never).decision;
+      expect(d.pick).toBe(false);
+    });
+
+    it('has no line and no surprise', () => {
+      const d = decideRobo(initialRoboMemory(), { ...clean, pickOwed: true, wrongSubmits: 1 }, throws).decision;
+      expect(d).toEqual({ big: null, line: null, surprise: false, pick: true });
+    });
   });
 
   it('pickStyle is uniform over the rest and never repeats', () => {
