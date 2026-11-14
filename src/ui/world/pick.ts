@@ -6,7 +6,7 @@ import { el } from '../dom';
 import { createFigure, setFigure } from '../robo/drawing';
 import { fitFrame } from './frame';
 import { KIND_NAMES, drawKind } from './kinds';
-import { GROUND, SKY_LOW, SKY_TOP, itemScale, sceneSvg, svgDataUri } from './scene';
+import { GROUND, SKY_LOW, SKY_TOP, itemScale, sceneExtent, sceneSvg, svgDataUri } from './scene';
 
 export const PICK_CHEER_MS = 2500;
 
@@ -30,7 +30,9 @@ const px = (n: number) => `${n}px`;
 /** The pick: her world full screen, three kinds to choose from, tap where it goes, OK. */
 export function createPick(deps: PickDeps): { el: HTMLElement; destroy(): void } {
   const scene = el('img', { class: 'pick-scene', alt: '', draggable: 'false' });
-  scene.src = svgDataUri(sceneSvg(deps.items));
+  let placed: WorldItem | null = null; // her new thing, once OK is pressed
+  let sceneExt = { x0: 0, x1: AREA_W };
+  const drawScene = () => { scene.src = svgDataUri(sceneSvg(placed ? [...deps.items, placed] : deps.items, { extent: sceneExt })); };
   const overlay = document.createElementNS(SVG_NS, 'svg');
   overlay.setAttribute('class', 'pick-overlay');
   overlay.setAttribute('viewBox', `0 0 ${AREA_W} ${AREA_H}`);
@@ -107,6 +109,10 @@ export function createPick(deps: PickDeps): { el: HTMLElement; destroy(): void }
     const fit = fitFrame(window.innerWidth, above);
     box = { ...fit, top: above - fit.height };
     Object.assign(frame.style, { left: px(box.left), top: px(box.top), width: px(box.width), height: px(box.height) });
+    // The picture is wider than the frame: sky, ground and hills run to the screen's edges, the area sits in the middle.
+    const s = sceneExtent(box.left, box.width, window.innerWidth);
+    Object.assign(scene.style, { left: px(s.left), width: px(s.width) });
+    if (s.extent.x0 !== sceneExt.x0 || s.extent.x1 !== sceneExt.x1) { sceneExt = s.extent; drawScene(); }
     const horizon = box.top + box.height * HORIZON_Y / AREA_H;
     // Flat sky above the frame, the frame's own sky gradient beside it (no seam in landscape), flat ground below.
     root.style.background = `linear-gradient(to bottom, ${SKY_TOP} 0px, ${SKY_TOP} ${px(box.top)}, `
@@ -143,7 +149,8 @@ export function createPick(deps: PickDeps): { el: HTMLElement; destroy(): void }
     okButton.disabled = true;
     shade.innerHTML = '';
     overlay.innerHTML = '';
-    scene.src = svgDataUri(sceneSvg([...deps.items, item]));
+    placed = item;
+    drawScene();
     frame.dataset.placed = kind;
     setFigure(figure, { light: 'green', mouth: 'smile', arms: 'up' });
     words.textContent = deps.cheer();

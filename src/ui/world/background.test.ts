@@ -70,7 +70,7 @@ test('update rebuilds the picture only when the items changed', () => {
   expect(svgOf(bg.el)).toContain('data-kind="lake"');
 });
 
-test('the picture is sized to the screen by fitFrame, on mount and on resize', () => {
+test('the picture spans the screen width at the height fitFrame gives, and shows more of the world beside the area, on mount and on resize', () => {
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: 810 });
   Object.defineProperty(window, 'innerHeight', { configurable: true, value: 1080 });
   const bg = createWorldBackground();
@@ -80,7 +80,11 @@ test('the picture is sized to the screen by fitFrame, on mount and on resize', (
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1080 });
   Object.defineProperty(window, 'innerHeight', { configurable: true, value: 810 });
   window.dispatchEvent(new Event('resize'));
-  expect(img(bg.el).style.width).toBe('607.5px');
-  expect(img(bg.el).style.left).toBe('236.25px');
+  expect(img(bg.el).style.width).toBe('1080px'); // the scenery runs to the screen's edges
+  expect(img(bg.el).style.left).toBe('0px');
+  expect(img(bg.el).style.height).toBe('810px');
+  const view = decodeURIComponent(img(bg.el).src).match(/viewBox="(-?[\d.]+) 0 ([\d.]+) 360"/)!;
+  expect(Number(view[1])).toBeCloseTo(-236.25 / (607.5 / 270), 5); // x0: the area starts 236.25px in
+  expect(Number(view[2])).toBeCloseTo(1080 / (607.5 / 270), 5);
   bg.destroy();
 });

@@ -1,8 +1,8 @@
 import './world.css';
-import { AREA_H, HORIZON_Y, type WorldItem } from '../../core/world';
+import { AREA_H, AREA_W, HORIZON_Y, type WorldItem } from '../../core/world';
 import { el } from '../dom';
 import { fitFrame } from './frame';
-import { GROUND, SKY_LOW, SKY_TOP, sceneSvg, svgDataUri } from './scene';
+import { GROUND, SKY_LOW, SKY_TOP, sceneExtent, sceneSvg, svgDataUri } from './scene';
 
 const px = (n: number) => `${n}px`;
 
@@ -16,24 +16,34 @@ export function createWorldBackground(): { el: HTMLElement; update(items: WorldI
   const root = el('div', { class: 'world-bg', 'data-role': 'world-bg', 'aria-hidden': 'true' }, img, veil);
   root.hidden = true;
   let key = '';
+  let items: WorldItem[] = [];
+  let extent = { x0: 0, x1: AREA_W };
   let rev = 0;
 
   function layout(): void {
     const box = fitFrame(window.innerWidth, window.innerHeight);
-    Object.assign(img.style, { left: px(box.left), top: px(box.top), width: px(box.width), height: px(box.height) });
+    // Wider than the area: the scenery runs to the screen's edges.
+    const s = sceneExtent(box.left, box.width, window.innerWidth);
+    Object.assign(img.style, { left: px(s.left + box.left), top: px(box.top), width: px(s.width), height: px(box.height) });
+    if (s.extent.x0 !== extent.x0 || s.extent.x1 !== extent.x1) { extent = s.extent; draw(); }
     const horizon = box.top + box.height * HORIZON_Y / AREA_H;
     // Flat sky above the picture, its own sky gradient beside it (no seam on wide screens), flat ground below.
     root.style.background = `linear-gradient(to bottom, ${SKY_TOP} 0px, ${SKY_TOP} ${px(box.top)}, `
       + `${SKY_LOW} ${px(horizon)}, ${GROUND} ${px(horizon)}, ${GROUND} 100%)`;
   }
 
-  function update(items: WorldItem[]): void {
-    root.hidden = items.length === 0;
-    const next = JSON.stringify(items);
+  function draw(): void {
+    const next = JSON.stringify([items, extent]);
     if (next === key) return;
     key = next;
-    img.src = svgDataUri(sceneSvg(items, { blur: 2 }));
+    img.src = svgDataUri(sceneSvg(items, { blur: 2, extent }));
     root.dataset.rev = String(++rev);
+  }
+
+  function update(next: WorldItem[]): void {
+    root.hidden = next.length === 0;
+    items = next;
+    draw();
   }
 
   window.addEventListener('resize', layout);

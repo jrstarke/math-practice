@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { KINDS, depthScale, type WorldItem } from '../../core/world';
 import { drawKind, KIND_NAMES } from './kinds';
-import { sceneSvg, svgDataUri, SKY_TOP, SKY_LOW, GROUND } from './scene';
+import { sceneExtent, sceneSvg, svgDataUri, SKY_TOP, SKY_LOW, GROUND } from './scene';
 
 const parse = (s: string) => new DOMParser().parseFromString(s, 'image/svg+xml');
 const it = (kind: WorldItem['kind'], x: number, y: number): WorldItem => ({ kind, area: 0, x, y });
@@ -79,4 +79,24 @@ test('the starting hills sit fully inside the picture, so none is cut off at its
     expect(Number(m[1])).toBeGreaterThanOrEqual(0);
     expect(Number(m[2])).toBeLessThanOrEqual(270);
   }
+});
+
+test('sceneExtent: the picture spans the screen and shows the area exactly where the frame is', () => {
+  // A 607.5px-wide frame (2.25px per unit) centred on a 1080px screen: 236.25px each side.
+  const s = sceneExtent(236.25, 607.5, 1080);
+  expect(s.left).toBe(-236.25);
+  expect(s.width).toBe(1080);
+  expect(s.extent.x0).toBeCloseTo(-105, 5);
+  expect(s.extent.x1).toBeCloseTo(375, 5);
+  // Frame as wide as the screen: just the area.
+  expect(sceneExtent(0, 810, 810).extent).toEqual({ x0: 0, x1: 270 });
+});
+
+test('a wider scene carries the sky, ground and hills out to its edges (none cut off in the middle)', () => {
+  const svg = sceneSvg([], { extent: { x0: -105, x1: 375 } });
+  expect(svg).toContain('viewBox="-105 0 480 360"');
+  expect(svg).toContain('<rect x="-105" width="480"');
+  const starts = [...svg.matchAll(/<path d="M(-?[\d.]+) [\d.]+ Q-?[\d.]+ -?[\d.]+ (-?[\d.]+) [\d.]+ Z" fill="#(?:c4e3ad|b5dc9c)"/g)].map((m) => [Number(m[1]), Number(m[2])]);
+  expect(Math.min(...starts.map((h) => h[0]))).toBeLessThanOrEqual(-105); // runs off the left edge
+  expect(Math.max(...starts.map((h) => h[1]))).toBeGreaterThanOrEqual(375); // and the right
 });
