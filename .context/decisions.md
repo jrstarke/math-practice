@@ -27,3 +27,5 @@
   iPadOS 18.7.11 (was 15), so Safari-15 limits no longer bind new work; Robo's JS layout measuring stays. Robo moments
   shrink to fit the room under the problem (min 56px), peek at the stage's bottom-left on small screens, and end on a
   rotation.
+- 2026-11-13: Always use the visual companion (browser mockups) when brainstorming — start it without asking (user:
+  "always :)"). Show mockups beside any playback of something she'll look at.

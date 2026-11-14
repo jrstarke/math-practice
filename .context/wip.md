@@ -1,27 +1,36 @@
-# WIP (updated 2026-11-11)
+# WIP (updated 2026-11-13)
 
-## >>> RESUME HERE (updated 2026-11-11)
-- **State:** main = e0f8d8f, clean, 552 vitest + tsc green. Robo is MERGED to main (2026-11-08) and the user said it
-  looks good. Not pushed by me: user pushes `git push dev main` (math-practice-dev.jamiestarke.com) and later
-  `git push prod main` from the host. Don't know yet whether they have pushed.
-- **MERGED to main + pushed to dev by the user (2026-11-11): Day streak** (main 6b8d5ae; built on feat/day-streak, deleted; 601 vitest, tsc,
-  build, Playwright ROBO_ONLY + RM + full: only se-tab cell 31<38). Hide 🔥 (still counted), Robo welcome on open / after
-  30+ min away, 10 right answers/day counts the day, one missed day forgiven, tiers wave/arms/jump/fireworks, held-back
-  walks say the current count. Progress v7 (key math-practice-progress-v7, adds day + hiddenAt).
-  Spec docs/superpowers/specs/2026-11-11-day-streak-design.md, plan docs/superpowers/plans/2026-11-11-day-streak.md.
-  Final review With fixes → fixed peek-mode welcome over a hint. Deferred minors: welcome beep on resume may play late
-  on her first tap if iOS keeps audio suspended (CHECK ON IPAD); update reload right after a welcomed resume can
-  double/cut the welcome; red light + hidden try-again words if she returns to an unanswered wrong try; advance timer
-  can cut welcome words short; stale storage test names; shots.mjs YESTERDAY off in fall-back hour.
-  User pushed to prod too (prod/main = 6c164ad, 2026-11-11).
-- **IN PROGRESS (2026-11-11): Celebration variety.** Random level-up celebrations (9) and 20-star celebrations (7),
-  no repeat in a row per group; 100s keep walk-with-friend, kick stays for unlocks, fireworks stay day-streak only.
-  Spec docs/superpowers/specs/2026-11-11-celebration-variety-design.md, mockups docs/superpowers/mockups/2026-11-11-celebrations/.
-  Approach 1 (decideRobo picks; view has one scene per celebration). Builder check clean. User APPROVED the design (also: walk-with-friend moved
-  to 20s; 100s = conga growing 2→10 robots, coloured lights fixed order). Plan: docs/superpowers/plans/2026-11-11-celebration-variety.md
-  (6 tasks). User chose to have me build it myself (inline): NEXT = superpowers:executing-plans on that plan, on a
-  new branch feat/celebrations. Mockup HTML pulls Robo's real figure markup (grab via Playwright from /robo-preview.html). Visual companion: .superpowers/brainstorm/773830-1794424189 (port $PUBLISH_PORT,
-  run start-server.sh with --foreground as a background job, else it dies with its shell).
+## >>> RESUME HERE (updated 2026-11-13, handed off to a new machine)
+- **Branch to work on: `feat/robos-world`** (pushed to the `prod` remote as a branch; only `main` deploys). It holds
+  main's characters commit plus the Robo's world design and mockups. Local `main` = 4cebb75 (characters, prod/main + 1).
+- **Waiting on the user: approval of the Robo's world design**
+  (docs/superpowers/specs/2026-11-11-robos-world-design.md). Once approved: superpowers:writing-plans for
+  **release 1 = her first pick** (world appears on day 5 practised; 3 random kinds; tap to place, tap to move; Robo's
+  cheer line; tree/bush/mountain/lake/house; baked-blur world behind the math with the card + light veil; the pick
+  may be an overlay; one area; progress v9 `world`). Then build it, ideally before her 5th practised day.
+  Releases after that: R2 celebrations into the world (slide-away, » skip, no pan), R3 world grows (areas, swipe,
+  pan); then part 2 friends (Beep/Boom/Room in the first 3 houses), part 3 roads + vehicles (user: keep this order).
+- **Mockups:** docs/superpowers/mockups/2026-11-11-robos-world/ (robos-world-for-her.html is the kid version;
+  pick-moment-v2, world-idea-v2, roads-v2 are the latest of each).
+- **Clean up dev:** dev's main is the throwaway blur test build (8f7b343, "spike: …" commits). When the user is done
+  testing on the iPad: `git push --force dev main` (user OK'd force-pushing dev). The spike's code stays reachable
+  as dev's old main until then; the local branch spike/world-blur was not carried over. Its findings are in the
+  design: blur baked into an SVG <img> (feGaussianBlur) on its own layer (`will-change: transform`), because a live
+  CSS `filter: blur()` made Robo's hop stutter on her iPad; the user prefers blur + card. Its next ▶ / replay ↻
+  move buttons might be worth keeping as a dev-only tool (offered to the user, no answer yet).
+- **Shipped and live (prod and dev):** day streak (v7), celebration variety (a0eb55e), days-practised counter
+  (progress v8, f757a77). Open on-iPad checks for celebrations: arms switch at the payoff; var() in keyframes on a
+  mid-tower refit. Deferred minors were reported to the user (details in the git log / final messages).
+- **New machine setup:**
+  - node via asdf (`asdf plugin add nodejs && asdf install nodejs latest && asdf global nodejs latest`); if `node`
+    isn't found, prefix commands with `PATH="$HOME/.asdf/shims:$PATH"`. Then `npm install`.
+  - `GH_TOKEN` must be set for pushes (dev + prod remotes, HTTPS). Remotes: `dev` = jrstarke/math-practice-dev,
+    `prod` = jrstarke/math-practice. Watch a deploy: `gh run watch <id> -R jrstarke/<repo> --exit-status`.
+  - Mockup server (superpowers brainstorming visual companion): run its `start-server.sh` with
+    `BRAINSTORM_PORT=$PUBLISH_PORT --project-dir /workspace --host 0.0.0.0 --url-host localhost --foreground` as a
+    background job (it dies with its shell otherwise, and stops itself after a while idle). Always use it: see
+    decisions.md 2026-11-13.
+  - Tests, build, the Playwright layout check: running.md.
 - **Next-step candidates** (details further down this file):
   1. Gentler streak — today a hint breaks the 🔥 streak; conflicts with "hints should feel good" (small).
   2. Short sets with a finish line ending in Robo's kick (reverses the "endless" decision; user's call).

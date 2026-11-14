@@ -1,0 +1,225 @@
+<h2>The pick moment, mid-session</h2>
+<p class="subtitle">Her 10th right answer on a 5th, 10th, 15th… day of practice. The math slides away (as in the celebration sketch), she picks and places, the math comes back. Aim: well under half a minute.</p>
+<style>
+
+/* Robo (src/ui/robo/). Safari 15 safe: no container queries, :has(), nesting or inset shorthand. */
+
+.robo-figure { width: 100%; height: 100%; pointer-events: none; }
+.robo-figure svg { display: block; overflow: visible; }
+
+/* Light: colours come from setFigure() as custom properties (LIGHT in drawing.ts). */
+.robo-figure [data-part="light"] { fill: var(--robo-light, #e4e1d8); }
+.robo-figure [data-part="glow"] { fill: var(--robo-glow, transparent); opacity: 0.6; }
+.robo-figure [data-part="rays"] { stroke: var(--robo-rays, transparent); }
+.robo-figure[data-light="off"] [data-part="glow"],
+.robo-figure[data-light="off"] [data-part="rays"],
+.robo-figure[data-light="off"] [data-part="highlight"] { display: none; }
+
+/* Only the variant matching the figure's state shows. */
+.robo-figure [data-part^="eyes-"],
+.robo-figure [data-part^="mouth-"],
+.robo-figure [data-pose] { display: none; }
+.robo-figure[data-look="front"] [data-part="eyes-front"],
+.robo-figure[data-look="up"] [data-part="eyes-up"],
+.robo-figure[data-look="side"] [data-part="eyes-side"],
+.robo-figure[data-mouth="flat"] [data-part="mouth-flat"],
+.robo-figure[data-mouth="smile"] [data-part="mouth-smile"],
+.robo-figure[data-mouth="talk"] [data-part="mouth-talk"],
+.robo-figure[data-arms="down"] [data-pose="down"],
+.robo-figure[data-arms="point"] [data-pose="point"],
+.robo-figure[data-arms="up"] [data-pose="up"],
+.robo-figure[data-arms="high-five"] [data-pose="high-five"] { display: inline; }
+
+
+.robo-figure { width: 100%; height: 100%; pointer-events: none; } .robo-figure svg { display: block; overflow: visible; }
+.robo-friend svg { transform: scaleX(-1); }
+.wrow { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
+.wcol { width: 210px; } .wcol h3 { margin: 8px 0 2px; font-size: 14px; } .wcol p { margin: 0; font-size: 12.5px; opacity: .8; }
+.ipad { position: relative; width: 210px; height: 280px; border-radius: 16px; overflow: hidden; border: 5px solid #2b2a4c; background: #fff8ec; }
+.world { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.actor { position: absolute; width: 48px; height: 58px; }
+.say { position: absolute; left: 10px; right: 10px; top: 14px; background: #fff; border-radius: 12px; padding: 5px 8px; font: 700 12px/1.3 system-ui; color: #2b2a4c; text-align: center; box-shadow: 0 2px 0 #e6dccb; }
+.picks { position: absolute; left: 8px; right: 8px; bottom: 12px; display: flex; gap: 6px; justify-content: center; }
+.pk { background: #fff; border-radius: 10px; box-shadow: 0 2px 0 #e6dccb; padding: 3px; text-align: center; font: 700 10px/1.2 system-ui; color: #2b2a4c; }
+.pk span { display: block; } .pk.on { outline: 3px solid #2bb673; }
+.ghost { position: absolute; opacity: .55; } .hand { position: absolute; font-size: 22px; }
+.glide { position: absolute; left: 30px; right: 30px; height: 30px; border-radius: 8px; background: rgba(255,255,255,.85); font: 600 10px/30px system-ui; text-align: center; color: #8a87a8; }
+</style>
+<div class="wrow">
+  <div class="wcol"><div class="ipad"><svg class="world" viewBox="0 0 270 360" preserveAspectRatio="xMidYMid slice">
+  <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe6ff"/><stop offset="1" stop-color="#eaf7ff"/></linearGradient></defs>
+  <rect width="270" height="150" fill="url(#sky)"/><rect y="150" width="270" height="210" fill="#d8efc4"/>
+  <path d="M0 150 L270 150" stroke="#2b2b2b" stroke-width="2" opacity="0.35"/>
+  <circle cx="226" cy="42" r="16" fill="#ffe27a" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <g transform="translate(70 150) scale(0.55)"><path d="M-60 0 L-18 -56 L0 -36 L22 -70 L64 0 Z" fill="#b9b3d6" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><path d="M22 -70 L12 -54 L22 -50 L30 -58 Z" fill="#fff" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/></g><g transform="translate(200 178) scale(0.55)"><path d="M0 0 L0 -26" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" fill="none"/><path d="M-20 -22 C-26 -44 -10 -62 0 -60 C12 -64 28 -46 20 -22 Z" fill="#7cc576" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/></g></svg><div class="glide" style="top:-14px">problem slides up ↑</div><div class="glide" style="bottom:-14px">keys slide down ↓</div>
+    <div class="actor" style="left:56px;top:150px"><div class="robo-figure" aria-hidden="true" data-light="green" data-mouth="smile" data-look="front" data-arms="up" style="--robo-light: #4cd964; --robo-glow: #c8f7c5; --robo-rays: #2fa84f;">
+<svg viewBox="-125 -90 250 305" width="100%" height="100%" preserveAspectRatio="xMidYMax meet" focusable="false" fill="none" stroke="#2b2b2b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+  <g class="robo-body-group">
+    <g data-part="leg-left" transform="translate(-30 140)"><g class="robo-leg">
+      <path d="M0 0 L0 55"></path><ellipse class="robo-foot" cx="-6" cy="62" rx="19" ry="12" fill="#2b2b2b" stroke="none"></ellipse>
+    </g></g>
+    <g data-part="leg-right" transform="translate(30 140)"><g class="robo-leg">
+      <path d="M0 0 L0 55"></path><ellipse class="robo-foot" cx="6" cy="62" rx="19" ry="12" fill="#2b2b2b" stroke="none"></ellipse>
+    </g></g>
+    <circle data-part="glow" cx="0" cy="-38" r="34" stroke="none"></circle>
+    <path data-part="rays" d="M0 -72 L0 -82 M-30 -62 L-37 -69 M30 -62 L37 -69 M-38 -38 L-48 -38 M38 -38 L48 -38" stroke-width="3"></path>
+    <path data-part="light" d="M-20 -12 L-20 -38 A20 22 0 0 1 20 -38 L20 -12 Z"></path>
+    <path data-part="highlight" d="M-11 -22 L-11 -38 C-11 -46 -7 -51 -2 -53" stroke="#ffffff" stroke-width="3"></path>
+    <path data-part="body" d="M-65 140 L-65 70 A65 70 0 0 1 65 70 L65 140 Z" fill="#ffffff"></path>
+    <path data-part="mount" d="M-28 6.8 L-28 -8 Q-28 -12 -24 -12 L24 -12 Q28 -12 28 -8 L28 6.8 A65 70 0 0 0 -28 6.8 Z" fill="#2b2b2b"></path>
+    <g class="robo-eyes">
+      <path data-part="eyes-front" d="M-18 40 L-18 50 M18 40 L18 50"></path>
+      <path data-part="eyes-up" d="M-23 32 L-23 42 M13 32 L13 42"></path>
+      <path data-part="eyes-side" d="M-26 40 L-26 50 M10 40 L10 50"></path>
+    </g>
+    <path data-part="mouth-flat" d="M-22 78 L22 78"></path>
+    <path data-part="mouth-smile" d="M-22 76 Q0 86 22 76"></path>
+    <ellipse data-part="mouth-talk" cx="0" cy="80" rx="9" ry="7" fill="#2b2b2b" stroke="none"></ellipse>
+    <g data-part="arm-left" transform="translate(-63 82)"><g class="robo-arm">
+  <g data-pose="down"><path d="M0 0 C-10 12 -16 26 -18 40"></path><circle cx="-19" cy="51" r="12" fill="#2b2b2b" stroke="none"></circle></g>
+  <g data-pose="point"><path d="M0 0 C-18 -2 -34 -14 -42 -32"></path><circle cx="-47" cy="-43" r="12" fill="#2b2b2b" stroke="none"></circle></g>
+  <g data-pose="up"><path d="M0 0 C-14 -6 -24 -22 -28 -42"></path><circle cx="-30" cy="-54" r="12" fill="#2b2b2b" stroke="none"></circle></g>
+  <g data-pose="high-five"><path d="M0 0 C-10 12 -16 26 -18 40"></path><circle cx="-19" cy="51" r="12" fill="#2b2b2b" stroke="none"></circle></g></g></g>
+    <g data-part="arm-right" transform="translate(63 82)"><g class="robo-arm">
+  <g data-pose="down"><path d="M0 0 C10 12 16 26 18 40"></path><circle cx="19" cy="51" r="12" fill="#2b2b2b" stroke="none"></circle></g>
+  <g data-pose="point"><path d="M0 0 C10 12 16 26 18 40"></path><circle cx="19" cy="51" r="12" fill="#2b2b2b" stroke="none"></circle></g>
+  <g data-pose="up"><path d="M0 0 C14 -6 24 -22 28 -42"></path><circle cx="30" cy="-54" r="12" fill="#2b2b2b" stroke="none"></circle></g>
+  <g data-pose="high-five"><path d="M0 0 L30 0 L30 -28"></path><circle cx="30" cy="-42" r="14" fill="#2b2b2b" stroke="none"></circle></g></g></g>
+  </g>
+</svg></div></div><div class="actor" style="left:108px;top:150px"><div class="robo-figure robo-friend" aria-hidden="true" data-light="green" data-mouth="smile" data-look="front" data-arms="up" style="--robo-light: #4cd964; --robo-glow: #c8f7c5; --robo-rays: #2fa84f;">
+<svg viewBox="-125 -90 250 305" width="100%" height="100%" preserveAspectRatio="xMidYMax meet" focusable="false" fill="none" stroke="#2b2b2b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+  <g class="robo-body-group">
+    <g data-part="leg-left" transform="translate(-30 140)"><g class="robo-leg">
+      <path d="M0 0 L0 55"></path><ellipse class="robo-foot" cx="-6" cy="62" rx="19" ry="12" fill="#2b2b2b" stroke="none"></ellipse>
+    </g></g>
+    <g data-part="leg-right" transform="translate(30 140)"><g class="robo-leg">
+      <path d="M0 0 L0 55"></path><ellipse class="robo-foot" cx="6" cy="62" rx="19" ry="12" fill="#2b2b2b" stroke="none"></ellipse>
+    </g></g>
+    <circle data-part="glow" cx="0" cy="-38" r="34" stroke="none"></circle>
+    <path data-part="rays" d="M0 -72 L0 -82 M-30 -62 L-37 -69 M30 -62 L37 -69 M-38 -38 L-48 -38 M38 -38 L48 -38" stroke-width="3"></path>
+    <path data-part="light" d="M-20 -12 L-20 -38 A20 22 0 0 1 20 -38 L20 -12 Z"></path>
+    <path data-part="highlight" d="M-11 -22 L-11 -38 C-11 -46 -7 -51 -2 -53" stroke="#ffffff" stroke-width="3"></path>
+    <path data-part="body" d="M-65 140 L-65 70 A65 70 0 0 1 65 70 L65 140 Z" fill="#ffffff"></path>
+    <path data-part="mount" d="M-28 6.8 L-28 -8 Q-28 -12 -24 -12 L24 -12 Q28 -12 28 -8 L28 6.8 A65 70 0 0 0 -28 6.8 Z" fill="#2b2b2b"></path>
+    <g class="robo-eyes">
+      <path data-part="eyes-front" d="M-18 40 L-18 50 M18 40 L18 50"></path>
+      <path data-part="eyes-up" d="M-23 32 L-23 42 M13 32 L13 42"></path>
+      <path data-part="eyes-side" d="M-26 40 L-26 50 M10 40 L10 50"></path>
+    </g>
+    <path data-part="mouth-flat" d="M-22 78 L22 78"></path>
+    <path data-part="mouth-smile" d="M-22 76 Q0 86 22 76"></path>
+    <ellipse data-part="mouth-talk" cx="0" cy="80" rx="9" ry="7" fill="#2b2b2b" stroke="none"></ellipse>
+    <g data-part="arm-left" transform="translate(-63 82)"><g class="robo-arm">
+  <g data-pose="down"><path d="M0 0 C-10 12 -16 26 -18 40"></path><circle cx="-19" cy="51" r="12" fill="#2b2b2b" stroke="none"></circle></g>
+  <g data-pose="point"><path d="M0 0 C-18 -2 -34 -14 -42 -32"></path><circle cx="-47" cy="-43" r="12" fill="#2b2b2b" stroke="none"></circle></g>
+  <g data-pose="up"><path d="M0 0 C-14 -6 -24 -22 -28 -42"></path><circle cx="-30" cy="-54" r="12" fill="#2b2b2b" stroke="none"></circle></g>
+  <g data-pose="high-five"><path d="M0 0 C-10 12 -16 26 -18 40"></path><circle cx="-19" cy="51" r="12" fill="#2b2b2b" stroke="none"></circle></g></g></g>
+    <g data-part="arm-right" transform="translate(63 82)"><g class="robo-arm">
+  <g data-pose="down"><path d="M0 0 C10 12 16 26 18 40"></path><circle cx="19" cy="51" r="12" fill="#2b2b2b" stroke="none"></circle></g>
+  <g data-pose="point"><path d="M0 0 C10 12 16 26 18 40"></path><circle cx="19" cy="51" r="12" fill="#2b2b2b" stroke="none"></circle></g>
+  <g data-pose="up"><path d="M0 0 C14 -6 24 -22 28 -42"></path><circle cx="30" cy="-54" r="12" fill="#2b2b2b" stroke="none"></circle></g>
+  <g data-pose="high-five"><path d="M0 0 L30 0 L30 -28"></path><circle cx="30" cy="-42" r="14" fill="#2b2b2b" stroke="none"></circle></g></g></g>
+  </g>
+</svg></div></div>
+    <div class="say" style="top:30px">10 days of math! Let's add something to our world!</div></div>
+    <h3>1 · Unlock</h3><p>Her 10th answer completes the day. The day-streak words and the unlock share one celebration.</p></div>
+  <div class="wcol"><div class="ipad"><svg class="world" viewBox="0 0 270 360" preserveAspectRatio="xMidYMid slice">
+  <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe6ff"/><stop offset="1" stop-color="#eaf7ff"/></linearGradient></defs>
+  <rect width="270" height="150" fill="url(#sky)"/><rect y="150" width="270" height="210" fill="#d8efc4"/>
+  <path d="M0 150 L270 150" stroke="#2b2b2b" stroke-width="2" opacity="0.35"/>
+  <circle cx="226" cy="42" r="16" fill="#ffe27a" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <g transform="translate(70 150) scale(0.55)"><path d="M-60 0 L-18 -56 L0 -36 L22 -70 L64 0 Z" fill="#b9b3d6" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><path d="M22 -70 L12 -54 L22 -50 L30 -58 Z" fill="#fff" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/></g><g transform="translate(200 178) scale(0.55)"><path d="M0 0 L0 -26" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" fill="none"/><path d="M-20 -22 C-26 -44 -10 -62 0 -60 C12 -64 28 -46 20 -22 Z" fill="#7cc576" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/></g></svg>
+    <div class="actor" style="left:80px;top:120px"><div class="robo-figure" aria-hidden="true" data-light="green" data-mouth="smile" data-look="front" data-arms="point" style="--robo-light: #4cd964; --robo-glow: #c8f7c5; --robo-rays: #2fa84f;">
+<svg viewBox="-125 -90 250 305" width="100%" height="100%" preserveAspectRatio="xMidYMax meet" focusable="false" fill="none" stroke="#2b2b2b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+  <g class="robo-body-group">
+    <g data-part="leg-left" transform="translate(-30 140)"><g class="robo-leg">
+      <path d="M0 0 L0 55"></path><ellipse class="robo-foot" cx="-6" cy="62" rx="19" ry="12" fill="#2b2b2b" stroke="none"></ellipse>
+    </g></g>
+    <g data-part="leg-right" transform="translate(30 140)"><g class="robo-leg">
+      <path d="M0 0 L0 55"></path><ellipse class="robo-foot" cx="6" cy="62" rx="19" ry="12" fill="#2b2b2b" stroke="none"></ellipse>
+    </g></g>
+    <circle data-part="glow" cx="0" cy="-38" r="34" stroke="none"></circle>
+    <path data-part="rays" d="M0 -72 L0 -82 M-30 -62 L-37 -69 M30 -62 L37 -69 M-38 -38 L-48 -38 M38 -38 L48 -38" stroke-width="3"></path>
+    <path data-part="light" d="M-20 -12 L-20 -38 A20 22 0 0 1 20 -38 L20 -12 Z"></path>
+    <path data-part="highlight" d="M-11 -22 L-11 -38 C-11 -46 -7 -51 -2 -53" stroke="#ffffff" stroke-width="3"></path>
+    <path data-part="body" d="M-65 140 L-65 70 A65 70 0 0 1 65 70 L65 140 Z" fill="#ffffff"></path>
+    <path data-part="mount" d="M-28 6.8 L-28 -8 Q-28 -12 -24 -12 L24 -12 Q28 -12 28 -8 L28 6.8 A65 70 0 0 0 -28 6.8 Z" fill="#2b2b2b"></path>
+    <g class="robo-eyes">
+      <path data-part="eyes-front" d="M-18 40 L-18 50 M18 40 L18 50"></path>
+      <path data-part="eyes-up" d="M-23 32 L-23 42 M13 32 L13 42"></path>
+      <path data-part="eyes-side" d="M-26 40 L-26 50 M10 40 L10 50"></path>
+    </g>
+    <path data-part="mouth-flat" d="M-22 78 L22 78"></path>
+    <path data-part="mouth-smile" d="M-22 76 Q0 86 22 76"></path>
+    <ellipse data-part="mouth-talk" cx="0" cy="80" rx="9" ry="7" fill="#2b2b2b" stroke="none"></ellipse>
+    <g data-part="arm-left" transform="translate(-63 82)"><g class="robo-arm">
+  <g data-pose="down"><path d="M0 0 C-10 12 -16 26 -18 40"></path><circle cx="-19" cy="51" r="12" fill="#2b2b2b" stroke="none"></circle></g>
+  <g data-pose="point"><path d="M0 0 C-18 -2 -34 -14 -42 -32"></path><circle cx="-47" cy="-43" r="12" fill="#2b2b2b" stroke="none"></circle></g>
+  <g data-pose="up"><path d="M0 0 C-14 -6 -24 -22 -28 -42"></path><circle cx="-30" cy="-54" r="12" fill="#2b2b2b" stroke="none"></circle></g>
+  <g data-pose="high-five"><path d="M0 0 C-10 12 -16 26 -18 40"></path><circle cx="-19" cy="51" r="12" fill="#2b2b2b" stroke="none"></circle></g></g></g>
+    <g data-part="arm-right" transform="translate(63 82)"><g class="robo-arm">
+  <g data-pose="down"><path d="M0 0 C10 12 16 26 18 40"></path><circle cx="19" cy="51" r="12" fill="#2b2b2b" stroke="none"></circle></g>
+  <g data-pose="point"><path d="M0 0 C10 12 16 26 18 40"></path><circle cx="19" cy="51" r="12" fill="#2b2b2b" stroke="none"></circle></g>
+  <g data-pose="up"><path d="M0 0 C14 -6 24 -22 28 -42"></path><circle cx="30" cy="-54" r="12" fill="#2b2b2b" stroke="none"></circle></g>
+  <g data-pose="high-five"><path d="M0 0 L30 0 L30 -28"></path><circle cx="30" cy="-42" r="14" fill="#2b2b2b" stroke="none"></circle></g></g></g>
+  </g>
+</svg></div></div>
+    <div class="say">Which one?</div>
+    <div class="picks"><div class="pk"><svg viewBox="-40 -60 80 70" width="64" height="56"><g transform="translate(0 0) scale(0.9)"><path d="M0 0 L0 -26" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" fill="none"/><path d="M-20 -22 C-26 -44 -10 -62 0 -60 C12 -64 28 -46 20 -22 Z" fill="#7cc576" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/></g></svg><span>Tree</span></div><div class="pk"><svg viewBox="-40 -60 80 70" width="64" height="56"><g transform="translate(0 0) scale(0.5)"><path d="M-60 0 L-18 -56 L0 -36 L22 -70 L64 0 Z" fill="#b9b3d6" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><path d="M22 -70 L12 -54 L22 -50 L30 -58 Z" fill="#fff" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/></g></svg><span>Mountain</span></div><div class="pk"><svg viewBox="-40 -60 80 70" width="64" height="56"><g transform="translate(0 -8) scale(0.8)"><ellipse cx="0" cy="0" rx="46" ry="12" fill="#8fd0f0" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><path d="M-20 -2 L-8 -2 M6 3 L20 3" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></g></svg><span>Lake</span></div></div></div>
+    <h3>2 · Pick one of three</h3><p>Three choices, not a whole catalogue: quick to decide.</p></div>
+  <div class="wcol"><div class="ipad"><svg class="world" viewBox="0 0 270 360" preserveAspectRatio="xMidYMid slice">
+  <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe6ff"/><stop offset="1" stop-color="#eaf7ff"/></linearGradient></defs>
+  <rect width="270" height="150" fill="url(#sky)"/><rect y="150" width="270" height="210" fill="#d8efc4"/>
+  <path d="M0 150 L270 150" stroke="#2b2b2b" stroke-width="2" opacity="0.35"/>
+  <circle cx="226" cy="42" r="16" fill="#ffe27a" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <g transform="translate(70 150) scale(0.55)"><path d="M-60 0 L-18 -56 L0 -36 L22 -70 L64 0 Z" fill="#b9b3d6" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><path d="M22 -70 L12 -54 L22 -50 L30 -58 Z" fill="#fff" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/></g><g transform="translate(200 178) scale(0.55)"><path d="M0 0 L0 -26" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" fill="none"/><path d="M-20 -22 C-26 -44 -10 -62 0 -60 C12 -64 28 -46 20 -22 Z" fill="#7cc576" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/></g></svg>
+    <div class="say">Tap where it goes!</div>
+    <div class="ghost" style="left:0;top:0;width:100%;height:100%"><svg viewBox="0 0 270 360" width="210" height="280"><g transform="translate(150 270) scale(1.15)"><ellipse cx="0" cy="0" rx="46" ry="12" fill="#8fd0f0" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><path d="M-20 -2 L-8 -2 M6 3 L20 3" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></g></svg></div>
+    <div class="hand" style="left:118px;top:216px">👆</div>
+    <div class="picks"><div class="pk on"><svg viewBox="-40 -60 80 70" width="64" height="56"><g transform="translate(0 -8) scale(0.8)"><ellipse cx="0" cy="0" rx="46" ry="12" fill="#8fd0f0" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><path d="M-20 -2 L-8 -2 M6 3 L20 3" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></g></svg><span>Lake</span></div></div></div>
+    <h3>3 · Place it</h3><p>She taps the ground; it's drawn smaller the higher up she taps. She can tap again to move it, then OK.</p></div>
+  <div class="wcol"><div class="ipad"><svg class="world" viewBox="0 0 270 360" preserveAspectRatio="xMidYMid slice">
+  <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe6ff"/><stop offset="1" stop-color="#eaf7ff"/></linearGradient></defs>
+  <rect width="270" height="150" fill="url(#sky)"/><rect y="150" width="270" height="210" fill="#d8efc4"/>
+  <path d="M0 150 L270 150" stroke="#2b2b2b" stroke-width="2" opacity="0.35"/>
+  <circle cx="226" cy="42" r="16" fill="#ffe27a" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <g transform="translate(70 150) scale(0.55)"><path d="M-60 0 L-18 -56 L0 -36 L22 -70 L64 0 Z" fill="#b9b3d6" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><path d="M22 -70 L12 -54 L22 -50 L30 -58 Z" fill="#fff" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/></g><g transform="translate(200 178) scale(0.55)"><path d="M0 0 L0 -26" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" fill="none"/><path d="M-20 -22 C-26 -44 -10 -62 0 -60 C12 -64 28 -46 20 -22 Z" fill="#7cc576" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/></g><g transform="translate(150 270) scale(1.15)"><ellipse cx="0" cy="0" rx="46" ry="12" fill="#8fd0f0" stroke="#2b2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/><path d="M-20 -2 L-8 -2 M6 3 L20 3" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></g></svg>
+    <div class="actor" style="left:50px;top:170px"><div class="robo-figure" aria-hidden="true" data-light="green" data-mouth="smile" data-look="front" data-arms="up" style="--robo-light: #4cd964; --robo-glow: #c8f7c5; --robo-rays: #2fa84f;">
+<svg viewBox="-125 -90 250 305" width="100%" height="100%" preserveAspectRatio="xMidYMax meet" focusable="false" fill="none" stroke="#2b2b2b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+  <g class="robo-body-group">
+    <g data-part="leg-left" transform="translate(-30 140)"><g class="robo-leg">
+      <path d="M0 0 L0 55"></path><ellipse class="robo-foot" cx="-6" cy="62" rx="19" ry="12" fill="#2b2b2b" stroke="none"></ellipse>
+    </g></g>
+    <g data-part="leg-right" transform="translate(30 140)"><g class="robo-leg">
+      <path d="M0 0 L0 55"></path><ellipse class="robo-foot" cx="6" cy="62" rx="19" ry="12" fill="#2b2b2b" stroke="none"></ellipse>
+    </g></g>
+    <circle data-part="glow" cx="0" cy="-38" r="34" stroke="none"></circle>
+    <path data-part="rays" d="M0 -72 L0 -82 M-30 -62 L-37 -69 M30 -62 L37 -69 M-38 -38 L-48 -38 M38 -38 L48 -38" stroke-width="3"></path>
+    <path data-part="light" d="M-20 -12 L-20 -38 A20 22 0 0 1 20 -38 L20 -12 Z"></path>
+    <path data-part="highlight" d="M-11 -22 L-11 -38 C-11 -46 -7 -51 -2 -53" stroke="#ffffff" stroke-width="3"></path>
+    <path data-part="body" d="M-65 140 L-65 70 A65 70 0 0 1 65 70 L65 140 Z" fill="#ffffff"></path>
+    <path data-part="mount" d="M-28 6.8 L-28 -8 Q-28 -12 -24 -12 L24 -12 Q28 -12 28 -8 L28 6.8 A65 70 0 0 0 -28 6.8 Z" fill="#2b2b2b"></path>
+    <g class="robo-eyes">
+      <path data-part="eyes-front" d="M-18 40 L-18 50 M18 40 L18 50"></path>
+      <path data-part="eyes-up" d="M-23 32 L-23 42 M13 32 L13 42"></path>
+      <path data-part="eyes-side" d="M-26 40 L-26 50 M10 40 L10 50"></path>
+    </g>
+    <path data-part="mouth-flat" d="M-22 78 L22 78"></path>
+    <path data-part="mouth-smile" d="M-22 76 Q0 86 22 76"></path>
+    <ellipse data-part="mouth-talk" cx="0" cy="80" rx="9" ry="7" fill="#2b2b2b" stroke="none"></ellipse>
+    <g data-part="arm-left" transform="translate(-63 82)"><g class="robo-arm">
+  <g data-pose="down"><path d="M0 0 C-10 12 -16 26 -18 40"></path><circle cx="-19" cy="51" r="12" fill="#2b2b2b" stroke="none"></circle></g>
+  <g data-pose="point"><path d="M0 0 C-18 -2 -34 -14 -42 -32"></path><circle cx="-47" cy="-43" r="12" fill="#2b2b2b" stroke="none"></circle></g>
+  <g data-pose="up"><path d="M0 0 C-14 -6 -24 -22 -28 -42"></path><circle cx="-30" cy="-54" r="12" fill="#2b2b2b" stroke="none"></circle></g>
+  <g data-pose="high-five"><path d="M0 0 C-10 12 -16 26 -18 40"></path><circle cx="-19" cy="51" r="12" fill="#2b2b2b" stroke="none"></circle></g></g></g>
+    <g data-part="arm-right" transform="translate(63 82)"><g class="robo-arm">
+  <g data-pose="down"><path d="M0 0 C10 12 16 26 18 40"></path><circle cx="19" cy="51" r="12" fill="#2b2b2b" stroke="none"></circle></g>
+  <g data-pose="point"><path d="M0 0 C10 12 16 26 18 40"></path><circle cx="19" cy="51" r="12" fill="#2b2b2b" stroke="none"></circle></g>
+  <g data-pose="up"><path d="M0 0 C14 -6 24 -22 28 -42"></path><circle cx="30" cy="-54" r="12" fill="#2b2b2b" stroke="none"></circle></g>
+  <g data-pose="high-five"><path d="M0 0 L30 0 L30 -28"></path><circle cx="30" cy="-42" r="14" fill="#2b2b2b" stroke="none"></circle></g></g></g>
+  </g>
+</svg></div></div>
+    <div class="say">It's perfect!</div>
+    <div class="glide" style="top:-14px">problem slides back ↓</div><div class="glide" style="bottom:-14px">keys slide back ↑</div></div>
+    <h3>4 · Back to math</h3><p>Robo cheers beside it; the math slides back and the world blurs again.</p></div>
+</div>
