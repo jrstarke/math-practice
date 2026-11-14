@@ -5,12 +5,14 @@ export interface SoundPlayer {
   levelUp(): void;
   /** Robo's "beep boop" for its big moments. */
   robo(): void;
+  /** A soft pop when she puts something in her world. */
+  pop(): void;
   setMuted(m: boolean): void;
 }
 
 export function createSilentSound(): SoundPlayer {
   const noop = () => {};
-  return { unlock: noop, correct: noop, wrong: noop, levelUp: noop, robo: noop, setMuted: noop };
+  return { unlock: noop, correct: noop, wrong: noop, levelUp: noop, robo: noop, pop: noop, setMuted: noop };
 }
 
 type Note = { freq: number; endFreq?: number; start: number; dur: number; type: OscillatorType; gain: number };
@@ -88,6 +90,9 @@ export function createSound(ctor: typeof AudioContext | undefined = defaultCtor(
         { freq: 880, start: 0, dur: 0.09, type: 'square', gain: 0.06 },
         { freq: 660, start: 0.11, dur: 0.1, type: 'square', gain: 0.06 },
       ]);
+    },
+    pop() {
+      play([{ freq: 520, endFreq: 760, start: 0, dur: 0.12, type: 'sine', gain: 0.2 }]);
     },
     wrong() {
       play([{ freq: 220, endFreq: 180, start: 0, dur: 0.2, type: 'triangle', gain: 0.15 }]);

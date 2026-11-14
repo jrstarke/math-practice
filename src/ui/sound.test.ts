@@ -83,3 +83,15 @@ test('robo() plays two short notes and is silent when muted', () => {
   s.robo();
   expect(f.created).toEqual(['osc', 'osc']);
 });
+
+test('pop() plays one note and is silent when muted', () => {
+  const f = fakeCtor();
+  const s = createSound(f.ctor);
+  s.unlock();
+  s.setMuted(true);
+  s.pop();
+  expect(f.created).toHaveLength(0);
+  s.setMuted(false);
+  s.pop();
+  expect(f.created).toEqual(['osc']);
+});

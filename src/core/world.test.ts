@@ -8,11 +8,11 @@ test('constants', () => {
   expect(KINDS).toEqual(['tree', 'bush', 'mountain', 'lake', 'house']);
 });
 
-test('a pick is owed for every 5 days practised, less the picks used', () => {
-  expect(picksOwed(4, empty)).toBe(0);
-  expect(picksOwed(5, empty)).toBe(1);
-  expect(picksOwed(10, { ...empty, picksUsed: 1 })).toBe(1);
-  expect(picksOwed(9, { ...empty, picksUsed: 1 })).toBe(0);
+test('a pick is owed for every 3 days practised, less the picks used', () => {
+  expect(picksOwed(2, empty)).toBe(0);
+  expect(picksOwed(3, empty)).toBe(1);
+  expect(picksOwed(6, { ...empty, picksUsed: 1 })).toBe(1);
+  expect(picksOwed(8, { ...empty, picksUsed: 2 })).toBe(0);
 });
 
 test('an offer is 3 distinct valid kinds, and every kind shows up over many seeds', () => {
@@ -100,7 +100,7 @@ test('pickCheer never repeats the last line and covers all six', () => {
 });
 
 test('prompts', () => {
-  expect(pickPrompt(5)).toBe("5 days of math! Let's add something to our world!");
+  expect(pickPrompt(3)).toBe("3 days of math! Let's add something to our world!");
   expect(PLACE_PROMPT).toBe('Tap where it goes!');
 });
 

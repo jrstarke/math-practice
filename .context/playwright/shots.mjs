@@ -210,7 +210,7 @@ const roboFixtures = {
 // The next right answer completes day N (9 right today, N - 1 days in a row up to yesterday).
 // Picks already spent for those days (real data always has them), so day 7 and 12 owe none and play their celebration.
 const dayFixture = n => ({ ...progressFor(1), total: 12, day: { date: TODAY, right: 9, days: n - 1, lastDone: YESTERDAY, practised: n - 1 },
-  world: { items: [], picksUsed: Math.floor((n - 1) / 5), offer: null } });
+  world: { items: [], picksUsed: Math.floor((n - 1) / 3), offer: null } });
 
 async function open(name, w, h, progress, query = '') {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true, isMobile: w < 1000, reducedMotion: RM ? 'reduce' : 'no-preference' });
@@ -407,9 +407,9 @@ if (!WORLD_ONLY) {
 }
 
 // ---- Robo's world (2026-11-14), per view in WORLD_VIEWS (her iPad, a landscape iPad, a phone):
-// 1. Behind the math: a world fixture (day 5 practised, its pick spent, a few items) against the same fixture with no
+// 1. Behind the math: a world fixture (day 3 practised, its pick spent, a few items) against the same fixture with no
 //    items. The card sits behind the problem (contains it, under it) and the problem, answer, controls and keys don't
-//    move or change size (within 1px). 2. The pick: the next right answer completes day 5 (practised 4, 9 right today,
+//    move or change size (within 1px). 2. The pick: the next right answer completes day 3 (practised 2, 9 right today,
 //    no picks spent). It opens; Robo is hidden and the pad is inert under it; OK, the three kinds and the whole frame
 //    are inside the viewport and every button is >= 44px; choose a kind (zone dims), tap the ground (ghost), switch
 //    kind (ghost follows), rotate and back, OK places it; after the cheer the pick is gone, Robo is back and the pad
@@ -420,9 +420,9 @@ const WORLD_ITEMS = [
   { kind: 'lake', area: 0, x: 120, y: 300 }, { kind: 'bush', area: 0, x: 40, y: 330 },
 ];
 const worldFixture = items => ({ ...progressFor(1), total: 41,
-  day: { date: TODAY, right: 0, days: 5, lastDone: YESTERDAY, practised: 5 }, world: { items, picksUsed: 1, offer: null } });
+  day: { date: TODAY, right: 0, days: 3, lastDone: YESTERDAY, practised: 3 }, world: { items, picksUsed: 1, offer: null } });
 const pickFixture = { ...progressFor(1), total: 41,
-  day: { date: TODAY, right: 9, days: 4, lastDone: YESTERDAY, practised: 4 }, world: { items: WORLD_ITEMS.slice(0, 3), picksUsed: 0, offer: null } };
+  day: { date: TODAY, right: 9, days: 2, lastDone: YESTERDAY, practised: 2 }, world: { items: WORLD_ITEMS.slice(0, 3), picksUsed: 0, offer: null } };
 const layoutBoxes = page => page.evaluate(() => {
   const box = e => { const b = e.getBoundingClientRect(); return [b.left, b.top, b.width, b.height]; };
   return Object.fromEntries([['problem', '.problem'], ['answer', '[data-role="answer"]'], ['controls', '.controls'],

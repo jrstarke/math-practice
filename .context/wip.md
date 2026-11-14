@@ -7,14 +7,14 @@
   Code: src/core/world.ts (zones, depth, picksOwed/makeOffer/placeItem, cheer lines), progress v9 `world`
   ({items, picksUsed, offer}), src/ui/world/{scene,kinds,frame,pick,background}.ts + world.css, wired in src/ui/app.ts
   (fitCard, startPick). The pick opens on the right answer that completes a day when days practised reach a multiple
-  of 5 (one pick owed per 5 days not yet spent); the blurred world sits behind the math once she has an item.
+  of 3 (one pick owed per 3 days not yet spent); the blurred world sits behind the math once she has an item.
   Layout check: `WORLD_ONLY=1 node shots.mjs` (running.md) passes on her iPad, landscape iPad and phone, also with RM=1.
 - **Next:** 1) the user tries the on-iPad checklist below (push to dev first — ask; dev's `main` is still the
-  throwaway blur spike, see "Clean up dev"); 2) ask before pushing to prod (ideally before her 5th practised day);
+  throwaway blur spike, see "Clean up dev"); 2) ask before pushing to prod (ideally before her 3rd practised day);
   3) release 2 = celebrations into the world (slide-away, » skip, no pan); 4) release 3 = the world grows (areas,
   swipe, pan; phones then crop/swipe instead of letterboxing). Then part 2 friends (Beep/Boom/Room in the first 3
   houses), part 3 roads + vehicles (user: keep this order).
-- **On-iPad checklist for release 1:** the pick appears on the answer that completes her 5th day; the three choices
+- **On-iPad checklist for release 1:** the pick appears on the answer that completes her 3rd day; the three choices
   are big enough to tap; the dim zones read clearly; switching the choice before OK works; OK cheers; the blurred
   world behind the math looks like the earlier test (same blur and card); Robo's hop still smooth over it; rotating
   while the pick is open.

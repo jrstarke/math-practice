@@ -235,6 +235,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
       days: progress.day.practised,
       cheer: () => (lastCheer = pickCheer(lastCheer, roboRng)),
       onPlaced: (item) => {
+        sound.pop();
         progress = { ...progress, world: placeItem(progress.world, item) };
         store.save(progress);
         showWorld();
@@ -245,6 +246,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     endMoment(); // any greeting or moment still playing
     robo.show(false);
     root.append(view.el);
+    sound.robo();
   }
 
   function closePick() {
@@ -388,7 +390,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     return result;
   }
 
-  /** After the answer is recorded: a pick is owed for every 5 days practised that she hasn't spent yet. */
+  /** After the answer is recorded: a pick is owed for every 3 days practised that she hasn't spent yet. */
   const pickOwed = () => picksOwed(progress.day.practised, progress.world) > 0;
 
   function submit() {

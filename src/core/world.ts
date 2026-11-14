@@ -1,7 +1,7 @@
 import type { Rng } from './rng';
 import { pickStyle } from './robo';
 
-export const AREA_W = 270, AREA_H = 360, HORIZON_Y = 90, PICK_EVERY = 5;
+export const AREA_W = 270, AREA_H = 360, HORIZON_Y = 90, PICK_EVERY = 3;
 
 export const KINDS = ['tree', 'bush', 'mountain', 'lake', 'house'] as const;
 export type WorldKind = (typeof KINDS)[number];
