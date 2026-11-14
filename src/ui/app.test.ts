@@ -795,6 +795,18 @@ describe("Robo's world", () => {
     expect(robo(s).hidden).toBe(true);
   });
 
+  test('a right answer while the day moment is still playing does not cut it short: the pick waits for it', () => {
+    const s = setup(1, standing, { ...day5(), unlocked: ['addition', 'subtraction'] });
+    answerRight(s);
+    s.advance(1000);
+    answerRight(s);
+    expect(s.saved.at(-1)!.unlocked).toEqual(['addition', 'subtraction']); // plain: no kick replaces the day moment
+    expect(s.q('[data-moment="day"]')).not.toBeNull();
+    expect(pick(s)).toBeNull();
+    s.advance(2500);
+    expect(s.root.querySelectorAll('[data-role="pick"]')).toHaveLength(1);
+  });
+
   test('the same answer passed never opens a pick and practised stays the same', () => {
     const s = setup(1, standing, day5());
     s.tap('[data-action="pass"]');

@@ -305,7 +305,8 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
       pickPending = wantPick;
       return;
     }
-    if (pick) { startPick(); return; }
+    // Pending (and no pick open) means a moment is holding it: it opens when that moment ends.
+    if (pick) { if (!pickPending) startPick(); return; }
     if (o.passed) return;
     if (roboPlace === 'up') {
       robo.right(null);
