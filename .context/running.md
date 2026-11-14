@@ -15,7 +15,8 @@
   4. Robo (2026-11-08): the same script ends with a Robo flow per view (thinking, hint ×2, rotate and back, wrong,
      mid-walk / high five / kick with a tap-through-the-pad check). `ROBO_ONLY=1` runs just that (~3 min);
      Since 2026-11-11 it also checks the welcome (fixture hiddenAt: null) and day celebrations day-1/3/7/12 (fixture: 9 right
-     today, N−1 days up to yesterday). Fixtures are progress v8 with hiddenAt: Date.now() so other flows get no welcome;
+     today, N−1 days up to yesterday, picksUsed = floor((N−1)/5) so day 7/12 owe no pick and play their celebration).
+     Fixtures are progress v9 with hiddenAt: Date.now() so other flows get no welcome;
      `RM=1` runs it with prefers-reduced-motion. Screenshots: out/robo-<view>-<state>.png (her iPad: ipad102-p, ipad102-p-tab).
      Every measured state also checks Robo never overlaps the problem, answer boxes, bubble, picture or controls.
   5. Celebrations (2026-11-11): the Robo flow also plays every level-up style, every 20-star style, conga-2 (total 99)
@@ -26,6 +27,19 @@
      light-show, ball-ride, header), right data-moment, conga robot count; conga-10 also rotates mid-moment.
      Screenshots out/robo-<view>-<level|stars>-<style>-40.png, robo-<view>-conga-<n>-40.png. A fixed roboRng below 1/15
      also makes surprises fire on clean answers (harmless for the check).
+  6. Robo's world (2026-11-14): the script ends with a world flow on ipad102-p, ipad102-p-tab, ipad102-l-tab and ip15
+     (WORLD_VIEWS; a VIEWS override runs it only for listed names in that set). `WORLD_ONLY=1` runs just that (a minute or two);
+     `RM=1 WORLD_ONLY=1` also asserts nothing in the pick animates under Reduce Motion.
+     a) Behind the math: fixture day 5 practised, picksUsed 1, five items (WORLD_ITEMS) vs the same with no items:
+        problem/answer/controls/every key box identical within 1px; data-world set, world-bg shown; the card
+        (data-role="world-card") contains the problem and is under it; key 5 takes its tap; measure() passes (also after a Hint).
+     b) The pick: fixture practised 4, 9 right today, picksUsed 0, 3 items; answerNow completes day 5 and the pick must
+        open. Checks (pickCheck): frame, 3 kinds and OK inside the viewport, each >= 44px and takes its own tap, tray
+        below the frame, no page scroll, the real Robo hidden; the answer doesn't change on a tap/key under the pick.
+        Then: choose a ground kind (4 dims, OK still disabled), tap world (135, 250) → ghost of that kind, OK enabled;
+        switch kind → ghost follows; rotate and back (still fits, ghost kept); OK → frame data-placed, dims gone, save has
+        4 items/picksUsed 1/offer null; the pick closes (≤5 s), measure() passes with Robo back, key 2 changes the answer.
+     Screenshots: out/world-<view>-{none,bg,bg-hint,pick,ghost,switched,rotated,cheer,after}[-rm].png.
   - Robo poses/moments preview (dev only, not built): /robo-preview.html and /robo-preview.html?moment=walk|walk-friend|<level-up style>|stars-<20-star style>|conga-2|conga-5|conga-10|kick|day-1|day-3|day-7|day-12|welcome|peek|surprise|wrong|right|up (&size=68 for a short lane)
   - Gotchas: $PUBLISH_PORT may already be taken by another process — then Vite picks the next port (check dev.log) and the
     URL must match. Vite's file watcher can miss edits on the /workspace mount: if a run looks like old code,

@@ -31,3 +31,10 @@
   "always :)"). Show mockups beside any playback of something she'll look at.
 - 2026-11-14: Robo's world horizon = about a third down (y=120 of 360), more ground (user: "more ground"); sketch mockups used 42%. In spec (commit 993f1ed). Tune by eye on a mockup in release 1.
 - 2026-11-14 (later): horizon changed again to 25% down (y=90 of 360; user: "the 25 to give more space to play"); small mountains plus a few smaller scenery-only hills in front; a one-zone kind dims the rest while placing (mountain = horizon band, tree/bush/house = ground, lake = open ground); she can switch among the three offered picks before OK; blur numbers (stdDeviation 2, card 92%, veil 15%) written into the spec. Mockup: .superpowers/brainstorm/1106-1794639231/content/world-25-hills-placing.html.
+- 2026-11-14 (release 1 build): the pick is an overlay over the whole app; its world frame is fitted (fitFrame) in the
+  space above the bottom strip (Robo, words, tray), so the tray never covers ground she can place on. The card behind
+  the math hugs the problem and its picture (padded), out of flow, measured in app.ts (fitCard) — it never changes the
+  layout. The pick draws its own small Robo figure for the prompt and cheer; the real Robo is hidden while it is open
+  (and pad, keys, Hint, Pass, mute are inert). On screens narrower than 3:4 (phones) the whole area is letterboxed
+  (fitted to the width, flat sky/ground continuing) instead of cropped, so every spot stays visible until release 3's
+  swipe. A pick waiting on a moment opens when the moment ends; Hint or Pass never opens it (the next right answer does).

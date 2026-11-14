@@ -1,22 +1,25 @@
-# WIP (updated 2026-11-13)
+# WIP (updated 2026-11-14)
 
-## >>> RESUME HERE (updated 2026-11-13, handed off to a new machine)
-- **Session 2026-11-14 (before container restart):** summarised the design for the user; user asked for more ground →
-  horizon set to a third down and committed (993f1ed, local on feat/robos-world, NOT pushed to prod remote).
-  Still waiting on design approval. Wrote a horizon mockup (sketch 42% vs 33% vs behind-the-math) at
-  .superpowers/brainstorm/2545-1794638035/content/horizon.html; user hadn't seen it yet — $PUBLISH_PORT was UNSET this
-  session, so the server picked random port 58366 (maybe unreachable). After restart: check `echo $PUBLISH_PORT`, restart
-  the visual companion on it (see New machine setup), show horizon.html again (copy to a new file name), then on approval
-  → writing-plans for release 1. If the mockup is liked, copy it into docs/superpowers/mockups/2026-11-11-robos-world/.
-- **Branch to work on: `feat/robos-world`** (pushed to the `prod` remote as a branch; only `main` deploys). It holds
-  main's characters commit plus the Robo's world design and mockups. Local `main` = 4cebb75 (characters, prod/main + 1).
-- **Waiting on the user: approval of the Robo's world design**
-  (docs/superpowers/specs/2026-11-11-robos-world-design.md). Once approved: superpowers:writing-plans for
-  **release 1 = her first pick** (world appears on day 5 practised; 3 random kinds; tap to place, tap to move; Robo's
-  cheer line; tree/bush/mountain/lake/house; baked-blur world behind the math with the card + light veil; the pick
-  may be an overlay; one area; progress v9 `world`). Then build it, ideally before her 5th practised day.
-  Releases after that: R2 celebrations into the world (slide-away, » skip, no pan), R3 world grows (areas, swipe,
-  pan); then part 2 friends (Beep/Boom/Room in the first 3 houses), part 3 roads + vehicles (user: keep this order).
+## >>> RESUME HERE (updated 2026-11-14)
+- **Robo's world release 1 (her first pick) is BUILT and reviewed on branch `feat/robos-world` — NOT pushed, NOT
+  deployed.** Spec docs/superpowers/specs/2026-11-11-robos-world-design.md (approved), plan
+  docs/superpowers/plans/2026-11-14-robos-world-release-1.md, task ledger .superpowers/sdd/2026-11-14-robos-world-release-1/.
+  Code: src/core/world.ts (zones, depth, picksOwed/makeOffer/placeItem, cheer lines), progress v9 `world`
+  ({items, picksUsed, offer}), src/ui/world/{scene,kinds,frame,pick,background}.ts + world.css, wired in src/ui/app.ts
+  (fitCard, startPick). The pick opens on the right answer that completes a day when days practised reach a multiple
+  of 5 (one pick owed per 5 days not yet spent); the blurred world sits behind the math once she has an item.
+  Layout check: `WORLD_ONLY=1 node shots.mjs` (running.md) passes on her iPad, landscape iPad and phone, also with RM=1.
+- **Next:** 1) the user tries the on-iPad checklist below (push to dev first — ask; dev's `main` is still the
+  throwaway blur spike, see "Clean up dev"); 2) ask before pushing to prod (ideally before her 5th practised day);
+  3) release 2 = celebrations into the world (slide-away, » skip, no pan); 4) release 3 = the world grows (areas,
+  swipe, pan; phones then crop/swipe instead of letterboxing). Then part 2 friends (Beep/Boom/Room in the first 3
+  houses), part 3 roads + vehicles (user: keep this order).
+- **On-iPad checklist for release 1:** the pick appears on the answer that completes her 5th day; the three choices
+  are big enough to tap; the dim zones read clearly; switching the choice before OK works; OK cheers; the blurred
+  world behind the math looks like the earlier test (same blur and card); Robo's hop still smooth over it; rotating
+  while the pick is open.
+- **Branch `feat/robos-world`** (an older copy was pushed to the `prod` remote as a branch; only `main` deploys).
+  Local `main` = 4cebb75 (characters, prod/main + 1).
 - **Mockups:** docs/superpowers/mockups/2026-11-11-robos-world/ (robos-world-for-her.html is the kid version;
   pick-moment-v2, world-idea-v2, roads-v2 are the latest of each).
 - **Clean up dev:** dev's main is the throwaway blur test build (8f7b343, "spike: …" commits). When the user is done

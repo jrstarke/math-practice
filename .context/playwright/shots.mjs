@@ -119,7 +119,9 @@ function measure([longHint, expect]) {
 }
 
 // ROBO_ONLY=1 skips the per-level picture checks and runs only the Robo flow below.
-for (const level of process.env.ROBO_ONLY ? [] : LEVELS) {
+// WORLD_ONLY=1 runs only the world flow at the end.
+const WORLD_ONLY = !!process.env.WORLD_ONLY;
+for (const level of process.env.ROBO_ONLY || WORLD_ONLY ? [] : LEVELS) {
   const progress = progressFor(level);
   for (const [name, w, h] of views) {
     for (const tip of [false, true]) {
@@ -206,7 +208,9 @@ const roboFixtures = {
   welcome: { ...progressFor(1), total: 39, hiddenAt: null },
 };
 // The next right answer completes day N (9 right today, N - 1 days in a row up to yesterday).
-const dayFixture = n => ({ ...progressFor(1), total: 12, day: { date: TODAY, right: 9, days: n - 1, lastDone: YESTERDAY, practised: n - 1 } });
+// Picks already spent for those days (real data always has them), so day 7 and 12 owe none and play their celebration.
+const dayFixture = n => ({ ...progressFor(1), total: 12, day: { date: TODAY, right: 9, days: n - 1, lastDone: YESTERDAY, practised: n - 1 },
+  world: { items: [], picksUsed: Math.floor((n - 1) / 5), offer: null } });
 
 async function open(name, w, h, progress, query = '') {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true, isMobile: w < 1000, reducedMotion: RM ? 'reduce' : 'no-preference' });
@@ -271,7 +275,7 @@ const momentCheck = page => page.evaluate(() => {
   return issues;
 });
 
-for (const [name, w, h] of views) {
+for (const [name, w, h] of WORLD_ONLY ? [] : views) {
   const issues = new Set();
   const add = (tag, list) => list.forEach(i => issues.add(`${i} [${tag}]`));
   const shot = (page, state) => page.screenshot({ path: `${OUT}/robo-${name}-${state}${RM ? '-rm' : ''}.png` });
@@ -370,7 +374,7 @@ for (const [name, w, h] of views) {
 // ---- Short lane: every celebration on the dev preview with a 56 px lane (the smallest momentSize gives), every
 // animation stepped through 5%..95%: slots, balls, goal and (in scenes that don't rotate them) robots' drawn bodies
 // stay inside the lane. The words are left out: their 3-line box is taller than a 56 px lane (a known, older issue).
-{
+if (!WORLD_ONLY) {
   const scenes = ['high-five', 'jump-together', 'pass', 'dance', 'tower', 'keepy-uppy', 'light-show', 'header', 'cartwheel',
     ...['walk', 'walk-friend', 'dribble', 'hop', 'stop-wave', 'ball-ride', 'cartwheel'].map(x => `stars-${x}`), 'conga-2', 'conga-10'];
   const ROTATING = ['cartwheel', 'dance', 'light-show', 'ball-ride', 'header'];
@@ -400,6 +404,180 @@ for (const [name, w, h] of views) {
   }
   if (issues.length) failures++;
   console.log('short-lane'.padEnd(22), issues.length ? 'FAIL\n    ' + issues.join('\n    ') : 'ok');
+}
+
+// ---- Robo's world (2026-11-14), per view in WORLD_VIEWS (her iPad, a landscape iPad, a phone):
+// 1. Behind the math: a world fixture (day 5 practised, its pick spent, a few items) against the same fixture with no
+//    items. The card sits behind the problem (contains it, under it) and the problem, answer, controls and keys don't
+//    move or change size (within 1px). 2. The pick: the next right answer completes day 5 (practised 4, 9 right today,
+//    no picks spent). It opens; Robo is hidden and the pad is inert under it; OK, the three kinds and the whole frame
+//    are inside the viewport and every button is >= 44px; choose a kind (zone dims), tap the ground (ghost), switch
+//    kind (ghost follows), rotate and back, OK places it; after the cheer the pick is gone, Robo is back and the pad
+//    works. Screenshots: OUT/world-<view>-<state>.png.
+const WORLD_VIEWS = ['ipad102-p', 'ipad102-p-tab', 'ipad102-l-tab', 'ip15'];
+const WORLD_ITEMS = [
+  { kind: 'mountain', area: 0, x: 190, y: 90 }, { kind: 'tree', area: 0, x: 60, y: 170 }, { kind: 'house', area: 0, x: 200, y: 230 },
+  { kind: 'lake', area: 0, x: 120, y: 300 }, { kind: 'bush', area: 0, x: 40, y: 330 },
+];
+const worldFixture = items => ({ ...progressFor(1), total: 41,
+  day: { date: TODAY, right: 0, days: 5, lastDone: YESTERDAY, practised: 5 }, world: { items, picksUsed: 1, offer: null } });
+const pickFixture = { ...progressFor(1), total: 41,
+  day: { date: TODAY, right: 9, days: 4, lastDone: YESTERDAY, practised: 4 }, world: { items: WORLD_ITEMS.slice(0, 3), picksUsed: 0, offer: null } };
+const layoutBoxes = page => page.evaluate(() => {
+  const box = e => { const b = e.getBoundingClientRect(); return [b.left, b.top, b.width, b.height]; };
+  return Object.fromEntries([['problem', '.problem'], ['answer', '[data-role="answer"]'], ['controls', '.controls'],
+    ...[...document.querySelectorAll('[data-key]')].map(k => [`key ${k.dataset.key}`, `[data-key="${k.dataset.key}"]`])]
+    .map(([n, s]) => [n, box(document.querySelector(s))]));
+});
+// A tap in the frame at world coordinates (0..270, 0..360).
+const tapWorld = async (page, x, y) => {
+  const f = await page.locator('[data-role="pick-frame"]').boundingBox();
+  await page.touchscreen.tap(f.x + x / 270 * f.width, f.y + y / 360 * f.height);
+};
+const tapEl = async (page, sel) => {
+  const b = await page.locator(sel).boundingBox();
+  await page.touchscreen.tap(b.x + b.width / 2, b.y + b.height / 2);
+};
+const answerText = page => page.$eval('[data-role="answer"]', e => e.textContent.replace(/\s/g, ''));
+// Everything the pick shows fits on screen, every button is a finger's size and takes its own tap.
+const pickCheck = page => page.evaluate(() => {
+  const issues = [];
+  const pick = document.querySelector('[data-role="pick"]');
+  if (!pick) return ['no pick'];
+  const inside = (n, b) => { if (b.left < -1 || b.top < -1 || b.right > innerWidth + 1 || b.bottom > innerHeight + 1) issues.push(`${n} off-screen`); };
+  const frame = document.querySelector('[data-role="pick-frame"]').getBoundingClientRect();
+  inside('frame', frame);
+  const kinds = [...document.querySelectorAll('[data-role="pick-kind"]')];
+  if (kinds.length !== 3) issues.push(`${kinds.length} kinds, not 3`);
+  for (const b of [...kinds, document.querySelector('[data-role="pick-ok"]')]) {
+    const n = b.dataset.kind ?? 'OK', r = b.getBoundingClientRect();
+    inside(n, r);
+    if (r.width < 44 || r.height < 44) issues.push(`${n} ${Math.round(r.width)}x${Math.round(r.height)} < 44`);
+    if (r.top < frame.bottom - 1) issues.push(`${n} over the frame`);
+    const at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    if (!b.contains(at)) issues.push(`a tap on ${n} does not reach it`);
+  }
+  const de = document.documentElement;
+  if (de.scrollHeight > innerHeight + 1 || de.scrollWidth > innerWidth + 1) issues.push('page scrolls');
+  const robo = document.querySelector('[data-role="robo"]');
+  if (robo && !robo.hidden && getComputedStyle(robo).visibility !== 'hidden') issues.push('the real Robo shows under the pick');
+  return issues;
+});
+// RM=1: nothing in the pick moves (no fade in, no pop on the chosen kind). Run right after it opens and right after a choice.
+const pickStill = page => page.evaluate(() => {
+  const pick = document.querySelector('[data-role="pick"]');
+  if (!pick || !matchMedia('(prefers-reduced-motion: reduce)').matches) return [];
+  const moving = document.getAnimations().filter(a => pick.contains(a.effect?.target)).map(a => a.animationName ?? 'transition');
+  return moving.length ? [`moves under Reduce Motion: ${[...new Set(moving)].join(', ')}`] : [];
+});
+
+for (const [name, w, h] of views.filter(([n]) => WORLD_VIEWS.includes(n))) {
+  const issues = new Set();
+  const add = (tag, list) => list.forEach(i => issues.add(`${i} [${tag}]`));
+  const shot = (page, state) => page.screenshot({ path: `${OUT}/world-${name}-${state}${RM ? '-rm' : ''}.png` });
+
+  // 1. Behind the math.
+  let { ctx, page, errors } = await open(name, w, h, worldFixture([]));
+  const plain = await layoutBoxes(page);
+  if (!(await page.$eval('[data-role="world-bg"]', e => e.hidden))) add('no world', ['world shows with no items']);
+  await shot(page, 'none');
+  add('errors', errors); await ctx.close();
+  ({ ctx, page, errors } = await open(name, w, h, worldFixture(WORLD_ITEMS)));
+  const withWorld = await layoutBoxes(page);
+  for (const [n, a] of Object.entries(plain)) {
+    const b = withWorld[n];
+    if (!b) { add('world', [`${n} missing`]); continue; }
+    if (a.some((v, i) => Math.abs(v - b[i]) > 1)) add('world', [`${n} moved ${a.map(Math.round)} -> ${b.map(Math.round)}`]);
+  }
+  add('world', await page.evaluate(() => {
+    const out = [];
+    if (!document.querySelector('.app').hasAttribute('data-world')) out.push('no data-world');
+    if (document.querySelector('[data-role="world-bg"]').hidden) out.push('world-bg hidden');
+    const card = document.querySelector('[data-role="world-card"]').getBoundingClientRect();
+    const p = document.querySelector('.problem').getBoundingClientRect();
+    if (card.left > p.left + 1 || card.top > p.top + 1 || card.right < p.right - 1 || card.bottom < p.bottom - 1) out.push('card does not hold the problem');
+    if (card.top < document.querySelector('.topbar').getBoundingClientRect().bottom - 1) out.push('card over topbar');
+    const at = document.elementFromPoint(p.left + p.width / 2, p.top + p.height / 2);
+    if (at?.closest('[data-role="world-card"], [data-role="world-bg"]')) out.push('card or world over the problem');
+    const k = document.querySelector('[data-key="5"]').getBoundingClientRect();
+    if (!document.querySelector('[data-key="5"]').contains(document.elementFromPoint(k.left + k.width / 2, k.top + k.height / 2))) out.push('a tap on 5 does not reach the key');
+    return out;
+  }));
+  add('world', (await page.evaluate(measure, [undefined, expectFor(name)])).issues);
+  await shot(page, 'bg');
+  await page.dispatchEvent('[data-action="hint"]', 'pointerdown');
+  await page.waitForTimeout(400);
+  add('world hint', (await page.evaluate(measure, [undefined, expectFor(name)])).issues);
+  await shot(page, 'bg-hint');
+  add('errors', errors); await ctx.close();
+
+  // 2. The pick.
+  ({ ctx, page, errors } = await open(name, w, h, pickFixture));
+  await answerNow(page);
+  try { await page.waitForSelector('[data-role="pick"]', { timeout: 8000 }); } catch { add('pick', ['the pick did not open']); }
+  if (await page.$('[data-role="pick"]')) {
+    add('pick opening', await pickStill(page));
+    await page.waitForTimeout(500);
+    const before = await answerText(page);
+    add('pick open', await pickCheck(page));
+    await shot(page, 'pick');
+    // The pad and keys are inert under it.
+    const k5 = await page.evaluate(() => { const b = document.querySelector('[data-key="5"]').getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; });
+    await page.touchscreen.tap(...k5);
+    await page.keyboard.press('3');
+    if ((await answerText(page)) !== before) add('pick', ['the answer changed under the pick']);
+    const kinds = await page.$$eval('[data-role="pick-kind"]', bs => bs.map(b => b.dataset.kind));
+    const ground = kinds.filter(k => k !== 'mountain');
+    await tapEl(page, `[data-role="pick-kind"][data-kind="${ground[0]}"]`);
+    add('pick choosing', await pickStill(page));
+    await page.waitForTimeout(300);
+    const dims = await page.$$eval('[data-role="pick-dim"]', d => d.length);
+    if (dims !== 4) add('pick chosen', [`${dims} dim zones, not 4`]);
+    if (!(await page.$eval('[data-role="pick-ok"]', b => b.disabled))) add('pick chosen', ['OK enabled before a spot']);
+    await tapWorld(page, 135, 250);
+    await page.waitForTimeout(200);
+    const ghost = () => page.evaluate(() => { const g = document.querySelector('[data-role="pick-ghost"]'); return g ? g.dataset.kind : null; });
+    if ((await ghost()) !== ground[0]) add('pick ghost', [`ghost is ${await ghost()}, not ${ground[0]}`]);
+    if (await page.$eval('[data-role="pick-ok"]', b => b.disabled)) add('pick ghost', ['OK still disabled']);
+    add('pick ghost', await pickCheck(page));
+    await shot(page, 'ghost');
+    // Switching the choice before OK: the ghost follows.
+    await tapEl(page, `[data-role="pick-kind"][data-kind="${ground[1]}"]`);
+    await page.waitForTimeout(300);
+    if ((await ghost()) !== ground[1]) add('pick switch', [`ghost is ${await ghost()}, not ${ground[1]}`]);
+    await shot(page, 'switched');
+    // Rotating while it is open keeps it whole and keeps the ghost.
+    await page.setViewportSize({ width: h, height: w });
+    await page.waitForTimeout(500);
+    add('pick rotated', await pickCheck(page));
+    if ((await ghost()) !== ground[1]) add('pick rotated', ['ghost lost']);
+    await shot(page, 'rotated');
+    await page.setViewportSize({ width: w, height: h });
+    await page.waitForTimeout(500);
+    add('pick rotated back', await pickCheck(page));
+    await tapEl(page, '[data-role="pick-ok"]');
+    await page.waitForTimeout(400);
+    const cheer = await page.evaluate(() => [document.querySelector('[data-role="pick-words"]').textContent,
+      document.querySelector('[data-role="pick-frame"]').dataset.placed, document.querySelectorAll('[data-role="pick-dim"]').length]);
+    if (cheer[1] !== ground[1]) add('pick ok', [`placed ${cheer[1]}, not ${ground[1]}`]);
+    if (cheer[2]) add('pick ok', ['dim zones still showing']);
+    await shot(page, 'cheer');
+    const saved = await page.evaluate(key => JSON.parse(localStorage.getItem(key)).world, STORAGE_KEY);
+    if (saved.items.length !== 4 || saved.items[3].kind !== ground[1] || saved.picksUsed !== 1 || saved.offer !== null) add('pick ok', [`saved ${JSON.stringify(saved)}`]);
+    try { await page.waitForSelector('[data-role="pick"]', { state: 'detached', timeout: 5000 }); } catch { add('pick done', ['the pick did not close']); }
+    await page.waitForTimeout(400);
+    add('pick done', (await page.evaluate(measure, [undefined, expectFor(name)])).issues);
+    await shot(page, 'after');
+    const now = await answerText(page);
+    await page.dispatchEvent('[data-key="2"]', 'pointerdown');
+    if ((await answerText(page)) === now) add('pick done', ['the pad does nothing after the pick']);
+  }
+  add('errors', errors); await ctx.close();
+
+  const ok = issues.size === 0;
+  if (!ok) failures++;
+  const list = [...issues];
+  console.log(`world-${name}`.padEnd(22), ok ? 'ok' : 'FAIL', ok ? '' : '\n    ' + list.slice(0, 8).join('\n    ') + (list.length > 8 ? `\n    …+${list.length - 8}` : ''));
 }
 
 await browser.close();
