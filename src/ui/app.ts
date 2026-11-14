@@ -250,6 +250,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     // roboWanted: a hint or Pass is showing (on small screens a peek's words would sit on the hint).
     if (pickView || roboWanted || (roboMode === 'standing' && (roboPlace !== 'spot' || roboAway))) return;
     endMoment();
+    if (pickView) return; // ending a moment that held a pick opened it: no hello under the pick
     const ms = robo.greet(welcomeWords(progress.total), momentPlace());
     greeting = roboMode === 'standing';
     sound.robo();
@@ -408,6 +409,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     if (phase !== 'answering' || hintsShown >= hintLimit(steps)) return;
     showSteps(hintsShown + 1);
     attempt.hintsUsed = hintsShown;
+    pickPending = false; // no pick under a hint; it opens on her next right answer (still owed, no offer made yet)
     endMoment();
     render();
     roboUp();
@@ -433,6 +435,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     phase = 'passing';
     message = '';
     entry = focusAnswer({ ...entry, answer: '', faded: false });
+    pickPending = false; // a Pass never opens a pick; it opens on her next right answer
     endMoment();
     robo.calm();
     roboWanted = true; // so passStep() sends Robo up

@@ -807,6 +807,37 @@ describe("Robo's world", () => {
     expect(s.root.querySelectorAll('[data-role="pick"]')).toHaveLength(1);
   });
 
+  for (const action of ['pass', 'hint'] as const) {
+    test(`${action} while the day moment holds a pick doesn't open it; her next right answer does`, () => {
+      const s = setup(1, standing, { ...day5(), unlocked: ['addition', 'subtraction'] });
+      answerRight(s);
+      s.advance(1000); // the next problem is answerable; the day moment still plays
+      expect(s.q('[data-moment="day"]')).not.toBeNull();
+      s.tap(`[data-action="${action}"]`);
+      expect(pick(s)).toBeNull();
+      s.advance(5000);
+      expect(pick(s)).toBeNull();
+      expect(s.saved.at(-1)!.world.offer).toBeNull();
+      if (action === 'pass') { s.tap('[data-action="next"]'); s.advance(1000); }
+      answerRight(s);
+      expect(s.root.querySelectorAll('[data-role="pick"]')).toHaveLength(1);
+    });
+  }
+
+  test('peek mode: a welcome back while a pick is waiting opens the pick and plays no greeting under it', () => {
+    const s = setup(1, { roboMode: 'peek' }, day5());
+    answerRight(s);
+    s.advance(1000);
+    expect(pick(s)).toBeNull();
+    s.hide();
+    s.away(31 * MIN);
+    const robos = s.sound.robo.mock.calls.length;
+    s.show();
+    expect(pick(s)).not.toBeNull();
+    expect(s.sound.robo.mock.calls.length).toBe(robos);
+    expect(s.q('[data-role="robo-moment"]')!.childElementCount).toBe(0);
+  });
+
   test('the same answer passed never opens a pick and practised stays the same', () => {
     const s = setup(1, standing, day5());
     s.tap('[data-action="pass"]');
