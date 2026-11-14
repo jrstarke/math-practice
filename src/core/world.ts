@@ -69,13 +69,13 @@ export function repairWorld(x: unknown): unknown {
 
 export type Zone = { x0: number; x1: number; y0: number; y1: number };
 
-const GROUND_ZONE: Zone = { x0: 24, x1: 246, y0: 102, y1: AREA_H };
+const GROUND_ZONE: Zone = { x0: 12, x1: 258, y0: 102, y1: AREA_H };
 const ZONES: Record<WorldKind, Zone> = {
   mountain: { x0: 40, x1: 230, y0: 42, y1: 102 },
   tree: GROUND_ZONE,
   bush: GROUND_ZONE,
   house: GROUND_ZONE,
-  lake: { x0: 48, x1: 222, y0: 135, y1: AREA_H },
+  lake: { x0: 30, x1: 240, y0: 135, y1: AREA_H },
 };
 
 export const zoneOf = (kind: WorldKind): Zone => ZONES[kind];

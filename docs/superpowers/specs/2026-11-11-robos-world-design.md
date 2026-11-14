@@ -113,6 +113,7 @@ Parts 2 and 3 get their own designs. Part 1 must not block them (see Constraints
   a tree, bush or house lights up the ground (the sky dims); a lake lights up open ground (builder's call how much of
   the ground; a lake shouldn't sit on the horizon strip). A tap on a dimmed part does nothing (my call: no error, the
   ghost stays where it was). A mountain tapped on the band snaps to the horizon line, keeping only where along it.
+  The ground zone runs x 12–258 (close to the edges), and a lake x 30–240 (user: closer to the edge).
 - **Look** (my call, to confirm with her on a mockup): the robots' style — dark `#2b2b2b` rounded outlines, simple
   shapes, no shading — with soft flat colours for the world (sky blue, grass green, lake blue, lilac mountains), as in
   the mockups. The sky/ground with sun is the empty world she starts with.

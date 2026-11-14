@@ -65,10 +65,10 @@ test('makeOffer draws from rng exactly three times', () => {
 
 test('zones', () => {
   expect(zoneOf('mountain')).toEqual({ x0: 40, x1: 230, y0: 42, y1: 102 });
-  expect(zoneOf('tree')).toEqual({ x0: 24, x1: 246, y0: 102, y1: 360 });
+  expect(zoneOf('tree')).toEqual({ x0: 12, x1: 258, y0: 102, y1: 360 });
   expect(zoneOf('bush')).toEqual(zoneOf('tree'));
   expect(zoneOf('house')).toEqual(zoneOf('tree'));
-  expect(zoneOf('lake')).toEqual({ x0: 48, x1: 222, y0: 135, y1: 360 });
+  expect(zoneOf('lake')).toEqual({ x0: 30, x1: 240, y0: 135, y1: 360 });
 });
 
 test('snapPlacement enforces zones and puts mountains on the horizon', () => {
