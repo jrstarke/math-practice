@@ -64,3 +64,10 @@ test('all five kinds draw and have names', () => {
   }
   expect(KIND_NAMES.house).toBe('House');
 });
+
+test('an empty world has no mountains (she adds those) but keeps its hills', () => {
+  const svg = sceneSvg([]);
+  expect(svg).not.toContain('data-kind="mountain"');
+  expect(kindsIn(svg).filter((e) => e.getAttribute('data-kind') === 'mountain')).toHaveLength(0);
+  expect(svg).toContain('#c4e3ad');
+});

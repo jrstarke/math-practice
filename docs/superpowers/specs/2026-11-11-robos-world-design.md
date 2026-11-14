@@ -99,9 +99,9 @@ Parts 2 and 3 get their own designs. Part 1 must not block them (see Constraints
 - **Horizon** (user: "more ground", then "the 25 to give more space to play"): **a quarter of the way down** (y=90 of an
   area's 360), so the sky is the top quarter and the ground the bottom three quarters. Earlier values (42% in the first
   sketches, then a third) were tried on mockups and dropped. Tune by eye in release 1, but keep the ground the larger part.
-- **Far edge** (user): small lilac mountains on the horizon, with **a few smaller, softer hills in front of them**
-  (lighter greens, a bit lower than the mountains' peaks). The hills are scenery only, part of the empty world: she
-  can't place or move them, and they're not a sixth kind (my call; the user hasn't asked for placeable hills).
+- **Far edge** (user): the world starts with no mountains, since they are something she adds. Only **a few small, soft
+  hills** (lighter greens) sit on the horizon from the start, scenery only: she can't place or move them, and
+  they're not a sixth kind (my call; the user hasn't asked for placeable hills). A mountain she places sits on the horizon behind the hills.
 - **Depth**: where she places a thing sets how far away it is: higher on the ground (nearer the horizon) is farther
   and drawn smaller; lower is nearer and bigger. Things are drawn far-to-near, so nearer things overlap farther ones.
   (User: "something further up towards the horizon is further away, and something lower is closer and bigger".)

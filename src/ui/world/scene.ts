@@ -18,7 +18,6 @@ export function sceneSvg(items: WorldItem[], opts: { blur?: number } = {}): stri
   const land = `<rect width="${AREA_W}" height="${HORIZON_Y}" fill="url(#sky)"/>`
     + `<rect y="${HORIZON_Y}" width="${AREA_W}" height="${AREA_H - HORIZON_Y}" fill="${GROUND}"/>`
     + `<circle cx="226" cy="26" r="15" fill="#ffe27a" ${OUTLINE}/>`
-    + drawKind('mountain', 60, HORIZON_Y, 0.55) + drawKind('mountain', 150, HORIZON_Y, 0.4) + drawKind('mountain', 235, HORIZON_Y, 0.5)
     + mountains.join('')
     + drawHill(30, HORIZON_Y, 70, 9, '#c4e3ad') + drawHill(165, HORIZON_Y, 80, 11, '#b5dc9c') + drawHill(262, HORIZON_Y, 50, 8, '#c4e3ad')
     + rest.join('');
