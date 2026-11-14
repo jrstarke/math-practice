@@ -1,6 +1,6 @@
 import { initialOpState } from './core/adaptive';
 import { initialDayStreak, type DayStreak } from './core/days';
-import { isValidWorld, initialWorld } from './core/world';
+import { isValidWorld, initialWorld, repairWorld } from './core/world';
 import { defaultProgress, type OpKey, type Progress } from './core/progress';
 
 /**
@@ -223,7 +223,8 @@ export function createStore(storage: KV | null): ProgressStore {
     load() {
       if (!storage) return memory ?? defaultProgress();
       try {
-        const current = readJson(storage, STORAGE_KEY);
+        const raw = readJson(storage, STORAGE_KEY);
+        const current = isObj(raw) && 'world' in raw ? { ...raw, world: repairWorld(raw.world) } : raw;
         if (isValidProgress(current)) return current;
         const v8 = readJson(storage, V8_STORAGE_KEY);
         if (isValidProgressV8(v8)) return upgradeV8(v8);

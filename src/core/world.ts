@@ -48,12 +48,23 @@ function isValidItem(x: unknown): x is WorldItem {
     && (i.kind !== 'mountain' || i.y === HORIZON_Y);
 }
 
+const isValidOffer = (o: unknown) =>
+  o === null || (Array.isArray(o) && o.length === 3 && o.every(isKind) && new Set(o).size === 3);
+
+/** Strict: items, picksUsed and offer must all be sound. Loading runs `repairWorld` first, so only the offer is forgiven. */
 export function isValidWorld(x: unknown): x is WorldState {
   if (typeof x !== 'object' || x === null || Array.isArray(x)) return false;
   const w = x as Record<string, unknown>;
   return Array.isArray(w.items) && w.items.every(isValidItem)
     && isNonNegInt(w.picksUsed)
-    && (w.offer === null || (Array.isArray(w.offer) && w.offer.length === 3 && w.offer.every(isKind) && new Set(w.offer).size === 3));
+    && isValidOffer(w.offer);
+}
+
+/** A saved offer that is corrupt is just a lost offer (the app makes a fresh one); nothing else is repaired. */
+export function repairWorld(x: unknown): unknown {
+  if (typeof x !== 'object' || x === null || Array.isArray(x)) return x;
+  const w = x as Record<string, unknown>;
+  return isValidOffer(w.offer) ? x : { ...w, offer: null };
 }
 
 export type Zone = { x0: number; x1: number; y0: number; y1: number };
@@ -72,6 +83,7 @@ export const zoneOf = (kind: WorldKind): Zone => ZONES[kind];
 /** The spot an item lands on, or null when the tap is outside where its kind may go. Mountains sit on the horizon. */
 export function snapPlacement(kind: WorldKind, x: number, y: number): { x: number; y: number } | null {
   const z = ZONES[kind];
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return null; // NaN fails every comparison below and would reach her save
   if (x < z.x0 || x > z.x1 || y < z.y0 || y > z.y1) return null;
   return { x, y: kind === 'mountain' ? HORIZON_Y : y };
 }

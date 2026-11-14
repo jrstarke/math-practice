@@ -253,6 +253,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     pickView.el.remove();
     pickView = null;
     pickPending = false;
+    actionsReadyAt = now() + ACTION_GUARD_MS; // a tap that lands as the pick closes must not hit Hint or Pass
     measureRobo(); // Robo back
   }
 

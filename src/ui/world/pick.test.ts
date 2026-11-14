@@ -198,3 +198,15 @@ test('fitFrame is the largest centred 3:4 box', () => {
   expect(fitFrame(1080, 810)).toEqual({ left: 236.25, top: 0, width: 607.5, height: 810 });
   expect(fitFrame(390, 844)).toEqual({ left: 0, top: 162, width: 390, height: 520 });
 });
+
+test('a zero-size frame makes the tap maths non-finite and places no ghost', () => {
+  const t = setup();
+  t.choose('tree');
+  const frame = t.q('[data-role="pick-frame"]')!;
+  frame.getBoundingClientRect = () => ({ left: 0, top: 0, width: 0, height: 0, right: 0, bottom: 0, x: 0, y: 0, toJSON: () => ({}) });
+  const at = (x: number, y: number) => frame.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, clientX: x, clientY: y }));
+  at(0, 0); // 0/0 is NaN
+  at(120, 200); // n/0 is Infinity
+  expect(t.ghost()).toBeNull();
+  expect(t.okDisabled()).toBe(true);
+});

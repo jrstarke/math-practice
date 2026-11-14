@@ -2,6 +2,7 @@
 import { defaultProgress, type OpKey, type Progress } from '../core/progress';
 import { hintLimit, solve } from '../core/solver';
 import { localDate } from '../core/days';
+import { ACTION_GUARD_MS } from './app';
 import { setup, START } from './testUtil';
 
 test('renders a problem and number pad', () => {
@@ -977,6 +978,22 @@ describe("Robo's world", () => {
     expect(s.saved.length).toBe(saves);
     expect(s.answerText()).toBe('');
     expect(pick(s)).not.toBeNull();
+  });
+
+  test('a Pass tap as the pick closes is ignored; after ACTION_GUARD_MS it works', () => {
+    const s = setup(1, standing, owed());
+    answerRight(s);
+    const [first] = kinds(s);
+    place(s, first!);
+    s.advance(2500); // PICK_CHEER_MS: the pick closes
+    expect(pick(s)).toBeNull();
+    s.tap('[data-action="pass"]');
+    s.advance(10_000);
+    expect(s.root.querySelectorAll('[data-ghost]')).toHaveLength(0); // not passed
+    s.advance(ACTION_GUARD_MS);
+    s.tap('[data-action="pass"]');
+    s.advance(10_000);
+    expect(s.root.querySelectorAll('[data-ghost]').length).toBeGreaterThan(0);
   });
 
   test('destroy removes the world and the pick', () => {

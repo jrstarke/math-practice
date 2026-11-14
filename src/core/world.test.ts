@@ -1,5 +1,5 @@
 import { mulberry32 } from './rng';
-import { AREA_H, AREA_W, CHEER_LINES, HORIZON_Y, KINDS, PLACE_PROMPT, depthScale, initialWorld, pickCheer, pickPrompt, snapPlacement, zoneOf, isValidWorld, makeOffer, picksOwed, placeItem, type WorldState } from './world';
+import { AREA_H, AREA_W, CHEER_LINES, HORIZON_Y, KINDS, PLACE_PROMPT, depthScale, initialWorld, pickCheer, pickPrompt, snapPlacement, zoneOf, isValidWorld, repairWorld, makeOffer, picksOwed, placeItem, type WorldState } from './world';
 
 const empty = initialWorld();
 
@@ -102,4 +102,20 @@ test('pickCheer never repeats the last line and covers all six', () => {
 test('prompts', () => {
   expect(pickPrompt(5)).toBe("5 days of math! Let's add something to our world!");
   expect(PLACE_PROMPT).toBe('Tap where it goes!');
+});
+
+test.each(KINDS)('%s: a non-finite tap is no placement', (kind) => {
+  for (const bad of [NaN, Infinity, -Infinity]) {
+    expect(snapPlacement(kind, bad, 150)).toBeNull();
+    expect(snapPlacement(kind, 100, bad)).toBeNull();
+  }
+});
+
+test('repairWorld nulls a bad offer, leaves a good one, and never touches the rest', () => {
+  const w = { items: [], picksUsed: 1, offer: ['tree', 'tree', 'bush'] };
+  expect(repairWorld(w)).toEqual({ ...w, offer: null });
+  const good = { items: [], picksUsed: 1, offer: ['tree', 'bush', 'house'] };
+  expect(repairWorld(good)).toBe(good);
+  expect(repairWorld(null)).toBeNull();
+  expect(repairWorld({ ...w, items: null })).toEqual({ ...w, items: null, offer: null });
 });

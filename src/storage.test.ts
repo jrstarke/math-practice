@@ -427,6 +427,28 @@ test('a v9 record with a corrupt world is rejected and loading falls back to v8,
   expect(createStore(s).load()).toMatchObject({ total: 380 });
 });
 
+test.each([
+  ['a bad kind', ['tree', 'dragon', 'bush']],
+  ['two kinds', ['tree', 'bush']],
+  ['duplicates', ['tree', 'tree', 'bush']],
+  ['not an array', 'tree'],
+])('a v9 record whose offer has %s loads with offer null and everything else intact', (_, offer) => {
+  const s = mem();
+  const world = { items: [{ kind: 'tree', area: 0, x: 20, y: 200 }], picksUsed: 1, offer };
+  const p = { ...defaultProgress(), total: 40, world };
+  s.m.set(STORAGE_KEY, JSON.stringify(p));
+  s.m.set(V8_STORAGE_KEY, JSON.stringify(v8Record));
+  expect(createStore(s).load()).toEqual({ ...p, world: { ...world, offer: null } });
+});
+
+test('a v9 record with a bad item still falls back even when its offer is also bad', () => {
+  const s = mem();
+  const world = { items: [{ kind: 'mountain', area: 0, x: 5, y: 120 }], picksUsed: 0, offer: ['tree'] };
+  s.m.set(STORAGE_KEY, JSON.stringify({ ...defaultProgress(), world }));
+  s.m.set(V8_STORAGE_KEY, JSON.stringify(v8Record));
+  expect(createStore(s).load()).toEqual({ ...v8Record, version: 9, world: initialWorld() });
+});
+
 test('saving after a v8 upgrade writes only the v9 key and leaves the v8 string byte-identical', () => {
   const s = mem();
   const raw = JSON.stringify(v8Record);
