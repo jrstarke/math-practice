@@ -8,7 +8,7 @@ practised counter (`docs/superpowers/specs/2026-11-08-robo-companion-design.md`,
 ## Intent and why
 
 The child (who invented Robo) imagined Robo having a window onto a world. The user turned it into a reward that only
-ever adds: **Robo's world**, a landscape she builds one thing at a time, one pick for every 3 days she practises
+ever adds: **Robo's world**, a landscape she builds one thing at a time, one pick for every 3 days she practises, the first on day 1
 (in total, not in a row — "then it's always additive, and never feels punishing"). The world sits behind the math,
 blurred; the bigger celebrations slide the math away and play out in it, so seeing it clearly is a treat she earns
 (user: celebrations only, no "visit" button). Every-20-stars celebrations play there too, as motivation to keep
@@ -29,9 +29,9 @@ Parts 2 and 3 get their own designs. Part 1 must not block them (see Constraints
 
 ## Goals (part 1)
 
-- **The world appears on her 3rd day practised** (`day.practised` reaches 3), together with her first pick. Before
+- **The world appears on her 1st day practised** (`day.practised` reaches 1), together with her first pick. Before
   that nothing changes: every celebration plays in the strip as today.
-- **A pick for every 3 days practised**: on the answer that completes a day and brings `practised` to a multiple of
+- **A pick on day 1 and then every 3 days practised** (days 1, 4, 7, ...): on the answer that completes a day and brings `practised` to 1 or to 1 more than a multiple of
   3. Picks are never lost: one she doesn't finish (app closed, reload) is offered again (see Picks).
 - **Things she can add in part 1** (the child's list, minus roads and vehicles, which are part 3): **tree, bush,
   mountain, lake, house**. As many of each as she likes.
@@ -189,7 +189,7 @@ Parts 2 and 3 get their own designs. Part 1 must not block them (see Constraints
 
 ### Saving (progress v9)
 - Adds a `world` record: the things she's placed (each with its kind, area, position along the area, and depth),
-  how many picks she has used, and the open offer if any. `picksOwed = floor(day.practised / 3) − picksUsed`.
+  how many picks she has used, and the open offer if any. `picksOwed = ceil(day.practised / 3) − picksUsed`.
 - v8 → v9: an empty world with no picks used. (With `practised` shipped today, nobody has 5 yet.)
 
 ### Sound
@@ -216,7 +216,7 @@ Each release is useful on its own, gets its own short plan, and goes to dev then
 1. **Her first pick (the core loop).** The world appears on day 5 practised: three choices, tap to place, Robo's
    cheer line; tree, bush, mountain, lake, house; afterwards the world sits blurred behind the math with the card.
    One area, no panning. Celebrations stay in the strip for now. The pick may show **on top of the app** (covering
-   it) instead of sliding the math away; the slide-away comes with release 2. Aim: before her 3rd day practised (a
+   it) instead of sliding the math away; the slide-away comes with release 2. Aim: before her 1st day practised (a
    late release only means the pick waits for her).
 2. **Celebrations move into her world.** The slide-away and the » skip button; the day streak, every 20 stars and
    the 100s conga play in the world (no panning yet); Reduce Motion fades.

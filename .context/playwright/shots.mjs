@@ -210,7 +210,7 @@ const roboFixtures = {
 // The next right answer completes day N (9 right today, N - 1 days in a row up to yesterday).
 // Picks already spent for those days (real data always has them), so day 7 and 12 owe none and play their celebration.
 const dayFixture = n => ({ ...progressFor(1), total: 12, day: { date: TODAY, right: 9, days: n - 1, lastDone: YESTERDAY, practised: n - 1 },
-  world: { items: [], picksUsed: Math.floor((n - 1) / 3), offer: null } });
+  world: { items: [], picksUsed: Math.ceil((n - 1) / 3), offer: null } });
 
 async function open(name, w, h, progress, query = '') {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true, isMobile: w < 1000, reducedMotion: RM ? 'reduce' : 'no-preference' });
@@ -407,9 +407,9 @@ if (!WORLD_ONLY) {
 }
 
 // ---- Robo's world (2026-11-14), per view in WORLD_VIEWS (her iPad, a landscape iPad, a phone):
-// 1. Behind the math: a world fixture (day 3 practised, its pick spent, a few items) against the same fixture with no
+// 1. Behind the math: a world fixture (day 4 practised, its pick spent, a few items) against the same fixture with no
 //    items. The card sits behind the problem (contains it, under it) and the problem, answer, controls and keys don't
-//    move or change size (within 1px). 2. The pick: the next right answer completes day 3 (practised 2, 9 right today,
+//    move or change size (within 1px). 2. The pick: the next right answer completes day 4 (practised 3, 9 right today,
 //    no picks spent). It opens; Robo is hidden and the pad is inert under it; OK, the three kinds and the whole frame
 //    are inside the viewport and every button is >= 44px; choose a kind (zone dims), tap the ground (ghost), switch
 //    kind (ghost follows), rotate and back, OK places it; after the cheer the pick is gone, Robo is back and the pad
@@ -422,7 +422,7 @@ const WORLD_ITEMS = [
 const worldFixture = items => ({ ...progressFor(1), total: 41,
   day: { date: TODAY, right: 0, days: 3, lastDone: YESTERDAY, practised: 3 }, world: { items, picksUsed: 1, offer: null } });
 const pickFixture = { ...progressFor(1), total: 41,
-  day: { date: TODAY, right: 9, days: 2, lastDone: YESTERDAY, practised: 2 }, world: { items: WORLD_ITEMS.slice(0, 3), picksUsed: 0, offer: null } };
+  day: { date: TODAY, right: 9, days: 3, lastDone: YESTERDAY, practised: 3 }, world: { items: WORLD_ITEMS.slice(0, 3), picksUsed: 1, offer: null } };
 const layoutBoxes = page => page.evaluate(() => {
   const box = e => { const b = e.getBoundingClientRect(); return [b.left, b.top, b.width, b.height]; };
   return Object.fromEntries([['problem', '.problem'], ['answer', '[data-role="answer"]'], ['controls', '.controls'],
@@ -563,7 +563,7 @@ for (const [name, w, h] of views.filter(([n]) => WORLD_VIEWS.includes(n))) {
     if (cheer[2]) add('pick ok', ['dim zones still showing']);
     await shot(page, 'cheer');
     const saved = await page.evaluate(key => JSON.parse(localStorage.getItem(key)).world, STORAGE_KEY);
-    if (saved.items.length !== 4 || saved.items[3].kind !== ground[1] || saved.picksUsed !== 1 || saved.offer !== null) add('pick ok', [`saved ${JSON.stringify(saved)}`]);
+    if (saved.items.length !== 4 || saved.items[3].kind !== ground[1] || saved.picksUsed !== 2 || saved.offer !== null) add('pick ok', [`saved ${JSON.stringify(saved)}`]);
     try { await page.waitForSelector('[data-role="pick"]', { state: 'detached', timeout: 5000 }); } catch { add('pick done', ['the pick did not close']); }
     await page.waitForTimeout(400);
     add('pick done', (await page.evaluate(measure, [undefined, expectFor(name)])).issues);

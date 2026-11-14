@@ -764,14 +764,14 @@ describe("Robo's world", () => {
   // Hidden just now, so no welcome.
   const base = (day: Progress['day'], world: Partial<Progress['world']> = {}): Progress =>
     ({ ...defaultProgress(), total: 41, hiddenAt: START, day, world: { ...defaultProgress().world, ...world } });
-  /** Nine right today, 2 days practised: her 10th right answer completes day 3. */
-  const day5 = () => base({ date: today, right: 9, days: 2, lastDone: yesterday, practised: 2 });
+  /** Her very first day: nine right so far, her 10th right answer completes day 1. */
+  const day5 = () => base({ date: today, right: 9, days: 0, lastDone: null, practised: 0 });
   /** A pick owed (3 days practised, none used), today not about to complete. */
   const owed = (world: Partial<Progress['world']> = {}, practised = 3) =>
     base({ date: today, right: 0, days: 5, lastDone: yesterday, practised }, world);
 
-  test('before day 3 the world is hidden and no pick opens', () => {
-    const s = setup(1, standing, base({ date: today, right: 0, days: 2, lastDone: yesterday, practised: 2 }));
+  test('before her first day is done the world is hidden and no pick opens', () => {
+    const s = setup(1, standing, base({ date: today, right: 0, days: 0, lastDone: null, practised: 0 }));
     expect(bg(s).hidden).toBe(true);
     expect(appEl(s).hasAttribute('data-world')).toBe(false);
     expect(bg(s).nextElementSibling).toBe(appEl(s)); // behind .app
@@ -780,10 +780,10 @@ describe("Robo's world", () => {
     expect(pick(s)).toBeNull();
   });
 
-  test('the 10th right answer completes day 3: the day moment plays, then the pick opens with three kinds', () => {
+  test('the 10th right answer completes day 1: the day moment plays, then the pick opens with three kinds', () => {
     const s = setup(1, standing, day5());
     answerRight(s);
-    expect(s.saved.at(-1)!.day.practised).toBe(3);
+    expect(s.saved.at(-1)!.day.practised).toBe(1);
     expect(s.q('[data-moment="day"]')).not.toBeNull();
     expect(pick(s)).toBeNull();
     s.advance(3499);
@@ -844,7 +844,7 @@ describe("Robo's world", () => {
     s.tap('[data-action="pass"]');
     s.advance(20_000);
     expect(pick(s)).toBeNull();
-    expect(s.saved.at(-1)!.day.practised).toBe(2);
+    expect(s.saved.at(-1)!.day.practised).toBe(0);
   });
 
   test('an owed pick opens at once on any right answer, and the level-up that would have played does not', () => {

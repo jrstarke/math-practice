@@ -11,7 +11,7 @@ export interface WorldItem { kind: WorldKind; area: number; x: number; y: number
 
 export interface WorldState {
   items: WorldItem[];
-  /** Picks she has spent; one is owed for every PICK_EVERY days practised. */
+  /** Picks she has spent; one is owed on day 1 and then for every PICK_EVERY days practised (days 1, 4, 7, ...). */
   picksUsed: number;
   /** The three kinds she is choosing between right now, kept so a reload shows the same three. */
   offer: WorldKind[] | null;
@@ -20,7 +20,7 @@ export interface WorldState {
 export const initialWorld = (): WorldState => ({ items: [], picksUsed: 0, offer: null });
 
 export function picksOwed(practised: number, w: WorldState): number {
-  return Math.floor(practised / PICK_EVERY) - w.picksUsed;
+  return Math.ceil(practised / PICK_EVERY) - w.picksUsed;
 }
 
 /** Three distinct kinds: a partial Fisher-Yates that draws from `rng` exactly three times. */
@@ -95,5 +95,5 @@ export const CHEER_LINES: readonly string[] = ["That's awesome!", 'That looks gr
 
 export const pickCheer = (last: string | null, rng: Rng): string => pickStyle(CHEER_LINES, last, rng);
 
-export const pickPrompt = (days: number): string => `${days} days of math! Let's add something to our world!`;
+export const pickPrompt = (days: number): string => `${days} ${days === 1 ? 'day' : 'days'} of math! Let's add something to our world!`;
 export const PLACE_PROMPT = 'Tap where it goes!';

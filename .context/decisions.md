@@ -39,3 +39,4 @@
   (fitted to the width, flat sky/ground continuing) instead of cropped, so every spot stays visible until release 3's
   swipe. A pick waiting on a moment opens when the moment ends; Hint or Pass never opens it (the next right answer does).
 - 2026-11-14 (after release 1): picks come every 3 days practised (was 5; user), so the world and her first pick appear on her 3rd practised day (PICK_EVERY in src/core/world.ts). Sounds built: Robo's beep-boop when the pick opens, a soft pop (sound.pop) when she places something. Phone layout is not a concern (she is fully on the iPad).
+- 2026-11-14 (later): the first pick is on day 1, then every 3 days practised (days 1, 4, 7, ...): picksOwed = ceil(practised / 3) - picksUsed (user: "unlock robo's world now, first item on day 1"). The prompt reads "1 day of math!" on day 1.

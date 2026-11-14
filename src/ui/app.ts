@@ -390,7 +390,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     return result;
   }
 
-  /** After the answer is recorded: a pick is owed for every 3 days practised that she hasn't spent yet. */
+  /** After the answer is recorded: a pick is owed on day 1 and every 3 days after (days 1, 4, 7, ...) that she hasn't spent yet. */
   const pickOwed = () => picksOwed(progress.day.practised, progress.world) > 0;
 
   function submit() {
