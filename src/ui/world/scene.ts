@@ -5,13 +5,16 @@ export const SKY_TOP = '#bfe6ff', SKY_LOW = '#eaf7ff', GROUND = '#d8efc4';
 
 export const svgDataUri = (svg: string): string => 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
 
+/** How big a placed thing is drawn: mountains all stand on the horizon at one size, the rest by depth. */
+export const itemScale = (item: Pick<WorldItem, 'kind' | 'y'>): number => item.kind === 'mountain' ? 0.9 : depthScale(item.y);
+
 const tag = (g: string, item: WorldItem) => g.replace('<g ', `<g data-kind="${item.kind}" data-y="${item.y}" `);
 
 /** The whole world as one SVG string. With `blur` the land is blurred inside the SVG itself. */
 export function sceneSvg(items: WorldItem[], opts: { blur?: number } = {}): string {
   const sorted = items.map((it, i) => ({ it, i })).sort((a, b) => a.it.y - b.it.y || a.i - b.i).map((e) => e.it);
-  const mountains = sorted.filter((i) => i.kind === 'mountain').map((i) => tag(drawKind('mountain', i.x, HORIZON_Y, 0.9), i));
-  const rest = sorted.filter((i) => i.kind !== 'mountain').map((i) => tag(drawKind(i.kind, i.x, i.y, depthScale(i.y)), i));
+  const mountains = sorted.filter((i) => i.kind === 'mountain').map((i) => tag(drawKind('mountain', i.x, HORIZON_Y, itemScale(i)), i));
+  const rest = sorted.filter((i) => i.kind !== 'mountain').map((i) => tag(drawKind(i.kind, i.x, i.y, itemScale(i)), i));
   const land = `<rect width="${AREA_W}" height="${HORIZON_Y}" fill="url(#sky)"/>`
     + `<rect y="${HORIZON_Y}" width="${AREA_W}" height="${AREA_H - HORIZON_Y}" fill="${GROUND}"/>`
     + `<circle cx="226" cy="26" r="15" fill="#ffe27a" ${OUTLINE}/>`

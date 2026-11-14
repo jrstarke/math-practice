@@ -1,0 +1,61 @@
+/* Robo's world (src/ui/world/). Safari 15 safe: no container queries, :has(), nesting or inset shorthand. */
+
+/* ---- The pick (data-role="pick"): full screen, above the app and Robo's layers ---- */
+.pick {
+  position: fixed; left: 0; top: 0; width: 100%; height: 100%; z-index: 20; overflow: hidden;
+  background: #d8efc4; touch-action: manipulation; -webkit-user-select: none; user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  animation: pick-in 0.35s ease-out;
+}
+.pick-frame { position: absolute; }
+.pick-scene, .pick-overlay { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; }
+.pick-scene { pointer-events: none; }
+.pick-overlay { overflow: visible; pointer-events: none; }
+.pick-ghost { opacity: 0.75; }
+
+.pick-shade, .pick-shade * { pointer-events: none; }
+.pick-dim { position: absolute; background: rgba(43, 42, 76, 0.55); }
+.pick-zone {
+  position: absolute; border: 3px dashed #f5a623; border-radius: 6px; background: rgba(255, 226, 122, 0.18);
+}
+
+/* Robo stands bottom-left of the frame, just above the tray; the tray sits on the screen's bottom edge. */
+.pick-bottom {
+  position: absolute; bottom: 0; display: flex; flex-direction: column; align-items: stretch; gap: 6px;
+  padding: 0 10px max(10px, env(safe-area-inset-bottom));
+  pointer-events: none;
+}
+.pick-robo { display: flex; align-items: flex-end; gap: 8px; pointer-events: none; }
+.pick-figure { flex: none; width: 78px; height: 96px; }
+.pick-words.robo-words { margin-bottom: 54px; max-width: 240px; }
+
+.pick-tray {
+  display: flex; align-items: stretch; gap: 8px; pointer-events: auto;
+  width: 100%; max-width: 560px; margin: 0 auto; padding: 8px;
+  background: rgba(255, 255, 255, 0.95); border-radius: 18px; box-shadow: 0 3px 0 #e6dccb;
+}
+.pick-kinds { flex: 1 1 auto; display: flex; gap: 8px; min-width: 0; }
+.pick-kind, .pick-ok {
+  font: inherit; font-weight: 700; color: #2b2a4c; border-radius: 14px; cursor: pointer;
+  -webkit-appearance: none; appearance: none; touch-action: manipulation;
+}
+.pick-kind {
+  flex: 1 1 0; min-width: 0; min-height: 64px; padding: 4px 2px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  background: #fff3dd; border: 3px solid transparent; font-size: 0.85rem;
+}
+.pick-kind[data-selected] { border-color: #f5a623; background: #ffe9b8; animation: pick-pop 0.25s ease-out; }
+.pick-icon { display: block; width: 52px; height: 34px; overflow: visible; }
+.pick-ok {
+  flex: none; min-width: 84px; min-height: 64px; padding: 0 16px; border: 0;
+  background: #6cc070; color: #ffffff; font-size: 1.3rem; box-shadow: 0 3px 0 #4a9a4e;
+}
+.pick-ok:disabled { background: #cfd8cf; box-shadow: 0 3px 0 #b5bfb5; cursor: default; }
+.pick[data-locked] .pick-kind { opacity: 0.6; }
+
+@keyframes pick-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pick-pop { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .pick, .pick-kind[data-selected] { animation: none; }
+}
