@@ -8,6 +8,7 @@ import { decideRobo, initialRoboMemory, welcomeWords, type BigMoment, type RoboO
 import { nextProblem, recordResult, RECENT_LIMIT, type AttemptInput } from '../core/session';
 import { hintLimit, revealState, solve, type RevealState, type Step } from '../core/solver';
 import type { Problem } from '../core/types';
+import { makeOffer, pickCheer, picksOwed, placeItem } from '../core/world';
 import type { ProgressStore } from '../storage';
 import { el } from './dom';
 import { shake } from './feedback';
@@ -20,6 +21,8 @@ import { renderColumnProblem, type Phase } from './problemView';
 import { chooseMode, laneTop, momentSize, peekPosition, placeUp, spotPosition, union, type Box, type RoboMode } from './robo/layout';
 import { createRobo, type MomentPlace } from './robo/robo';
 import type { SoundPlayer } from './sound';
+import { createWorldBackground } from './world/background';
+import { createPick } from './world/pick';
 
 export interface AppDeps {
   root: HTMLElement;
@@ -84,6 +87,9 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   let roboLayout = ''; // where the stage and controls were at the last measure
   let roboAway = false; // a walk, high five or kick is playing in standing mode
   let greeting = false; // Robo is saying hello at its spot
+  let pickPending = false; // a pick is owed and opens when the moment playing now ends
+  let pickView: { el: HTMLElement; destroy(): void } | null = null;
+  let lastCheer: string | null = null; // in memory: the pick's last cheer line, so it doesn't repeat
 
   // Static shell
   const totalEl = el('span', { class: 'total', 'data-role': 'total' });
@@ -108,8 +114,16 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
       el('main', { class: 'play' },
         stageEl, controlsEl),
       robo.el, robo.overlay);
-  root.replaceChildren(appEl);
+  // Her world, blurred and still behind the math (once she has one).
+  const bg = createWorldBackground();
+  root.replaceChildren(bg.el, appEl);
   if (shouldShowInstallTip(nav, progress)) appEl.prepend(createInstallTip());
+
+  function showWorld() {
+    bg.update(progress.world.items);
+    appEl.toggleAttribute('data-world', progress.world.items.length > 0);
+  }
+  showWorld();
 
   function later(fn: () => void, ms: number) {
     const t = setTimeout(() => { timers.delete(t); fn(); }, ms);
@@ -175,7 +189,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     if (momentTimer && layout !== roboLayout) endMoment();
     roboLayout = layout;
     roboMode = deps.roboMode ?? chooseMode(document.documentElement.clientWidth || window.innerWidth, rect(controlsEl));
-    robo.show(roboMode === 'standing');
+    robo.show(roboMode === 'standing' && !pickView); // the pick brings its own Robo
     if (roboMode === 'standing' && roboWanted) roboUp(); else roboDown();
     syncMessage();
   }
@@ -185,6 +199,44 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     roboAway = false;
     robo.endMoment();
     endGreeting();
+    if (pickPending && !pickView) startPick();
+  }
+
+  /** The pick: full screen over the app. Its offer is saved before it shows, so a reload never loses it. */
+  function startPick() {
+    if (pickView) return;
+    pickPending = true;
+    let offer = progress.world.offer;
+    if (!offer) {
+      offer = makeOffer(roboRng);
+      progress = { ...progress, world: { ...progress.world, offer } };
+      store.save(progress);
+    }
+    const view = createPick({
+      items: progress.world.items,
+      offer,
+      days: progress.day.practised,
+      cheer: () => (lastCheer = pickCheer(lastCheer, roboRng)),
+      onPlaced: (item) => {
+        progress = { ...progress, world: placeItem(progress.world, item) };
+        store.save(progress);
+        showWorld();
+      },
+      onDone: closePick,
+    });
+    pickView = view; // before endMoment(), so it can't open a second one
+    endMoment(); // any greeting or moment still playing
+    robo.show(false);
+    root.append(view.el);
+  }
+
+  function closePick() {
+    if (!pickView) return;
+    pickView.destroy();
+    pickView.el.remove();
+    pickView = null;
+    pickPending = false;
+    measureRobo(); // Robo back
   }
 
   function endGreeting() {
@@ -196,7 +248,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   /** Hello, at Robo's spot. Never while it's up beside the problem or away on a moment: nothing may cover her work. */
   function greet() {
     // roboWanted: a hint or Pass is showing (on small screens a peek's words would sit on the hint).
-    if (roboWanted || (roboMode === 'standing' && (roboPlace !== 'spot' || roboAway))) return;
+    if (pickView || roboWanted || (roboMode === 'standing' && (roboPlace !== 'spot' || roboAway))) return;
     endMoment();
     const ms = robo.greet(welcomeWords(progress.total), momentPlace());
     greeting = roboMode === 'standing';
@@ -243,8 +295,17 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   function cheer(o: RoboOutcome) {
     const r = decideRobo(roboMemory, o, roboRng);
     roboMemory = r.memory;
-    const { big, line, surprise } = r.decision;
-    if (big) { playMoment(big); return; }
+    const { big, line, surprise, pick } = r.decision;
+    if (big) {
+      // The moment opens the pick when it ends. Set after playMoment, whose own opening endMoment() must not open it
+      // (a pick already waiting on an earlier moment waits on this one instead).
+      const wantPick = pick || pickPending;
+      pickPending = false;
+      playMoment(big);
+      pickPending = wantPick;
+      return;
+    }
+    if (pick) { startPick(); return; }
     if (o.passed) return;
     if (roboPlace === 'up') {
       robo.right(null);
@@ -306,6 +367,9 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     return result;
   }
 
+  /** After the answer is recorded: a pick is owed for every 5 days practised that she hasn't spent yet. */
+  const pickOwed = () => picksOwed(progress.day.practised, progress.world) > 0;
+
   function submit() {
     if (!firstSubmitted) {
       attempt.firstSubmitMs = now() - shownAt;
@@ -320,7 +384,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
       message = '';
       render();
       cheer({ totalBefore, totalAfter: progress.total, levelChange, unlocked,
-        wrongSubmits: attempt.wrongSubmits, hintsUsed: attempt.hintsUsed, passed: false, dayDone, pickOwed: false });
+        wrongSubmits: attempt.wrongSubmits, hintsUsed: attempt.hintsUsed, passed: false, dayDone, pickOwed: pickOwed() });
       later(showNext, ADVANCE_MS);
     } else {
       attempt.wrongSubmits++;
@@ -373,7 +437,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     roboWanted = true; // so passStep() sends Robo up
     passStep();
     cheer({ totalBefore, totalAfter: progress.total, levelChange, unlocked,
-      wrongSubmits: attempt.wrongSubmits, hintsUsed: attempt.hintsUsed, passed: true, dayDone, pickOwed: false });
+      wrongSubmits: attempt.wrongSubmits, hintsUsed: attempt.hintsUsed, passed: true, dayDone, pickOwed: pickOwed() });
   }
 
   function dismissTip() {
@@ -403,6 +467,8 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   const unlockSound = () => sound.unlock();
   function onPointerDown(e: Event) {
     sound.unlock();
+    // The pick handles its own taps (its listener has already run); nothing under it may take one.
+    if (pickView) return;
     const target = e.target as HTMLElement;
     const keyEl = target.closest<HTMLElement>('[data-key]');
     if (keyEl) { e.preventDefault(); handleKey(keyEl.dataset.key as Key); return; }
@@ -429,6 +495,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
 
   function onKeyDown(e: KeyboardEvent) {
     sound.unlock();
+    if (pickView) return; // the answer under the pick can't change
     const key = keyFromKeyboard(e);
     if (!key) return;
     e.preventDefault();
@@ -473,6 +540,10 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
       resizeObserver?.disconnect();
       robo.el.remove();
       robo.overlay.remove();
+      if (pickView) { pickView.destroy(); pickView.el.remove(); pickView = null; }
+      pickPending = false;
+      bg.destroy();
+      bg.el.remove();
       timers.forEach(clearTimeout);
       timers.clear();
     },

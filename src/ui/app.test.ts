@@ -737,3 +737,182 @@ describe('Robo', () => {
     expect(s.saved.at(-1)!.day).toEqual({ date: today, right: 10, days: 3, lastDone: today, practised: 6 });
   });
 });
+
+describe("Robo's world", () => {
+  const MIN = 60_000;
+  const today = localDate(new Date(START));
+  const yesterday = localDate(new Date(START - 24 * 60 * MIN));
+  const standing = { roboMode: 'standing' as const };
+  type S = ReturnType<typeof setup>;
+  const answerRight = (s: S) => { s.typeAnswer(s.correctAnswer()); s.tap('[data-key="submit"]'); };
+  const pick = (s: S) => s.q('[data-role="pick"]');
+  const kinds = (s: S) => [...s.root.querySelectorAll<HTMLElement>('[data-role="pick-kind"]')].map(k => k.dataset.kind);
+  const robo = (s: S) => s.q('[data-role="robo"]')!;
+  const bg = (s: S) => s.q('[data-role="world-bg"]')!;
+  const appEl = (s: S) => s.q('.app')!;
+  const down = (target: Element, init: MouseEventInit = {}) =>
+    target.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, ...init }));
+  /** Choose a kind, tap the ground at area (x, y) and press OK. */
+  function place(s: S, kind: string, x = 135, y = 250) {
+    down(s.q(`[data-role="pick-kind"][data-kind="${kind}"]`)!);
+    const frame = s.q('[data-role="pick-frame"]')!;
+    frame.getBoundingClientRect = () => new DOMRect(0, 0, 270, 360); // one client pixel per area unit
+    down(frame, { clientX: x, clientY: y });
+    down(s.q('[data-role="pick-ok"]')!);
+  }
+  // Hidden just now, so no welcome.
+  const base = (day: Progress['day'], world: Partial<Progress['world']> = {}): Progress =>
+    ({ ...defaultProgress(), total: 41, hiddenAt: START, day, world: { ...defaultProgress().world, ...world } });
+  /** Nine right today, 4 days practised: her 10th right answer completes day 5. */
+  const day5 = () => base({ date: today, right: 9, days: 4, lastDone: yesterday, practised: 4 });
+  /** A pick owed (5 days practised, none used), today not about to complete. */
+  const owed = (world: Partial<Progress['world']> = {}, practised = 5) =>
+    base({ date: today, right: 0, days: 5, lastDone: yesterday, practised }, world);
+
+  test('before day 5 the world is hidden and no pick opens', () => {
+    const s = setup(1, standing, base({ date: today, right: 0, days: 2, lastDone: yesterday, practised: 4 }));
+    expect(bg(s).hidden).toBe(true);
+    expect(appEl(s).hasAttribute('data-world')).toBe(false);
+    expect(bg(s).nextElementSibling).toBe(appEl(s)); // behind .app
+    answerRight(s);
+    s.advance(5000);
+    expect(pick(s)).toBeNull();
+  });
+
+  test('the 10th right answer completes day 5: the day moment plays, then the pick opens with three kinds', () => {
+    const s = setup(1, standing, day5());
+    answerRight(s);
+    expect(s.saved.at(-1)!.day.practised).toBe(5);
+    expect(s.q('[data-moment="day"]')).not.toBeNull();
+    expect(pick(s)).toBeNull();
+    s.advance(3499);
+    expect(pick(s)).toBeNull();
+    s.advance(1);
+    expect(pick(s)).not.toBeNull();
+    expect(kinds(s)).toHaveLength(3);
+    expect(s.root.querySelectorAll('[data-role="pick"]')).toHaveLength(1);
+    expect(s.q('[data-role="robo-moment"]')!.childElementCount).toBe(0);
+    expect(robo(s).hidden).toBe(true);
+  });
+
+  test('the same answer passed never opens a pick and practised stays the same', () => {
+    const s = setup(1, standing, day5());
+    s.tap('[data-action="pass"]');
+    s.advance(20_000);
+    expect(pick(s)).toBeNull();
+    expect(s.saved.at(-1)!.day.practised).toBe(4);
+  });
+
+  test('an owed pick opens at once on any right answer, and the level-up that would have played does not', () => {
+    const levelsUp: Progress = {
+      ...owed(),
+      unlocked: ['addition', 'subtraction', 'multiplication', 'division'],
+      addition: { level: 9, window: [], calibrationLeft: 0 },
+      subtraction: { level: 9, window: [], calibrationLeft: 0 },
+      multiplication: { level: 9, window: [], calibrationLeft: 0 },
+      division: { level: 1, window: [1], calibrationLeft: 9 },
+      welcome: { op: 'division', left: 1 },
+    };
+    const s = setup(1, standing, levelsUp);
+    answerRight(s);
+    expect(s.saved.at(-1)!.division.level).toBe(2); // it really levelled up
+    expect(pick(s)).not.toBeNull();
+    expect(s.q('[data-moment]')).toBeNull();
+    s.advance(5000);
+    expect(s.q('[data-moment]')).toBeNull();
+  });
+
+  test('the new offer is saved before the pick shows', () => {
+    const s = setup(1, standing, owed());
+    answerRight(s);
+    expect(pick(s)).not.toBeNull();
+    expect(s.saved.at(-1)!.world.offer).toEqual(kinds(s));
+    expect(s.saved.at(-1)!.world.picksUsed).toBe(0);
+  });
+
+  test('choose, tap the ground, OK: saved, cheered, then the pick closes onto the world behind the math', () => {
+    const s = setup(1, standing, owed());
+    answerRight(s);
+    const [first] = kinds(s);
+    place(s, first!, 135, 250);
+    const w = s.saved.at(-1)!.world;
+    expect(w.items).toEqual([{ kind: first, area: 0, x: 135, y: 250 }]);
+    expect(w.picksUsed).toBe(1);
+    expect(w.offer).toBeNull();
+    expect(s.q('[data-role="pick-words"]')!.textContent).toMatch(/!$/);
+    expect(bg(s).hidden).toBe(false);
+    expect(appEl(s).hasAttribute('data-world')).toBe(true);
+    s.advance(2500); // PICK_CHEER_MS
+    expect(pick(s)).toBeNull();
+    expect(robo(s).hidden).toBe(false);
+    expect(bg(s).hidden).toBe(false);
+    expect(bg(s).getAttribute('aria-hidden')).toBe('true');
+    expect(appEl(s).hasAttribute('data-world')).toBe(true);
+    expect(bg(s).querySelector('img')!.getAttribute('src')).toContain('feGaussianBlur');
+  });
+
+  test('a world she already has is behind the math from the start', () => {
+    const s = setup(1, standing, owed({ items: [{ kind: 'tree', area: 0, x: 100, y: 200 }], picksUsed: 1 }));
+    expect(bg(s).hidden).toBe(false);
+    expect(appEl(s).hasAttribute('data-world')).toBe(true);
+    answerRight(s);
+    expect(pick(s)).toBeNull();
+  });
+
+  test('a saved offer reopens exactly those three after a right answer', () => {
+    const s = setup(1, standing, owed({ offer: ['tree', 'lake', 'house'] }));
+    answerRight(s);
+    expect(kinds(s)).toEqual(['tree', 'lake', 'house']);
+  });
+
+  test('two picks owed: one at a time, the second on the next right answer after OK', () => {
+    const s = setup(1, standing, owed({}, 10));
+    answerRight(s);
+    expect(s.root.querySelectorAll('[data-role="pick"]')).toHaveLength(1);
+    place(s, kinds(s)[0]!);
+    s.advance(2500);
+    expect(pick(s)).toBeNull();
+    expect(s.saved.at(-1)!.world.picksUsed).toBe(1);
+    answerRight(s);
+    // This answer (seed 1) also unlocks subtraction: the kick plays first and the second pick opens when it ends.
+    expect(s.saved.at(-1)!.unlocked).toContain('subtraction');
+    expect(s.q('[data-moment="kick"]')).not.toBeNull();
+    expect(pick(s)).toBeNull();
+    s.advance(3000);
+    expect(s.root.querySelectorAll('[data-role="pick"]')).toHaveLength(1);
+    place(s, kinds(s)[1]!, 60, 300);
+    s.advance(2500);
+    expect(s.saved.at(-1)!.world.picksUsed).toBe(2);
+    expect(s.saved.at(-1)!.world.items).toHaveLength(2);
+    answerRight(s);
+    expect(pick(s)).toBeNull();
+  });
+
+  test('while the pick is open the pad, keyboard, Hint, Pass and mute do nothing', () => {
+    const s = setup(1, standing, owed());
+    answerRight(s);
+    s.advance(1000); // the next problem shows underneath
+    expect(pick(s)).not.toBeNull();
+    const saves = s.saved.length;
+    s.tap('[data-key="1"]');
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: '1' }));
+    expect(s.answerText()).toBe('');
+    s.tap('[data-action="hint"]');
+    expect(s.q('[data-role="bubble"]')!.textContent).toBe('');
+    s.tap('[data-action="pass"]');
+    s.tap('[data-action="mute"]');
+    s.advance(3000);
+    expect(s.saved.length).toBe(saves);
+    expect(s.answerText()).toBe('');
+    expect(pick(s)).not.toBeNull();
+  });
+
+  test('destroy removes the world and the pick', () => {
+    const s = setup(1, standing, owed({ items: [{ kind: 'tree', area: 0, x: 100, y: 200 }], picksUsed: 0 }));
+    answerRight(s);
+    expect(pick(s)).not.toBeNull();
+    s.app.destroy();
+    expect(pick(s)).toBeNull();
+    expect(s.q('[data-role="world-bg"]')).toBeNull();
+  });
+});

@@ -36,6 +36,9 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Its own stacking context, so Robo's world (z-index -1, src/ui/world/world.css) paints above the page background. */
+#app { isolation: isolate; }
+
 button { font: inherit; color: inherit; border: 0; background: none; padding: 0; cursor: pointer; }
 
 .app {
