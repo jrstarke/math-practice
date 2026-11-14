@@ -147,6 +147,42 @@ test('after OK, kind buttons and frame taps change nothing', () => {
   expect(t.onPlaced).toHaveBeenCalledTimes(1);
 });
 
+test('a resize after OK brings back no dim and no zone outline', () => {
+  const t = setup();
+  t.choose('tree');
+  t.tapArea(120, 200);
+  t.ok();
+  window.dispatchEvent(new Event('resize'));
+  expect(t.view.el.querySelectorAll('[data-role="pick-dim"]').length).toBe(0);
+  expect(t.q('[data-role="pick-zone"]')).toBeNull();
+});
+
+test('with a kind chosen, taps on the tray background or outside the frame place nothing', () => {
+  const t = setup();
+  t.choose('tree');
+  const down = (target: Element, x: number, y: number) =>
+    target.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, clientX: x, clientY: y }));
+  down(t.q('.pick-tray')!, 220, 250);
+  down(t.view.el, 220, 250);
+  expect(t.ghost()).toBeNull();
+  t.tapArea(120, 200);
+  down(t.q('.pick-tray')!, 160, 300);
+  down(t.view.el, 160, 300);
+  expect(t.ghostAt()).toEqual({ kind: 'tree', x: 120, y: 200 });
+});
+
+test('the frame fits in the space above the tray, standing on it', () => {
+  const t = setup();
+  const bottom = t.q('.pick-bottom')!;
+  Object.defineProperty(bottom, 'offsetHeight', { configurable: true, get: () => 168 });
+  window.dispatchEvent(new Event('resize'));
+  const f = fitFrame(window.innerWidth, window.innerHeight - 168);
+  const top = window.innerHeight - 168 - f.height;
+  const frame = t.q('[data-role="pick-frame"]')!;
+  expect([frame.style.left, frame.style.top, frame.style.width, frame.style.height])
+    .toEqual([`${f.left}px`, `${top}px`, `${f.width}px`, `${f.height}px`]);
+});
+
 test('destroy before the timer means onDone never fires', () => {
   const t = setup();
   t.choose('tree');

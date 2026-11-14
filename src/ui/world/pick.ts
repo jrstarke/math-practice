@@ -81,7 +81,7 @@ export function createPick(deps: PickDeps): { el: HTMLElement; destroy(): void }
   /** Dims everything outside the chosen kind's zone (beyond the frame too) and outlines the zone. */
   function drawShade(): void {
     shade.innerHTML = '';
-    if (!kind) return;
+    if (!kind || locked) return;
     const z = zoneOf(kind);
     const sx = box.width / AREA_W, sy = box.height / AREA_H;
     const l = box.left + z.x0 * sx, r = box.left + z.x1 * sx, t = box.top + z.y0 * sy, b = box.top + z.y1 * sy;
@@ -101,9 +101,12 @@ export function createPick(deps: PickDeps): { el: HTMLElement; destroy(): void }
   }
 
   function layout(): void {
-    box = fitFrame(window.innerWidth, window.innerHeight);
+    // The world fits in the space above the tray strip (Robo, its words and the choices), standing on it, so all of
+    // the ground she can place on is visible and tappable.
+    const above = Math.max(0, window.innerHeight - bottom.offsetHeight);
+    const fit = fitFrame(window.innerWidth, above);
+    box = { ...fit, top: above - fit.height };
     Object.assign(frame.style, { left: px(box.left), top: px(box.top), width: px(box.width), height: px(box.height) });
-    Object.assign(bottom.style, { left: px(box.left), width: px(box.width) });
     const horizon = box.top + box.height * HORIZON_Y / AREA_H;
     // Flat sky above the frame, the frame's own sky gradient beside it (no seam in landscape), flat ground below.
     root.style.background = `linear-gradient(to bottom, ${SKY_TOP} 0px, ${SKY_TOP} ${px(box.top)}, `
@@ -162,6 +165,9 @@ export function createPick(deps: PickDeps): { el: HTMLElement; destroy(): void }
 
   root.addEventListener('pointerdown', onPointerDown);
   window.addEventListener('resize', layout);
+  // The strip's height is only known once it's in the document (and changes if its words wrap differently).
+  const strip = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => layout());
+  strip?.observe(bottom);
   layout();
 
   return {
@@ -169,6 +175,7 @@ export function createPick(deps: PickDeps): { el: HTMLElement; destroy(): void }
     destroy() {
       root.removeEventListener('pointerdown', onPointerDown);
       window.removeEventListener('resize', layout);
+      strip?.disconnect();
       if (timer) clearTimeout(timer);
       timer = null;
     },
