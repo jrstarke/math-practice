@@ -71,3 +71,12 @@ test('an empty world has no mountains (she adds those) but keeps its hills', () 
   expect(kindsIn(svg).filter((e) => e.getAttribute('data-kind') === 'mountain')).toHaveLength(0);
   expect(svg).toContain('#c4e3ad');
 });
+
+test('the starting hills sit fully inside the picture, so none is cut off at its edges', () => {
+  const hills = [...sceneSvg([]).matchAll(/<path d="M(-?[\d.]+) [\d.]+ Q[\d.]+ [\d.-]+ (-?[\d.]+) [\d.]+ Z" fill="#(?:c4e3ad|b5dc9c)"/g)];
+  expect(hills).toHaveLength(3);
+  for (const m of hills) {
+    expect(Number(m[1])).toBeGreaterThanOrEqual(0);
+    expect(Number(m[2])).toBeLessThanOrEqual(270);
+  }
+});

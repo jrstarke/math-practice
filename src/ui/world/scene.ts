@@ -19,7 +19,7 @@ export function sceneSvg(items: WorldItem[], opts: { blur?: number } = {}): stri
     + `<rect y="${HORIZON_Y}" width="${AREA_W}" height="${AREA_H - HORIZON_Y}" fill="${GROUND}"/>`
     + `<circle cx="226" cy="26" r="15" fill="#ffe27a" ${OUTLINE}/>`
     + mountains.join('')
-    + drawHill(30, HORIZON_Y, 70, 9, '#c4e3ad') + drawHill(165, HORIZON_Y, 80, 11, '#b5dc9c') + drawHill(262, HORIZON_Y, 50, 8, '#c4e3ad')
+    + drawHill(52, HORIZON_Y, 48, 9, '#c4e3ad') + drawHill(150, HORIZON_Y, 70, 11, '#b5dc9c') + drawHill(232, HORIZON_Y, 36, 8, '#c4e3ad')
     + rest.join('');
   const blur = opts.blur;
   const filter = blur ? `<filter id="bl" x="-5%" y="-5%" width="110%" height="110%"><feGaussianBlur stdDeviation="${blur}"/></filter>` : '';
