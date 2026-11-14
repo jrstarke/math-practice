@@ -96,6 +96,9 @@ Parts 2 and 3 get their own designs. Part 1 must not block them (see Constraints
   a fixed shape means a rotation or another screen never stretches or squashes her world, and saved positions mean
   the same thing everywhere — part 3's roads depend on that.) It starts with one area; a new empty area opens to the right of the newest
   when the newest has enough things in it (builder: a count around 8, tuned so an area looks full but not cramped).
+- **Horizon** (user: "more ground"): about **a third of the way down** (y=120 of an area's 360), so the sky is the top
+  third and the ground the bottom two thirds. The mockups' 42% (y=150) was a sketch value. Confirm on a mockup in
+  release 1; tune by eye, but keep the ground the larger part.
 - **Depth**: where she places a thing sets how far away it is: higher on the ground (nearer the horizon) is farther
   and drawn smaller; lower is nearer and bigger. Things are drawn far-to-near, so nearer things overlap farther ones.
   (User: "something further up towards the horizon is further away, and something lower is closer and bigger".)
