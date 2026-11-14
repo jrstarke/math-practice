@@ -1,5 +1,5 @@
 import { mulberry32 } from './rng';
-import { AREA_H, AREA_W, HORIZON_Y, KINDS, initialWorld, isValidWorld, makeOffer, picksOwed, placeItem, type WorldState } from './world';
+import { AREA_H, AREA_W, CHEER_LINES, HORIZON_Y, KINDS, PLACE_PROMPT, depthScale, initialWorld, pickCheer, pickPrompt, snapPlacement, zoneOf, isValidWorld, makeOffer, picksOwed, placeItem, type WorldState } from './world';
 
 const empty = initialWorld();
 
@@ -55,3 +55,51 @@ test.each([
   ['items not an array', { ...empty, items: null }],
   ['not an object', null],
 ])('rejects %s', (_, w) => expect(isValidWorld(w)).toBe(false));
+
+test('makeOffer draws from rng exactly three times', () => {
+  let n = 0;
+  makeOffer(() => { n++; return 0.5; });
+  expect(n).toBe(3);
+});
+
+test('zones', () => {
+  expect(zoneOf('mountain')).toEqual({ x0: 40, x1: 230, y0: 42, y1: 102 });
+  expect(zoneOf('tree')).toEqual({ x0: 24, x1: 246, y0: 102, y1: 360 });
+  expect(zoneOf('bush')).toEqual(zoneOf('tree'));
+  expect(zoneOf('house')).toEqual(zoneOf('tree'));
+  expect(zoneOf('lake')).toEqual({ x0: 48, x1: 222, y0: 135, y1: 360 });
+});
+
+test('snapPlacement enforces zones and puts mountains on the horizon', () => {
+  expect(snapPlacement('mountain', 120, 70)).toEqual({ x: 120, y: 90 });
+  expect(snapPlacement('mountain', 120, 200)).toBeNull();
+  expect(snapPlacement('tree', 120, 70)).toBeNull();
+  expect(snapPlacement('tree', 120, 200)).toEqual({ x: 120, y: 200 });
+  expect(snapPlacement('tree', 5, 200)).toBeNull();
+  expect(snapPlacement('lake', 120, 110)).toBeNull();
+  expect(snapPlacement('lake', 120, 200)).toEqual({ x: 120, y: 200 });
+});
+
+test('depthScale grows with y', () => {
+  expect(depthScale(90)).toBe(0.4);
+  expect(depthScale(360)).toBe(1.15);
+  for (let y = 90; y < 360; y += 10) expect(depthScale(y + 10)).toBeGreaterThan(depthScale(y));
+});
+
+test('pickCheer never repeats the last line and covers all six', () => {
+  expect(CHEER_LINES).toEqual(["That's awesome!", 'That looks great!', 'Cool!', "It's perfect!", 'I love it!', 'Wow!']);
+  const seen = new Set<string>();
+  let last: string | null = null;
+  for (let n = 1; n <= 500; n++) {
+    const c = pickCheer(last, mulberry32(n));
+    expect(c).not.toBe(last);
+    seen.add(c);
+    last = c;
+  }
+  expect(seen.size).toBe(6);
+});
+
+test('prompts', () => {
+  expect(pickPrompt(5)).toBe("5 days of math! Let's add something to our world!");
+  expect(PLACE_PROMPT).toBe('Tap where it goes!');
+});

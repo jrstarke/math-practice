@@ -1,4 +1,5 @@
 import type { Rng } from './rng';
+import { pickStyle } from './robo';
 
 export const AREA_W = 270, AREA_H = 360, HORIZON_Y = 90, PICK_EVERY = 5;
 
@@ -54,3 +55,33 @@ export function isValidWorld(x: unknown): x is WorldState {
     && isNonNegInt(w.picksUsed)
     && (w.offer === null || (Array.isArray(w.offer) && w.offer.length === 3 && w.offer.every(isKind) && new Set(w.offer).size === 3));
 }
+
+export type Zone = { x0: number; x1: number; y0: number; y1: number };
+
+const GROUND_ZONE: Zone = { x0: 24, x1: 246, y0: 102, y1: AREA_H };
+const ZONES: Record<WorldKind, Zone> = {
+  mountain: { x0: 40, x1: 230, y0: 42, y1: 102 },
+  tree: GROUND_ZONE,
+  bush: GROUND_ZONE,
+  house: GROUND_ZONE,
+  lake: { x0: 48, x1: 222, y0: 135, y1: AREA_H },
+};
+
+export const zoneOf = (kind: WorldKind): Zone => ZONES[kind];
+
+/** The spot an item lands on, or null when the tap is outside where its kind may go. Mountains sit on the horizon. */
+export function snapPlacement(kind: WorldKind, x: number, y: number): { x: number; y: number } | null {
+  const z = ZONES[kind];
+  if (x < z.x0 || x > z.x1 || y < z.y0 || y > z.y1) return null;
+  return { x, y: kind === 'mountain' ? HORIZON_Y : y };
+}
+
+/** Things lower on the screen are nearer, so drawn bigger. */
+export const depthScale = (y: number): number => 0.4 + 0.75 * (y - HORIZON_Y) / (AREA_H - HORIZON_Y);
+
+export const CHEER_LINES: readonly string[] = ["That's awesome!", 'That looks great!', 'Cool!', "It's perfect!", 'I love it!', 'Wow!'];
+
+export const pickCheer = (last: string | null, rng: Rng): string => pickStyle(CHEER_LINES, last, rng);
+
+export const pickPrompt = (days: number): string => `${days} days of math! Let's add something to our world!`;
+export const PLACE_PROMPT = 'Tap where it goes!';
