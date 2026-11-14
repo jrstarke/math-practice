@@ -44,6 +44,19 @@ test('shown with one item: the picture is the world blurred inside the SVG, with
   expect(css).toMatch(/\.world-veil\s*\{[^}]*rgba\(255,\s*248,\s*236,\s*0?\.15\)/);
 });
 
+test("the card (app.ts places it around the problem) is drawn behind it in the card style, only with a world", () => {
+  const rule = css.match(/\.world-card\s*\{([^}]*)\}/)![1];
+  expect(rule).toMatch(/position:\s*absolute/);
+  expect(rule).toMatch(/z-index:\s*-1/);
+  expect(rule).toMatch(/pointer-events:\s*none/);
+  expect(rule).toMatch(/background:\s*rgba\(255,\s*255,\s*255,\s*0?\.92\)/);
+  expect(rule).toMatch(/box-shadow:\s*0 3px 0 var\(--key-shadow\)/);
+  expect(css).toMatch(/\.app:not\(\[data-world\]\) \.world-card\s*\{\s*display:\s*none/);
+  expect(css).toMatch(/\.app\[data-world\] \.problem-area\s*\{[^}]*position:\s*relative[^}]*z-index:\s*0/);
+  expect(css).not.toMatch(/problem-area::before/); // not the whole problem area
+  expect(css).toMatch(/\.app\[data-world\] \.answer-row \.cell:empty:not\(:first-child\)\s*\{\s*background:\s*#fff3dd/);
+});
+
 test('update rebuilds the picture only when the items changed', () => {
   const bg = createWorldBackground();
   bg.update([tree]);

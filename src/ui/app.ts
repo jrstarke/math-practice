@@ -50,6 +50,8 @@ export const ACTION_GUARD_MS = 400;
 export const WELCOME_AFTER_MS = 30 * 60 * 1000;
 const TRY_AGAIN = 'Not quite — try again';
 const ROBO_TRY_AGAIN = 'Not quite — try again!';
+/** How far the problem's card reaches past the problem (and picture) on each side. */
+const CARD_PAD = 14;
 
 function toBox(r: DOMRect): Box {
   return { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
@@ -100,7 +102,9 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   const pictureHost = el('div', { class: 'picture-host', 'data-role': 'picture' });
   // The bubble floats above the problem (anchored to it) so hint length never resizes the problem.
   const problemAnchor = el('div', { class: 'problem-anchor' }, bubble.el, problemHost);
-  const problemArea = el('div', { class: 'problem-area', 'data-role': 'problem-area' }, problemAnchor, pictureHost);
+  // With a world, the problem sits on a card (out of flow: placed by fitCard, so the layout never changes).
+  const cardEl = el('div', { class: 'world-card', 'data-role': 'world-card', 'aria-hidden': 'true' });
+  const problemArea = el('div', { class: 'problem-area', 'data-role': 'problem-area' }, cardEl, problemAnchor, pictureHost);
   const hintBtn = el('button', { type: 'button', class: 'action hint', 'data-action': 'hint' });
   const passBtn = el('button', { type: 'button', class: 'action pass', 'data-action': 'pass' }, 'Pass');
   const actions = el('div', { class: 'actions' });
@@ -122,8 +126,19 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   function showWorld() {
     bg.update(progress.world.items);
     appEl.toggleAttribute('data-world', progress.world.items.length > 0);
+    fitCard();
   }
-  showWorld();
+
+  /** The card hugs the problem and its picture (as drawn now, Robo's shift included), padded. Only with a world. */
+  function fitCard() {
+    if (!appEl.hasAttribute('data-world')) return;
+    const area = rect(problemArea);
+    const c = union(rect(problemAnchor), pictureHost.childElementCount > 0 ? rect(pictureHost) : null);
+    Object.assign(cardEl.style, {
+      left: `${c.left - area.left - CARD_PAD}px`, top: `${c.top - area.top - CARD_PAD}px`,
+      width: `${c.right - c.left + 2 * CARD_PAD}px`, height: `${c.bottom - c.top + 2 * CARD_PAD}px`,
+    });
+  }
 
   function later(fn: () => void, ms: number) {
     const t = setTimeout(() => { timers.delete(t); fn(); }, ms);
@@ -157,6 +172,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     roboPlace = 'spot';
     robo.moveTo(spot(), 'spot');
     syncMessage();
+    fitCard();
   }
 
   /** Up beside the problem if there's room, otherwise point at the bubble from the spot. */
@@ -179,6 +195,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
       robo.moveTo(spot(), 'point');
     }
     syncMessage();
+    fitCard();
   }
 
   /** Measure the layout: stand or peek, and where. Runs after the first render and on every resize. */
@@ -331,6 +348,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     muteBtn.textContent = progress.muted ? '🔇' : '🔊';
     bubble.set(reveal.text);
     renderPicture(pictureHost, reveal.picture ?? null);
+    fitCard();
     const allShown = hintsShown >= hintLimit(steps);
     hintBtn.disabled = allShown;
     hintBtn.textContent = allShown ? "💡 That's every hint!" : '💡 Hint';
@@ -510,6 +528,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   root.addEventListener('pointerup', unlockSound);
   window.addEventListener('keydown', onKeyDown);
   sound.setMuted(progress.muted);
+  showWorld();
   showNext();
   measureRobo();
   if (awayLongEnough()) greet();

@@ -902,6 +902,35 @@ describe("Robo's world", () => {
     expect(pick(s)).toBeNull();
   });
 
+  test('the card hugs the problem (and the picture when it shows), padded, without moving anything', () => {
+    const at = (x: number, y: number, w: number, h: number) => new DOMRect(x, y, w, h);
+    const boxes: [string, DOMRect][] = [
+      ['problem-area', at(16, 80, 778, 487)],
+      ['problem-anchor', at(280, 200, 250, 260)],
+      ['picture-host', at(250, 460, 310, 100)],
+    ];
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      return boxes.find(([cls]) => this.classList.contains(cls))?.[1] ?? new DOMRect(0, 0, 0, 0);
+    });
+    const tree = { kind: 'tree' as const, area: 0, x: 100, y: 200 };
+    const noWorld = setup(1, standing, owed({ picksUsed: 1 }));
+    const card = (s: S) => s.q('[data-role="world-card"]')!;
+    expect(card(noWorld).getAttribute('aria-hidden')).toBe('true');
+    expect(card(noWorld).style.width).toBe(''); // not measured without a world
+    const s = setup(1, standing, owed({ items: [tree], picksUsed: 1 }));
+    expect(card(s).parentElement).toBe(s.q('.problem-area'));
+    // No picture: the problem anchor, padded 14px, in problem-area coordinates.
+    expect([card(s).style.left, card(s).style.top, card(s).style.width, card(s).style.height])
+      .toEqual(['250px', '106px', '278px', '288px']);
+    s.tap('[data-action="hint"]'); // the picture host still counts only once it has a picture
+    const host = s.q('.picture-host')!;
+    if (host.childElementCount === 0) host.append(document.createElement('div'));
+    window.dispatchEvent(new Event('resize'));
+    expect([card(s).style.left, card(s).style.top, card(s).style.width, card(s).style.height])
+      .toEqual(['220px', '106px', '338px', '388px']);
+    vi.restoreAllMocks();
+  });
+
   test('a saved offer reopens exactly those three after a right answer', () => {
     const s = setup(1, standing, owed({ offer: ['tree', 'lake', 'house'] }));
     answerRight(s);

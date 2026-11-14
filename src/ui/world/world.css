@@ -10,12 +10,14 @@
 .world-bg img { position: absolute; display: block; will-change: transform; pointer-events: none; }
 .world-veil { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: rgba(255, 248, 236, 0.15); }
 
-/* The problem's card: drawn behind the problem (and its picture) without changing its layout. */
+/* The problem's card: out of flow, behind the problem (and its picture when one shows), so the layout never changes.
+   app.ts places it around them, padded (one card for both: the picture host scrolls, so it can't draw its own). */
 .app[data-world] .problem-area { position: relative; z-index: 0; }
-.app[data-world] .problem-area::before {
-  content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: -1; pointer-events: none;
+.world-card {
+  position: absolute; z-index: -1; pointer-events: none;
   background: rgba(255, 255, 255, 0.92); border-radius: 20px; box-shadow: 0 3px 0 var(--key-shadow);
 }
+.app:not([data-world]) .world-card { display: none; }
 /* Empty answer boxes read as boxes on the white card (not the leading blank op cell). */
 .app[data-world] .answer-row .cell:empty:not(:first-child) { background: #fff3dd; }
 
