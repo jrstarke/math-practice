@@ -94,11 +94,26 @@ export function createRobo(): RoboView {
       // The scene is the full viewport wide with its content centred on 50%: shift it so that centre is centerX,
       // keeping room for the words on its left and the robot on its right.
       const lo = Math.min(at.viewportWidth / 2, 240), hi = Math.max(at.viewportWidth / 2, at.viewportWidth - 120);
-      m.style.left = `${Math.min(hi, Math.max(lo, at.centerX)) - at.viewportWidth / 2}px`;
+      const cx = Math.min(hi, Math.max(lo, at.centerX));
+      m.style.left = `${cx - at.viewportWidth / 2}px`;
+      // The day words end at cx - 68s and must not run off the left edge.
+      const dayWords = m.querySelector<HTMLElement>('.robo-words');
+      if (dayWords && m.dataset.moment === 'day') {
+        const s = Number(m.style.getPropertyValue('--s'));
+        dayWords.style.maxWidth = `${Math.max(0, Math.min(260, Math.round(cx - 68 * s - 16)))}px`;
+      }
     } else if (!peeking) m.style.left = '';
     if (peeking) {
       m.style.left = `${at.peek.left}px`;
       m.style.width = `${width}px`;
+    }
+    const fw = m.querySelector<HTMLElement>('.robo-fireworks');
+    if (fw && world) {
+      // In the sky over him: fixed size (not --s), centred on Robo, its bottom one robot height above his head.
+      const top = Math.max(8 - (Number.parseFloat(m.style.top) || 0), -(FIREWORKS_H + height));
+      fw.style.setProperty('--fw', '1');
+      fw.style.left = `calc(50% - ${FIREWORKS_W / 2}px)`;
+      fw.style.top = `${top}px`;
     }
     const slots = m.querySelectorAll<HTMLElement>('.robo-slot');
     for (const s of slots) {
@@ -228,6 +243,9 @@ export function createRobo(): RoboView {
   };
   return view;
 }
+
+const FIREWORKS_W = 170;
+const FIREWORKS_H = 136;
 
 /** Bursts of sparks beside Robo for a 10+ day: the box is 170 × 136 at full scale and shrinks with --s like the ball. */
 function fireworks(): HTMLElement {

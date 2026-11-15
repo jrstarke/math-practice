@@ -43,6 +43,33 @@ describe('a world moment draws small robots', () => {
   });
 });
 
+describe('fireworks in the sky', () => {
+  const fw: BigMoment = { kind: 'day', days: 12, tier: 'fireworks', words: 'Twelve days!' };
+  const fwEl = () => robo.overlay.querySelector<HTMLElement>('[data-role="fireworks"]')!;
+  it('in the world they keep a fixed scale and hang above Robo', () => {
+    robo.play(fw, { ...standing, robotH: 40, size: 40, laneTop: 300, centerX: 400 });
+    const f = fwEl();
+    expect(f.style.getPropertyValue('--fw')).toBe('1');
+    expect(Number.parseFloat(f.style.top) + 136).toBeLessThanOrEqual(0);
+    expect(f.style.left).toBe('calc(50% - 85px)');
+  });
+  it('in the strip they are unchanged: right of Robo, scaled by --s', () => {
+    robo.play(fw, standing);
+    const f = fwEl();
+    expect(f.style.getPropertyValue('--fw')).toBe('');
+    expect(f.style.top).toBe('');
+    expect(f.style.left).toBe('');
+  });
+  it('the day words stay on screen when Robo stands near the left edge', () => {
+    robo.play({ kind: 'day', days: 3, tier: 'arms', words: 'Three days in a row!' }, { ...standing, robotH: 40, size: 40, laneTop: 300, centerX: 10 });
+    const m = moment()!;
+    const line = Number.parseFloat(m.style.left) + 810 / 2; // the scene's 50% line, in screen px
+    const w = m.querySelector<HTMLElement>('.robo-words')!;
+    const s = Number(m.style.getPropertyValue('--s'));
+    expect(line - 68 * s - Number.parseFloat(w.style.maxWidth)).toBeGreaterThanOrEqual(15);
+  });
+});
+
 describe('Robo view', () => {
   it('think: light off, looking up, nothing said', () => {
     robo.right('You got it!');

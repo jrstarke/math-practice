@@ -110,3 +110,20 @@
   .app[data-world-moment] .topbar, .app[data-world-moment] .stage, .app[data-world-moment] .controls { transform: none; opacity: 0; }
   .pick, .pick-kind[data-selected] { animation: none; }
 }
+
+/* Sparkles round the small Robo: above his layer (5, and later in the page), under the front picture (6). Opacity and
+   transform only. Each star is centred on its left/top by a negative margin. */
+.sparkles { position: fixed; left: 0; top: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; overflow: hidden; }
+.sparkle { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; }
+.sparkle svg { display: block; }
+.sparkle-go { opacity: 0; animation: sparkle-rise var(--sl, 1.5s) ease-out var(--sd, 0s) 2 both; }
+@keyframes sparkle-rise {
+  0% { opacity: 0; transform: translateY(6px) scale(0.5); }
+  30% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-18px) scale(0.8); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sparkle-go { animation: sparkle-fade var(--sl, 1.5s) ease-in-out var(--sd, 0s) 1 both; }
+  .sparkle[data-still] { animation: sparkle-fade 3s ease-in-out both; }
+}
+@keyframes sparkle-fade { 0%, 100% { opacity: 0; } 30%, 70% { opacity: 1; } }

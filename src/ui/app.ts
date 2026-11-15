@@ -23,6 +23,7 @@ import { createRobo, type MomentPlace } from './robo/robo';
 import type { SoundPlayer } from './sound';
 import { createWorldBackground } from './world/background';
 import { createWorldFront } from './world/front';
+import { createSparkles, sparkleCircle, wantsSparkles } from './world/sparkles';
 import { isWorldMoment, worldMomentPlace } from './world/moment';
 import { createPick } from './world/pick';
 
@@ -136,7 +137,9 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   // » ends a world celebration early; it is the only thing that does.
   const skipBtn = el('button', { type: 'button', class: 'world-skip', 'data-role': 'world-skip', 'aria-label': 'Skip' }, '»');
   skipBtn.hidden = true;
-  root.replaceChildren(bg.el, appEl, front.el, skipBtn);
+  // Sparkles round the small Robo: same z as his layer, later in the page, so over him and under the front picture.
+  const sparkles = createSparkles();
+  root.replaceChildren(bg.el, appEl, sparkles.el, front.el, skipBtn);
   if (shouldShowInstallTip(nav, progress)) appEl.prepend(createInstallTip());
 
   function showWorld() {
@@ -234,6 +237,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     if (momentTimer) { clearTimeout(momentTimer); timers.delete(momentTimer); momentTimer = null; }
     roboAway = false;
     robo.endMoment();
+    sparkles.stop();
     endGreeting();
     if (worldMoment) endWorldMoment();
     if (pickPending && !pickView) startPick();
@@ -362,6 +366,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
         const { feetY, ...place } = worldMomentPlace(window.innerWidth, window.innerHeight, progress.world.items, big);
         front.show(progress.world.items, feetY);
         const ms = robo.play(big, place);
+        if (wantsSparkles(big)) sparkles.play(sparkleCircle(place), ms);
         sound.robo();
         momentTimer = later(() => { momentTimer = null; endMoment(); syncMessage(); }, ms);
       }, SLIDE_MS);
@@ -639,6 +644,8 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
       skipBtn.remove();
       front.destroy();
       front.el.remove();
+      sparkles.stop();
+      sparkles.el.remove();
       if (pickView) { pickView.destroy(); pickView.el.remove(); pickView = null; }
       pickPending = false;
       bg.destroy();
