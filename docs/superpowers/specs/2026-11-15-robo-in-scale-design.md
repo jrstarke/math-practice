@@ -39,7 +39,7 @@ everything else in her world.
   becomes: the sharp twin is split into a "behind" and an "in front" picture, and the celebration scene is placed between them.
 - **Party.** Because he is small, a burst of sparkles (new, drawn in screen pixels, about 3x Robo's height across) plays
   around him so the show still fills the screen. The words bubble keeps its size (it was too small next to the big Robo, and is
-  about right next to a small one).
+  about right next to a small one). Sparkles play for stars, conga and the day's lower tiers; the 10+ day tier has no sparkle ring, and its fireworks stay screen-sized and burst in the sky above Robo instead of shrinking with him (chosen by the user, 2026-11-15).
 - **Kept as is.** The slide-away, the » skip, the 6 s cap, the 400 ms tap guard, and the shared world frame all stay.
 
 ## Left to the builder

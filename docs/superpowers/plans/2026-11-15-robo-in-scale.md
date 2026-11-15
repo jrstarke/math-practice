@@ -4,7 +4,7 @@
 
 **Goal:** In a world celebration Robo is house-door-sized and obeys depth (nearer items stand in front of him), instead of being 34% of the screen tall.
 
-**Architecture:** A pure `chooseSpot` picks where he stands from her placed items. `MomentPlace` gains `robotH` (the height of one robot in px) and `centerX`, so the existing scene builders draw small robots. A transparent "front" picture, holding only the items nearer than his feet, is drawn above the scene so those items cover him. A sparkle burst keeps the show big.
+**Architecture:** A pure `chooseSpot` picks where he stands from her placed items. `MomentPlace` gains `robotH` (the height of one robot in px) and `centerX`, so the existing scene builders draw small robots. A transparent "front" picture, holding only the items nearer than his feet, is drawn above the scene so those items cover him. A sparkle burst (stars, conga and the lower day tiers) and sky fireworks (day, 10+ days) keep the show big.
 
 **Tech Stack:** vanilla TypeScript, Vite, Vitest (jsdom), `shots.mjs` (Playwright layout check).
 
@@ -25,7 +25,8 @@
 - A world with no free ground (items everywhere): `chooseSpot` still returns a finite spot inside the ground zone (Task 2 test).
 - Phone landscape (852x393): robot height stays at least 20px, the layer stays on screen (Task 3 test).
 - Items exactly at Robo's feet y: they are NOT in the front layer (they are behind or beside him) (Task 4 test).
-- Reduce Motion: sparkles do not move, they fade (Task 5 test).
+- Reduce Motion: sparkles do not move, they fade (Task 5 test); the fireworks tier already stills its bursts, keep that.
+- The 10+ day tier has fireworks and NO sparkle ring (Task 5 test).
 
 ---
 
@@ -93,20 +94,21 @@
 - [ ] **Step 4: Run** `npx vitest run`; `npx tsc --noEmit`; expect PASS.
 - [ ] **Step 5: Commit** `feat: things nearer than Robo stand in front of him`.
 
-### Task 5: A sparkle burst so a small Robo still has a party
+### Task 5: Sparkles, and fireworks in the sky, so a small Robo still has a party
 
 **Files:**
 - Create: `src/ui/world/sparkles.ts`
-- Modify: `src/ui/world/world.css`, `src/ui/app.ts`
-- Test: `src/ui/world/sparkles.test.ts`
+- Modify: `src/ui/world/world.css`, `src/ui/robo/robo.css` (fireworks), `src/ui/robo/robo.ts`, `src/ui/app.ts`
+- Test: `src/ui/world/sparkles.test.ts`, `src/ui/robo/robo.test.ts`
 
 **Interfaces:**
 - Consumes: the `WorldMomentPlace` (Task 3: `centerX`, `laneTop`, `robotH`, `size`, `maxMs`).
 - Produces: `export function createSparkles(): { el: HTMLElement; play(at: { x: number; y: number; r: number }, ms: number): void; stop(): void }`: 10 small inline-SVG stars placed on a circle of radius `r` px around `(x, y)`, each fading and rising by opacity/transform CSS only, for `ms`.
 
 - [ ] **Step 1: Write failing tests**: `play` adds 10 stars within `r` of `(x, y)`; `stop` removes them; under Reduce Motion (`matchMedia('(prefers-reduced-motion: reduce)')` mocked true) the stars have `data-still` and no animation class; `r` is `3 * robotH` as called by app (assert in a small app-level helper if it exists, else in `sparkles.test.ts` with the helper `sparkleCircle(place)` exported from the same file returning `{ x: centerX, y: laneTop + size - robotH / 2, r: 3 * robotH }`).
-- [ ] **Step 2: Run** `npx vitest run src/ui/world/sparkles.test.ts`; expect FAIL.
-- [ ] **Step 3: Implement** `sparkles.ts` and the CSS (`@keyframes` using opacity and transform only; a `@media (prefers-reduced-motion: reduce)` rule turns movement off and just fades). In `app.ts` play the sparkles right after `robo.play` in `playWorldMoment` (for ms = the returned ms) and stop them in `endMoment()`. Put the sparkle layer between the Robo overlay and the front picture.
+- [ ] **Step 1b: Write failing tests** in `robo.test.ts`: playing a world moment (`robotH` set) of the day at tier `fireworks` gives a `[data-role="fireworks"]` that does not follow `robotH` (fixed `--fw: 1`, not `--s`) and sits above Robo (its bottom edge above the scene's top); in the strip (no `robotH`) the fireworks are unchanged (right of Robo, scaled by `--s`). In `sparkles.test.ts`: `wantsSparkles(big: BigMoment): boolean` (exported from `sparkles.ts`) is true for stars, conga and the day at tiers `wave`, `arms`, `jump`, and false for the day at tier `fireworks`.
+- [ ] **Step 2: Run** `npx vitest run src/ui/world/sparkles.test.ts src/ui/robo/robo.test.ts`; expect FAIL.
+- [ ] **Step 3: Implement** `sparkles.ts` and the CSS (`@keyframes` using opacity and transform only; a `@media (prefers-reduced-motion: reduce)` rule turns movement off and just fades). Fireworks in the sky (my call on the exact spot): when `MomentPlace.robotH` is set, give the day scene's `.robo-fireworks` a fixed scale (`--fw: 1`, not `--s`) and centre it on Robo's x with its bottom edge one robot height above his head, so the bursts hang in the sky over him (keep the burst animation and its Reduce Motion stilling). In `app.ts` play the sparkles (only when `wantsSparkles(big)`) right after `robo.play` in `playWorldMoment` (for ms = the returned ms) and stop them in `endMoment()`. Put the sparkle layer between the Robo overlay and the front picture.
 - [ ] **Step 4: Run** `npx vitest run`; `npx tsc --noEmit`; expect PASS.
 - [ ] **Step 5: Commit** `feat: a sparkle burst around the small Robo`.
 
