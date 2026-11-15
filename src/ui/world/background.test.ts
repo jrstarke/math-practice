@@ -92,3 +92,53 @@ expect(img(bg.el).style.height).toBe(`${f2.height}px`);
   expect(Number(view[2])).toBeCloseTo(1080 / unit, 5);
   bg.destroy();
 });
+
+describe('coming into focus (a sharp twin that fades in)', () => {
+  const sharp = (el: HTMLElement) => el.querySelector<HTMLImageElement>('[data-role="world-sharp"]')!;
+  const decode = (i: HTMLImageElement) => decodeURIComponent(i.getAttribute('src')!.slice(i.getAttribute('src')!.indexOf(',') + 1));
+
+  test('focus(true) sets data-focus and the sharp picture is the same world without the blur', () => {
+    const bg = createWorldBackground();
+    bg.update([tree]);
+    expect(bg.el.hasAttribute('data-focus')).toBe(false);
+    bg.focus(true);
+    expect(bg.el.hasAttribute('data-focus')).toBe(true);
+    expect(decode(sharp(bg.el))).toContain('data-kind="tree"');
+    expect(decode(sharp(bg.el))).not.toContain('feGaussianBlur');
+    expect(svgOf(bg.el)).toContain('feGaussianBlur stdDeviation="2"'); // the blurred one is untouched
+    bg.focus(false);
+    expect(bg.el.hasAttribute('data-focus')).toBe(false);
+    bg.destroy();
+  });
+
+  test('the sharp picture sits exactly where the blurred one does', () => {
+    const bg = createWorldBackground();
+    bg.update([tree]);
+    bg.focus(true);
+    for (const side of ['left', 'top', 'width', 'height'] as const) expect(sharp(bg.el).style[side]).toBe(img(bg.el).style[side]);
+    bg.destroy();
+  });
+
+  test('an item placed while it is in focus shows in the sharp picture', () => {
+    const bg = createWorldBackground();
+    bg.update([tree]);
+    bg.focus(true);
+    bg.update([tree, lake]);
+    expect(decode(sharp(bg.el))).toContain('data-kind="lake"');
+    bg.destroy();
+  });
+
+  test('until it is first needed the sharp picture is not drawn', () => {
+    const bg = createWorldBackground();
+    bg.update([tree]);
+    expect(sharp(bg.el).getAttribute('src')).toBeNull();
+    bg.destroy();
+  });
+
+  test('css: focus fades the sharp picture in and the blurred one and the veil out, with opacity only (no live blur)', () => {
+    expect(css).toMatch(/\.world-bg\[data-focus\] \.world-sharp\s*\{[^}]*opacity:\s*1/);
+    expect(css).toMatch(/\.world-bg\[data-focus\] \.world-veil\s*\{[^}]*opacity:\s*0/);
+    expect(css).toMatch(/\.world-sharp\s*\{[^}]*transition:\s*opacity/);
+    expect(css).not.toMatch(/filter:\s*blur/);
+  });
+});

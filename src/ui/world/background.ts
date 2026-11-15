@@ -10,21 +10,27 @@ const px = (n: number) => `${n}px`;
  * Her world behind the math: blurred once into a picture (the blur is inside the SVG, never a live CSS filter) on its
  * own layer, still, under a light veil. Behind `.app`, decorative and never in the way of a tap.
  */
-export function createWorldBackground(): { el: HTMLElement; update(items: WorldItem[]): void; destroy(): void } {
-  const img = el('img', { alt: '', draggable: 'false' });
+export function createWorldBackground(): { el: HTMLElement; update(items: WorldItem[]): void; focus(on: boolean): void; destroy(): void } {
+  const img = el('img', { class: 'world-blurred', alt: '', draggable: 'false' });
+  // The sharp twin: the same world unblurred, drawn the first time she needs it. Cross-faded in by opacity (CSS), never a live blur.
+  const sharp = el('img', { class: 'world-sharp', 'data-role': 'world-sharp', alt: '', draggable: 'false' });
   const veil = el('div', { class: 'world-veil', 'data-role': 'world-veil' });
-  const root = el('div', { class: 'world-bg', 'data-role': 'world-bg', 'aria-hidden': 'true' }, img, veil);
+  const root = el('div', { class: 'world-bg', 'data-role': 'world-bg', 'aria-hidden': 'true' }, img, sharp, veil);
   root.hidden = true;
   let key = '';
   let items: WorldItem[] = [];
   let extent = { x0: 0, x1: AREA_W };
   let rev = 0;
+  let focused = false;
+  let sharpKey = '';
 
   function layout(): void {
     const box = worldFrame(window.innerWidth, window.innerHeight);
     // Wider than the area: the scenery runs to the screen's edges.
     const s = sceneExtent(box.left, box.width, window.innerWidth);
-    Object.assign(img.style, { left: px(s.left + box.left), top: px(box.top), width: px(s.width), height: px(box.height) });
+    const at = { left: px(s.left + box.left), top: px(box.top), width: px(s.width), height: px(box.height) };
+    Object.assign(img.style, at);
+    Object.assign(sharp.style, at);
     if (s.extent.x0 !== extent.x0 || s.extent.x1 !== extent.x1) { extent = s.extent; draw(); }
     const horizon = box.top + box.height * HORIZON_Y / AREA_H;
     // Flat sky above the picture, its own sky gradient beside it (no seam on wide screens), flat ground below.
@@ -38,6 +44,22 @@ export function createWorldBackground(): { el: HTMLElement; update(items: WorldI
     key = next;
     img.src = svgDataUri(sceneSvg(items, { blur: 2, extent }));
     root.dataset.rev = String(++rev);
+    drawSharp();
+  }
+
+  /** Only once she has asked for focus (and then whenever the world changes), so the math never pays for it. */
+  function drawSharp(): void {
+    if (!focused) return;
+    const next = JSON.stringify([items, extent]);
+    if (next === sharpKey) return;
+    sharpKey = next;
+    sharp.src = svgDataUri(sceneSvg(items, { extent }));
+  }
+
+  function focus(on: boolean): void {
+    focused = on;
+    root.toggleAttribute('data-focus', on);
+    drawSharp();
   }
 
   function update(next: WorldItem[]): void {
@@ -49,5 +71,5 @@ export function createWorldBackground(): { el: HTMLElement; update(items: WorldI
   window.addEventListener('resize', layout);
   layout();
 
-  return { el: root, update, destroy: () => window.removeEventListener('resize', layout) };
+  return { el: root, update, focus, destroy: () => window.removeEventListener('resize', layout) };
 }

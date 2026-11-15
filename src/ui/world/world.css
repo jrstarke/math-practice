@@ -8,6 +8,13 @@
   pointer-events: none;
 }
 .world-bg img { position: absolute; display: block; will-change: transform; pointer-events: none; }
+/* Coming into focus (a celebration): the sharp twin fades in over the blurred picture and the veil lifts. Opacity only. */
+.world-sharp { opacity: 0; transition: opacity 0.5s ease-in-out; }
+.world-blurred { transition: opacity 0.5s ease-in-out; }
+.world-veil { transition: opacity 0.5s ease-in-out; }
+.world-bg[data-focus] .world-sharp { opacity: 1; }
+.world-bg[data-focus] .world-blurred { opacity: 0; }
+.world-bg[data-focus] .world-veil { opacity: 0; }
 .world-veil { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: rgba(255, 248, 236, 0.15); }
 
 /* The problem's card: out of flow, behind the problem (and its picture when one shows), so the layout never changes.
