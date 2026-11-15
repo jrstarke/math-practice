@@ -1,33 +1,43 @@
-# WIP (updated 2026-11-14)
+# WIP (updated 2026-11-15)
 
-## >>> RESUME HERE (updated 2026-11-14)
-- **Robo's world release 1 (her first pick) is BUILT and reviewed on branch `feat/robos-world` — NOT pushed, NOT
-  deployed.** Spec docs/superpowers/specs/2026-11-11-robos-world-design.md (approved), plan
-  docs/superpowers/plans/2026-11-14-robos-world-release-1.md, task ledger .superpowers/sdd/2026-11-14-robos-world-release-1/.
+## >>> RESUME HERE (updated 2026-11-15)
+- **Robo's world release 1 is LIVE on prod and dev** (`main` = 3f37ddb on both; branch `feat/robos-world` merged and
+  deleted locally; a stale `prod/feat/robos-world` branch may still exist on the prod GitHub repo, harmless: only
+  `main` deploys, delete with `git push prod --delete feat/robos-world` if wanted). 754 tests, tsc clean.
+  Spec docs/superpowers/specs/2026-11-11-robos-world-design.md, plan docs/superpowers/plans/2026-11-14-robos-world-release-1.md.
   Code: src/core/world.ts (zones, depth, picksOwed/makeOffer/placeItem, cheer lines), progress v9 `world`
   ({items, picksUsed, offer}), src/ui/world/{scene,kinds,frame,pick,background}.ts + world.css, wired in src/ui/app.ts
-  (fitCard, startPick). The pick opens on the right answer that completes a day when days practised reach a multiple
-  of 3 (the first pick on day 1, then one per 3 days not yet spent); the blurred world sits behind the math once she has an item.
-  Layout check: `WORLD_ONLY=1 node shots.mjs` (running.md) passes on her iPad, landscape iPad and phone, also with RM=1.
-- **Next:** 1) the user tries the on-iPad checklist below (push to dev first — ask; dev's `main` is still the
-  throwaway blur spike, see "Clean up dev"); 2) ask before pushing to prod (ideally before her 1st practised day);
-  3) release 2 = celebrations into the world (slide-away, » skip, no pan); 4) release 3 = the world grows (areas,
-  swipe, pan; phones then crop/swipe instead of letterboxing). Then part 2 friends (Beep/Boom/Room in the first 3
-  houses), part 3 roads + vehicles (user: keep this order).
-- **On-iPad checklist for release 1:** the pick appears on the answer that completes her 1st day; the three choices
-  are big enough to tap; the dim zones read clearly; switching the choice before OK works; OK cheers; the blurred
-  world behind the math looks like the earlier test (same blur and card); Robo's hop still smooth over it; rotating
-  while the pick is open.
-- **Branch `feat/robos-world`** (an older copy was pushed to the `prod` remote as a branch; only `main` deploys).
-  Local `main` = 4cebb75 (characters, prod/main + 1).
-- **Mockups:** docs/superpowers/mockups/2026-11-11-robos-world/ (robos-world-for-her.html is the kid version;
-  pick-moment-v2, world-idea-v2, roads-v2 are the latest of each).
-- **Clean up dev:** dev's main is the throwaway blur test build (8f7b343, "spike: …" commits). When the user is done
-  testing on the iPad: `git push --force dev main` (user OK'd force-pushing dev). The spike's code stays reachable
-  as dev's old main until then; the local branch spike/world-blur was not carried over. Its findings are in the
-  design: blur baked into an SVG <img> (feGaussianBlur) on its own layer (`will-change: transform`), because a live
-  CSS `filter: blur()` made Robo's hop stutter on her iPad; the user prefers blur + card. Its next ▶ / replay ↻
-  move buttons might be worth keeping as a dev-only tool (offered to the user, no answer yet).
+  (fitCard, startPick). Layout check: `WORLD_ONLY=1 node shots.mjs` (running.md) passes (iPad, landscape iPad, phone).
+- **Rules as shipped (changed after the first build, user's calls):** the first pick is on her 1st day practised, then
+  one every 3 days (`picksOwed = ceil(practised / 3) - picksUsed`, PICK_EVERY = 3). The world starts with NO
+  mountains (she adds them); only three soft hills (scenery). Zones: ground x 12-258 / y 102-360, lake x 30-240 /
+  y 135-360, mountain x 40-230 / y 42-102 (snaps to the horizon). Sounds: Robo beep-boop when the pick opens
+  (`sound.robo`), a soft pop on placing (`sound.pop`). The sky, ground and hills run to the screen's edges
+  (`sceneExtent` in scene.ts; the hills repeat every 270 units); the 270x360 area stays in the middle at 3:4.
+- **Open / next (user to decide):**
+  1. The dim while placing is heavy and murky on the iPad (rgba(43,42,76,.55) over everything outside the zone):
+     proposed a light, colour-keeping veil (20-25%) only outside the zone. No answer yet.
+  2. The pick's world frame is fitted ABOVE the bottom strip (Robo, words, tray, ~190pt, 18% of the height), so it is
+     ~650pt wide on the portrait iPad. Options offered: overlay the tray on the world (bigger frame, tray covers the
+     nearest ground), a side tray in landscape, or both. No answer yet.
+  3. Release 2 = celebrations into the world (slide-away, » skip, no pan); release 3 = the world grows (areas, swipe,
+     pan; phones then crop/swipe instead of letterboxing; user is on the iPad only, phone layout isn't a concern).
+     Then part 2 friends (Beep/Boom/Room in the first 3 houses), part 3 roads + vehicles (keep this order).
+  4. Pace check: picks every 3 days fill the world ~1.7x faster than the 5-day plan release 3 was sized around.
+  5. Deferred minors: pick has no click/focus/aria-modal handling (VoiceOver/Switch Control); placed x,y are raw
+     floats; Playwright pick check's offer is random so the mountain path isn't covered; reopened pick says the
+     current day count; no app-level rotation-while-open test; hills' 270-unit repeat shows on very wide screens.
+- **On-iPad checks still open:** the pick on the answer that completes day 1, the dim readability, switching the
+  choice before OK, OK cheers + the pop, the blurred world behind the math (same blur and card as the earlier test),
+  Robo's hop over it, rotating while the pick is open, the hills reaching both edges.
+- **Mockups:** .superpowers/brainstorm/1106-1794639231/content/ (horizon-variations, horizon-25,
+  world-25-hills-placing; git-ignored, only copy) and docs/superpowers/mockups/2026-11-11-robos-world/.
+- **Dev:** dev's `main` is now the same as prod's (the old throwaway blur spike was force-replaced). The spike's
+  findings live in the design: blur baked into an SVG <img> (feGaussianBlur stdDeviation 2) on its own layer
+  (`will-change: transform`), never a live CSS `filter: blur()` (it made Robo's hop stutter on her iPad).
+- **Push access:** the sandbox's GitHub credential (jrstarke-agent) first got 403 on both dev and prod; the user
+  granted access and "try again" worked. If a push 403s, ask the user to grant access or run the push with `!`.
+  Don't use `pkill -f <pattern>` in a command whose own text contains the pattern (it killed the shell twice).
 - **Shipped and live (prod and dev):** day streak (v7), celebration variety (a0eb55e), days-practised counter
   (progress v8, f757a77). Open on-iPad checks for celebrations: arms switch at the payoff; var() in keyframes on a
   mid-tower refit. Deferred minors were reported to the user (details in the git log / final messages).
