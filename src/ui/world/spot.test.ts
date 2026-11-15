@@ -1,4 +1,4 @@
-import { KINDS, zoneOf, type WorldItem, type WorldKind } from '../../core/world';
+import { KINDS, depthScale, zoneOf, type WorldItem, type WorldKind } from '../../core/world';
 import { chooseLaneY, chooseSpot } from './spot';
 
 const item = (kind: WorldKind, x: number, y: number): WorldItem => ({ kind, area: 0, x, y });
@@ -23,7 +23,7 @@ describe('chooseSpot', () => {
 
   it('a house at the very bottom (y=360) -> spot.y < 360 or |dx| >= 38', () => {
     const p = chooseSpot([item('house', 150, 360)]);
-    expect(p.y < 360 || Math.abs(p.x - 150) >= 38).toBe(true);
+    expect(Math.hypot(p.x - 150, 1.5 * (p.y - 360))).toBeGreaterThanOrEqual(26 * depthScale(360));
   });
 
   it('the spot is always inside the ground zone', () => {
@@ -57,7 +57,7 @@ describe('chooseSpot', () => {
   });
 
   it('mountains are ignored (a world of only mountains behaves like an empty one)', () => {
-    const mountains = [item('mountain', 80, 90), item('mountain', 135, 90), item('mountain', 190, 90)];
+    const mountains = [item('mountain', 135, 345), item('mountain', 120, 340)];
     expect(chooseSpot(mountains)).toEqual(chooseSpot([]));
   });
 });
