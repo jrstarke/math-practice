@@ -625,6 +625,9 @@ for (const [name, w, h] of views.filter(([n]) => WORLD_VIEWS.includes(n))) {
     await page.waitForTimeout(700);
     const after = await layoutBoxes(page);
     for (const [n, a] of Object.entries(before)) if ((n === 'controls' || n.startsWith('key ')) && a.some((v, i) => Math.abs(v - after[n][i]) > 1)) add(label, [n + ' moved after the math came back']);
+    // Robo is placed from the keys' rect: after the math is back he stands on screen (not measured mid-slide, off the bottom).
+    const rb = await page.$eval('[data-role="robo"]', e => { const r = e.getBoundingClientRect(); return { hidden: e.hidden || getComputedStyle(e).visibility === 'hidden', bottom: r.bottom, top: r.top, h: innerHeight }; });
+    if (!rb.hidden && (rb.bottom > rb.h + 1 || rb.top < -1)) add(label, ['Robo is off-screen after the math came back (top ' + Math.round(rb.top) + ')']);
     if ((Date.now() - t0) > 8000) add(label, ['the whole thing took more than 8 s']);
     add(label + ' errors', errors); await ctx.close();
   }

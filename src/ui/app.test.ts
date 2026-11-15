@@ -2,7 +2,7 @@
 import { defaultProgress, type OpKey, type Progress } from '../core/progress';
 import { hintLimit, solve } from '../core/solver';
 import { localDate } from '../core/days';
-import { ACTION_GUARD_MS, SLIDE_MS, WORLD_DELAY_MS } from './app';
+import { ACTION_GUARD_MS, SLIDE_MS, SLIDE_SETTLE_MS, WORLD_DELAY_MS } from './app';
 import css from './world/world.css?raw';
 import { setup, START } from './testUtil';
 
@@ -1058,6 +1058,7 @@ describe("Robo's world celebrations", () => {
     expect(s.q('[data-role="world-bg"]')!.hasAttribute('data-focus')).toBe(false);
     expect(s.q('[data-moment]')).toBeNull();
     expect(skip(s).hidden).toBe(true);
+    s.advance(SLIDE_MS + SLIDE_SETTLE_MS); // Robo is measured again once the math is back
     expect(s.q('[data-role="robo"]')!.hidden).toBe(false);
   });
 
@@ -1175,6 +1176,36 @@ describe("Robo's world celebrations", () => {
     expect(pickEl(s)).not.toBeNull();
     expect(s.root.querySelectorAll('[data-role="pick"]')).toHaveLength(1);
     expect(away(s)).toBe(false);
+  });
+
+  test('review: Robo is not measured (and not shown) while the math is still sliding back, only once it is back', () => {
+    const s = walk(at39());
+    inTheWorld(s);
+    down(skip(s));
+    expect(away(s)).toBe(false);
+    expect(s.q('[data-role="robo"]')!.hidden).toBe(true); // the keys are still moving: a measure now would put him off-screen
+    window.dispatchEvent(new Event('resize')); // (a measure from the next problem or the ResizeObserver) must not show him either
+    s.advance(SLIDE_MS + SLIDE_SETTLE_MS - 1);
+    expect(s.q('[data-role="robo"]')!.hidden).toBe(true);
+    s.advance(1);
+    expect(s.q('[data-role="robo"]')!.hidden).toBe(false);
+  });
+
+  test('review: right after a celebration ends, taps are ignored for a moment (a double-tap on » must not mute or type)', () => {
+    const s = walk(at39());
+    inTheWorld(s);
+    const mutes = s.sound.setMuted.mock.calls.length;
+    down(skip(s));
+    down(s.q('[data-action="mute"]')!); // the second tap of a double-tap lands where the mute button is
+    down(s.q('[data-key="5"]')!);
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: '5' }));
+    expect(s.sound.setMuted.mock.calls.length).toBe(mutes);
+    expect(s.answerText()).toBe('');
+    s.advance(ACTION_GUARD_MS);
+    down(s.q('[data-key="5"]')!);
+    expect(s.answerText()).toBe('5');
+    down(s.q('[data-action="mute"]')!);
+    expect(s.sound.setMuted.mock.calls.length).toBe(mutes + 1);
   });
 
   test('a rotation (any resize) ends it at once: math and Robo back, nothing left to fire', () => {

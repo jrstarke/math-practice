@@ -52,6 +52,8 @@ export const WELCOME_AFTER_MS = 30 * 60 * 1000;
 /** A world celebration starts this long after her answer, so she sees the tick first; the math then slides away over SLIDE_MS. */
 export const WORLD_DELAY_MS = 600;
 export const SLIDE_MS = 500;
+/** After the math has slid back, wait this much longer before measuring (the timer starts a frame before the transition does). */
+export const SLIDE_SETTLE_MS = 150;
 const TRY_AGAIN = 'Not quite — try again';
 const ROBO_TRY_AGAIN = 'Not quite — try again!';
 /** How far the problem's card reaches past the problem (and picture) on each side. */
@@ -95,6 +97,8 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   let greeting = false; // Robo is saying hello at its spot
   let pickPending = false; // a pick is owed and opens when the moment playing now ends
   let worldMoment = false; // a celebration is playing in her world: the math is away (or sliding)
+  let slidingBack = false; // the world moment has ended and the math is still sliding back (rects are still moving)
+  let tapsReadyAt = -Infinity; // taps and keys are ignored until then (a world celebration just ended)
   let worldSnap = false; // end the world moment without the slide back (a rotation, or a pick covering the app)
   let pickView: { el: HTMLElement; destroy(): void } | null = null;
   let lastCheer: string | null = null; // in memory: the pick's last cheer line, so it doesn't repeat
@@ -214,10 +218,11 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     const layout = JSON.stringify([rect(stageEl), rect(controlsEl)]);
     // (A world moment ignores this: the math is slid away, and the next problem resizes the stage under it. A real
     // window resize ends it in onResize.)
-    if (momentTimer && !worldMoment && layout !== roboLayout) endMoment();
-    if (!worldMoment) roboLayout = layout;
+    const mathAway = worldMoment || slidingBack;
+    if (momentTimer && !mathAway && layout !== roboLayout) endMoment();
+    if (!mathAway) roboLayout = layout;
     roboMode = deps.roboMode ?? chooseMode(document.documentElement.clientWidth || window.innerWidth, rect(controlsEl));
-    robo.show(roboMode === 'standing' && !pickView && !worldMoment); // the pick brings its own Robo
+    robo.show(roboMode === 'standing' && !pickView && !worldMoment && !slidingBack); // the pick brings its own Robo
     if (roboMode === 'standing' && roboWanted) roboUp(); else roboDown();
     syncMessage();
   }
@@ -235,12 +240,22 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   function endWorldMoment() {
     const snap = worldSnap || pickPending;
     worldMoment = false;
+    tapsReadyAt = now() + ACTION_GUARD_MS; // a tap that lands as the math returns (a double-tap on ») must not hit a key, Pass or mute
     if (snap) appEl.setAttribute('data-snap', '');
     appEl.removeAttribute('data-world-moment');
     if (snap) { void appEl.offsetWidth; appEl.removeAttribute('data-snap'); }
     bg.focus(false);
     skipBtn.hidden = true;
-    measureRobo(); // Robo back
+    // Robo is placed from the controls' rect, so wait until the keys are back (a measure mid-slide puts him off-screen).
+    if (snap) measureRobo();
+    else {
+      slidingBack = true;
+      later(() => {
+        slidingBack = false;
+        roboDown(); // place him while he is still hidden: shown first, his position would slide up from where the keys were
+        measureRobo();
+      }, SLIDE_MS + SLIDE_SETTLE_MS);
+    }
   }
 
   /** The pick: full screen over the app. Its offer is saved before it shows, so a reload never loses it. */
@@ -539,6 +554,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     if (pickView) return;
     // While the math is away only » does anything.
     if (worldMoment) { if ((e.target as HTMLElement).closest?.('[data-role="world-skip"]')) endMoment(); return; }
+    if (now() < tapsReadyAt) return;
     const target = e.target as HTMLElement;
     const keyEl = target.closest<HTMLElement>('[data-key]');
     if (keyEl) { e.preventDefault(); handleKey(keyEl.dataset.key as Key); return; }
@@ -565,7 +581,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
 
   function onKeyDown(e: KeyboardEvent) {
     sound.unlock();
-    if (pickView || worldMoment) return; // the answer under the pick (or the slid-away math) can't change
+    if (pickView || worldMoment || now() < tapsReadyAt) return; // the answer under the pick (or the slid-away math) can't change
     const key = keyFromKeyboard(e);
     if (!key) return;
     e.preventDefault();
