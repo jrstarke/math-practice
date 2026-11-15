@@ -594,7 +594,7 @@ for (const [name, w, h] of views.filter(([n]) => WORLD_VIEWS.includes(n))) {
     const tScene = Date.now();
     await page.waitForTimeout(250);
     await shot(page, 'cel-' + label);
-    add(label, await page.evaluate(RMFLAG => {
+    add(label, await page.evaluate(([RMFLAG, LABEL]) => {
       const out = [];
       const r = s => document.querySelector(s)?.getBoundingClientRect();
       const stage = r('.stage'), controls = r('.controls'), skip = r('[data-role="world-skip"]');
@@ -608,11 +608,12 @@ for (const [name, w, h] of views.filter(([n]) => WORLD_VIEWS.includes(n))) {
       const slots = [...document.querySelectorAll('[data-role="robo-moment"] .robo-slot')].map(e => e.getBoundingClientRect());
       if (!slots.length) out.push('no Robo in the scene');
       else {
-        if (Math.max(...slots.map(b => b.height)) < innerHeight * 0.3) out.push('Robo is smaller than 30% of the screen height');
+        // (Reduce Motion's still conga is shrunk to the screen's width by scenes.css --fit, so it may be smaller on a phone.)
+        if (Math.max(...slots.map(b => b.height)) < innerHeight * (RMFLAG && LABEL === 'conga' ? 0.15 : 0.3)) out.push('Robo is smaller than 30% of the screen height');
         if (slots.some(b => b.top < -1 || b.bottom > innerHeight + 1)) out.push('a robot is above or below the screen');
       }
       return out;
-    }, RM));
+    }, [RM, label]));
     // A tap in the middle of the screen (the world) does nothing.
     await page.touchscreen.tap(w / 2, h / 2);
     await page.waitForTimeout(200);
