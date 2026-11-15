@@ -41,3 +41,12 @@
 - 2026-11-14 (after release 1): picks come every 3 days practised (was 5; user), so the world and her first pick appear on her 3rd practised day (PICK_EVERY in src/core/world.ts). Sounds built: Robo's beep-boop when the pick opens, a soft pop (sound.pop) when she places something. Phone layout is not a concern (she is fully on the iPad).
 - 2026-11-14 (later): the first pick is on day 1, then every 3 days practised (days 1, 4, 7, ...): picksOwed = ceil(practised / 3) - picksUsed (user: "unlock robo's world now, first item on day 1"). The prompt reads "1 day of math!" on day 1.
 - 2026-11-14/15 (world polish, all user calls): the world starts with no mountains (she adds them) and only three soft hills; ground zone x 12-258, lake x 30-240 ("closer to the edge"; heights unchanged); the hills sit inside the 270-wide area and repeat so the sky/ground/hills run to the screen's edges (sceneExtent). Release 1 merged to main and live on dev + prod (3f37ddb). Still open: lighter dim, bigger frame vs the bottom tray strip.
+
+## 2026-11-15 Robo's world release 2
+- **One world frame (the pick's), not the full window.** The blurred background and the pick fitted the world separately (1.2x
+  apart on her iPad). User chose option 1 over a full-window frame with the tray overlaid (that would hide the lowest ~18% of
+  the ground in the pick). The world is ~670pt wide on her 810pt iPad; sky/ground/hills still run to the edges.
+- **Celebrations scale the existing scenes** (user agreed), not redrawn world versions. Robo's lane is 34% of the screen height.
+- **Slide:** problem + top bar up, keys down (user: down), by the viewport height; 0.6 s delay so she sees her tick; » top right,
+  the only way to skip; a pick owed after the day celebration opens right after it (math snapped back under it).
+- **Conga cap:** 6 s in the world (faster than the strip's walk) to keep the whole thing under ~8 s.

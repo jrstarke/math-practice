@@ -555,6 +555,7 @@ for (const [name, w, h] of views.filter(([n]) => WORLD_VIEWS.includes(n))) {
     await page.setViewportSize({ width: w, height: h });
     await page.waitForTimeout(500);
     add('pick rotated back', await pickCheck(page));
+    const pickRect = await page.$eval('.pick-scene', e => { const r = e.getBoundingClientRect(); return [r.left, r.top, r.width, r.height]; });
     await tapEl(page, '[data-role="pick-ok"]');
     await page.waitForTimeout(400);
     const cheer = await page.evaluate(() => [document.querySelector('[data-role="pick-words"]').textContent,
@@ -568,10 +569,73 @@ for (const [name, w, h] of views.filter(([n]) => WORLD_VIEWS.includes(n))) {
     await page.waitForTimeout(400);
     add('pick done', (await page.evaluate(measure, [undefined, expectFor(name)])).issues);
     await shot(page, 'after');
+    // One frame: the blurred world behind the math is exactly where the pick drew it (what she placed stays put).
+    const bgRect = await page.$eval('[data-role="world-bg"] img', e => { const r = e.getBoundingClientRect(); return [r.left, r.top, r.width, r.height]; });
+    if (bgRect.some((v, i) => Math.abs(v - pickRect[i]) > 1)) add('frame', [`background ${bgRect.map(Math.round)} differs from the pick's ${pickRect.map(Math.round)}`]);
     const now = await answerText(page);
     await page.dispatchEvent('[data-key="2"]', 'pointerdown');
     if ((await answerText(page)) === now) add('pick done', ['the pad does nothing after the pick']);
   }
+  add('errors', errors); await ctx.close();
+
+  // 3. Celebrations in her world: the math slides away, the scene plays big in the sharp world, » is the only way out.
+  const celebrations = [
+    ['stars', { ...progressFor(1), total: 19, day: { date: TODAY, right: 0, days: 3, lastDone: YESTERDAY, practised: 3 }, world: { items: WORLD_ITEMS, picksUsed: 1, offer: null } }, '?roboRng=0', 'walk'],
+    ['conga', { ...progressFor(1), total: 99, day: { date: TODAY, right: 0, days: 3, lastDone: YESTERDAY, practised: 3 }, world: { items: WORLD_ITEMS, picksUsed: 1, offer: null } }, '', 'conga'],
+    ['day', { ...progressFor(1), total: 41, day: { date: TODAY, right: 9, days: 2, lastDone: YESTERDAY, practised: 2 }, world: { items: WORLD_ITEMS, picksUsed: 1, offer: null } }, '', 'day'],
+  ];
+  for (const [label, fixture, query, moment] of celebrations) {
+    ({ ctx, page, errors } = await open(name, w, h, fixture, query));
+    const before = await layoutBoxes(page);
+    const t0 = Date.now();
+    await answerNow(page);
+    try { await page.waitForSelector('.app[data-world-moment]', { timeout: 4000 }); } catch { add(label, ['the math never slid away']); await ctx.close(); continue; }
+    try { await page.waitForSelector('[data-moment="' + moment + '"]', { timeout: 4000 }); } catch { add(label, ['no ' + moment + ' scene']); await ctx.close(); continue; }
+    const tScene = Date.now();
+    await page.waitForTimeout(250);
+    await shot(page, 'cel-' + label);
+    add(label, await page.evaluate(RMFLAG => {
+      const out = [];
+      const r = s => document.querySelector(s)?.getBoundingClientRect();
+      const stage = r('.stage'), controls = r('.controls'), skip = r('[data-role="world-skip"]');
+      if (!RMFLAG) {
+        if (stage.bottom > 1) out.push('the problem is still on screen');
+        if (controls.top < innerHeight - 1) out.push('the keys are still on screen');
+      } else if (getComputedStyle(document.querySelector('.stage')).transform !== 'none') out.push('moves under Reduce Motion');
+      if (!document.querySelector('[data-role="world-bg"]').hasAttribute('data-focus')) out.push('the world is not in focus');
+      if (!skip || skip.width < 44 || skip.height < 44) out.push('the » is smaller than 44px');
+      else if (skip.right < innerWidth - 120 || skip.top > 120) out.push('the » is not in the top right');
+      const slots = [...document.querySelectorAll('[data-role="robo-moment"] .robo-slot')].map(e => e.getBoundingClientRect());
+      if (!slots.length) out.push('no Robo in the scene');
+      else {
+        if (Math.max(...slots.map(b => b.height)) < innerHeight * 0.3) out.push('Robo is smaller than 30% of the screen height');
+        if (slots.some(b => b.top < -1 || b.bottom > innerHeight + 1)) out.push('a robot is above or below the screen');
+      }
+      return out;
+    }, RM));
+    // A tap in the middle of the screen (the world) does nothing.
+    await page.touchscreen.tap(w / 2, h / 2);
+    await page.waitForTimeout(200);
+    if (!(await page.$('.app[data-world-moment]'))) add(label, ['a tap on the world ended it']);
+    // » ends it and the math is back, keys and controls exactly where they were.
+    const sk = await page.locator('[data-role="world-skip"]').boundingBox();
+    await page.touchscreen.tap(sk.x + sk.width / 2, sk.y + sk.height / 2);
+    try { await page.waitForSelector('.app[data-world-moment]', { state: 'detached', timeout: 1500 }); } catch { add(label, ['» did not bring the math back']); }
+    await page.waitForTimeout(700);
+    const after = await layoutBoxes(page);
+    for (const [n, a] of Object.entries(before)) if ((n === 'controls' || n.startsWith('key ')) && a.some((v, i) => Math.abs(v - after[n][i]) > 1)) add(label, [n + ' moved after the math came back']);
+    if ((Date.now() - t0) > 8000) add(label, ['the whole thing took more than 8 s']);
+    add(label + ' errors', errors); await ctx.close();
+  }
+  // The conga plays out in full: nothing longer than 6 s, and the whole line has crossed by the end.
+  ({ ctx, page, errors } = await open(name, w, h, celebrations[1][1]));
+  await answerNow(page);
+  await page.waitForSelector('[data-moment="conga"]', { timeout: 4000 });
+  const c0 = Date.now();
+  try { await page.waitForSelector('[data-moment="conga"]', { state: 'detached', timeout: 8000 }); } catch { add('conga', ['never ended']); }
+  if (Date.now() - c0 > 6400) add('conga', ['the conga took ' + (Date.now() - c0) + ' ms (cap 6000)']);
+  await page.waitForTimeout(800);
+  if (await page.$('.app[data-world-moment]')) add('conga', ['the math did not come back']);
   add('errors', errors); await ctx.close();
 
   const ok = issues.size === 0;

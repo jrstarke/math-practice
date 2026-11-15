@@ -1,6 +1,19 @@
 # WIP (updated 2026-11-15)
 
-## >>> RESUME HERE (updated 2026-11-15)
+## >>> RESUME HERE (updated 2026-11-15, later)
+- **Robo's world release 2 is BUILT on branch feat/robos-world-release-2 (NOT pushed, not merged).** Spec
+  docs/superpowers/specs/2026-11-15-robos-world-release-2-design.md, plan docs/superpowers/plans/2026-11-15-robos-world-release-2.md.
+  Done: (1) one shared world frame (frame.ts worldFrame: the pick's fit above a fixed 176px strip + safe area) used by the pick,
+  the blurred background and the celebrations. This FIXED a bug found 2026-11-15: behind the math the world was drawn 1.2x
+  bigger than in the pick (own full-window fit), so placed things shifted and the keys covered them. (2) bg.focus(): a sharp twin
+  picture fades in (opacity only). (3) src/ui/world/moment.ts: isWorldMoment (stars, conga, day; only with items), worldMomentPlace
+  (lane 34% of the height, feet at world y 330, conga capped at 6 s via MomentPlace.maxMs). (4) app.ts playWorldMoment: 0.6 s after
+  her answer the math slides away (0.5 s, by the viewport height), the scene plays, the math slides back; » (data-role=world-skip)
+  is the only way out; a window resize ends it; a pick owed after the day celebration opens with the math snapped back under it.
+  (5) shots.mjs world flow: frame parity + celebrations (stars, conga, day) on 4 views, passes; RM check below.
+  **Next:** user tries it on dev (push the branch to dev's main only on their say-so), then on-iPad checks: slide smoothness over
+  the blurred world, the words bubble looks small next to the big Robo (not scaled), » not tapped by accident, the pick/background
+  now matching, conga in the world. Then release 3 (the world grows).
 - **Robo's world release 1 is LIVE on prod and dev** (`main` = 3f37ddb on both; branch `feat/robos-world` merged and
   deleted locally; a stale `prod/feat/robos-world` branch may still exist on the prod GitHub repo, harmless: only
   `main` deploys, delete with `git push prod --delete feat/robos-world` if wanted). 754 tests, tsc clean.

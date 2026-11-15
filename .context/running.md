@@ -40,6 +40,11 @@
         switch kind → ghost follows; rotate and back (still fits, ghost kept); OK → frame data-placed, dims gone, save has
         4 items/picksUsed 1/offer null; the pick closes (≤5 s), measure() passes with Robo back, key 2 changes the answer.
      Screenshots: out/world-<view>-{none,bg,bg-hint,pick,ghost,switched,rotated,cheer,after}[-rm].png.
+  7. World celebrations (2026-11-15): the world flow also checks (a) the pick's picture and the background picture have the same
+     rect after placing (one frame), (b) a 20-star walk, a conga (total 99) and a day celebration with a world: after the delay+slide the
+     problem/keys are off screen, world in focus (data-focus), » >=44px top right, Robo >=30% of the height, a tap on the world
+     doesn't end it, » does and keys/controls are back where they were, whole thing under 8 s, conga under 6.4 s. RM=1: no transform.
+     Screenshots out/world-<view>-cel-{stars,conga,day}.png. Run from /tmp/claude-1000/pw with playwright installed there.
   - Robo poses/moments preview (dev only, not built): /robo-preview.html and /robo-preview.html?moment=walk|walk-friend|<level-up style>|stars-<20-star style>|conga-2|conga-5|conga-10|kick|day-1|day-3|day-7|day-12|welcome|peek|surprise|wrong|right|up (&size=68 for a short lane)
   - Gotchas: $PUBLISH_PORT may already be taken by another process — then Vite picks the next port (check dev.log) and the
     URL must match. Vite's file watcher can miss edits on the /workspace mount: if a run looks like old code,
