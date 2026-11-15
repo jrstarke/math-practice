@@ -1066,8 +1066,11 @@ describe("Robo's world celebrations", () => {
     const s = walk(at39());
     inTheWorld(s);
     const m = s.q('[data-moment="walk"]') as HTMLElement;
-    // jsdom's window is 1024x768: the lane is 0.34 of the height (261 px), against the strip's 136 (--s is the ratio)
-    expect(Number(m.style.getPropertyValue('--s'))).toBeCloseTo(Math.round(768 * 0.34) / 136, 2);
+    // In the world Robo is as small as a house door is tall (about 24 world units), so his scale is well under the strip's 1.
+    const robot = Number.parseFloat((m.querySelector('.robo-slot') as HTMLElement).style.height);
+    expect(robot).toBeGreaterThanOrEqual(20);
+    expect(robot).toBeLessThan(136);
+    expect(Number(m.style.getPropertyValue('--s'))).toBeCloseTo(robot / 136, 2);
   });
 
   test('the 100s conga plays in the world', () => {

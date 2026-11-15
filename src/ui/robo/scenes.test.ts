@@ -64,6 +64,13 @@ describe('buildScene', () => {
     expect(buildScene({ kind: 'conga', robots: 10, words: walkWords(900) }, { ...standing, size: 367 }).ms).toBeGreaterThan(6000);
   });
 
+  it('a conga of small world robots is shorter than the strip one and never longer than maxMs', () => {
+    const line = { kind: 'conga', robots: 10, words: walkWords(900) } as const;
+    const small = buildScene(line, { ...standing, size: 30, robotH: 30, maxMs: 6000 });
+    expect(small.ms).toBeLessThan(buildScene(line, standing).ms);
+    expect(small.ms).toBeLessThanOrEqual(6000);
+  });
+
   it('the strip conga is unchanged by the world options', () => {
     expect(buildScene({ kind: 'conga', robots: 5, words: walkWords(400) }, standing).ms).toBe(congaMs(5, 810));
   });

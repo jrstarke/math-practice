@@ -355,7 +355,8 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
       robo.show(false);
       skipBtn.hidden = false;
       momentTimer = later(() => {
-        const ms = robo.play(big, worldMomentPlace(window.innerWidth, window.innerHeight));
+        const { feetY: _feetY, ...place } = worldMomentPlace(window.innerWidth, window.innerHeight, progress.world.items, big); // feetY is for the front layer (next)
+        const ms = robo.play(big, place);
         sound.robo();
         momentTimer = later(() => { momentTimer = null; endMoment(); syncMessage(); }, ms);
       }, SLIDE_MS);

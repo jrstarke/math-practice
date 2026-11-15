@@ -57,7 +57,7 @@ function highFive(m: HTMLElement, big: SceneMoment): number {
 function conga(m: HTMLElement, big: SceneMoment, at: MomentPlace): number {
   const robots = big.kind === 'conga' ? big.robots : 2;
   // Robots bigger than the strip's (a world moment) take longer to cross; a world moment caps it (maxMs).
-  const ms = Math.min(congaMs(robots, at.viewportWidth, Math.max(ROBO_W, ROBO_W * at.size / ROBO_H)), at.maxMs ?? Infinity);
+  const ms = Math.min(congaMs(robots, at.viewportWidth, at.robotH !== undefined ? ROBO_W * at.robotH / ROBO_H : Math.max(ROBO_W, ROBO_W * at.size / ROBO_H)), at.maxMs ?? Infinity);
   // Laid out right to left (row-reverse): the words lead, then Robo, then the friends in order.
   const line = div('robo-walker robo-conga');
   line.style.animationDuration = `${ms}ms`;

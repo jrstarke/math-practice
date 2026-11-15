@@ -19,6 +19,10 @@ export interface MomentPlace {
   wordsAt: { x: number; bottom: number; width: number };
   /** A world moment: the longest a scene may play (a long conga walks faster to fit). */
   maxMs?: number;
+  /** A world moment: the height of one robot in px (Robo as small as he is in the world). Unset in the strip. */
+  robotH?: number;
+  /** A world moment: the x (px) the stay scenes and the day scene centre on. Travelling scenes cross the full width. */
+  centerX?: number;
 }
 
 export interface RoboView {
@@ -77,12 +81,21 @@ export function createRobo(): RoboView {
   function fit(m: HTMLElement, at: MomentPlace) {
     const peeking = m.dataset.moment === 'peek';
     const room = Number(m.dataset.room ?? 1) || 1;
-    const height = Math.round(at.size / room);
+    const world = at.robotH !== undefined;
+    const height = at.robotH ?? Math.round(at.size / room);
     const width = Math.round(ROBO_W * height / ROBO_H);
-    m.style.top = `${peeking ? at.peek.top : at.laneTop}px`;
-    m.style.height = `${at.size}px`;
-    m.style.setProperty('--s', String(Math.round(at.size / ROBO_H * 1000) / 1000));
-    m.style.setProperty('--a', String(Math.round(at.size / ROBO_H / room * 1000) / 1000));
+    // A world moment's layer is its robots' height times the room; its bottom (the feet line) stays at laneTop + size.
+    const layer = world ? Math.round(height * room) : at.size;
+    m.style.top = `${peeking ? at.peek.top : world ? at.laneTop + at.size - layer : at.laneTop}px`;
+    m.style.height = `${layer}px`;
+    m.style.setProperty('--s', String(Math.round(layer / ROBO_H * 1000) / 1000));
+    m.style.setProperty('--a', String(Math.round((at.robotH ?? at.size / room) / ROBO_H * 1000) / 1000));
+    if (at.centerX !== undefined && (m.classList.contains('robo-stay') || m.dataset.moment === 'day')) {
+      // The scene is the full viewport wide with its content centred on 50%: shift it so that centre is centerX,
+      // keeping room for the words on its left and the robot on its right.
+      const lo = Math.min(at.viewportWidth / 2, 240), hi = Math.max(at.viewportWidth / 2, at.viewportWidth - 120);
+      m.style.left = `${Math.min(hi, Math.max(lo, at.centerX)) - at.viewportWidth / 2}px`;
+    } else if (!peeking) m.style.left = '';
     if (peeking) {
       m.style.left = `${at.peek.left}px`;
       m.style.width = `${width}px`;

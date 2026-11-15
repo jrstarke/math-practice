@@ -21,6 +21,28 @@ beforeEach(() => {
   document.body.append(robo.el, robo.overlay);
 });
 
+describe('a world moment draws small robots', () => {
+  it('robotH sets the slots, --a and the layer height (times the scene room)', () => {
+    robo.play({ kind: 'levelUp', style: 'tower', words: 'x' }, { ...standing, robotH: 40, size: 40 });
+    const m = moment()!;
+    const room = Number(m.dataset.room);
+    expect(room).toBeGreaterThan(1);
+    for (const s of m.querySelectorAll<HTMLElement>('.robo-slot')) expect(s.style.height).toBe('40px');
+    expect(Number(m.style.getPropertyValue('--a'))).toBeCloseTo(40 / 136, 3);
+    expect(m.style.height).toBe(`${Math.round(40 * room)}px`);
+  });
+  it('a stay scene centres on centerX, and the layer sits on the feet line', () => {
+    robo.play({ kind: 'levelUp', style: 'jump-together', words: 'x' }, { ...standing, robotH: 40, size: 40, laneTop: 300, centerX: 300 });
+    const m = moment()!;
+    expect(Number.parseFloat(m.style.left)).toBe(300 - 810 / 2);
+    expect(Number.parseFloat(m.style.top) + Number.parseFloat(m.style.height)).toBe(340);
+  });
+  it('without centerX the scene stays where it was', () => {
+    robo.play({ kind: 'levelUp', style: 'jump-together', words: 'x' }, standing);
+    expect(moment()!.style.left).toBe('');
+  });
+});
+
 describe('Robo view', () => {
   it('think: light off, looking up, nothing said', () => {
     robo.right('You got it!');
