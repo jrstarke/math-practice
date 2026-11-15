@@ -495,7 +495,7 @@ const smallRoboCheck = ([items, moment, rm]) => {
   const raw = 24 * hOf(feetY) * k, door = 28 * hOf(feetY) * k;
   const floored = raw < 20;
   if (!floored && !(hMax < door)) out.push(`Robo ${hMax}px is not smaller than a door ${door.toFixed(1)}px at his depth`);
-  if (!rm && moment === 'day') for (const wd of document.querySelectorAll('[data-role="robo-moment"] [class*="words"]')) {
+  if (!rm && (moment === 'day' || document.querySelector('[data-role="robo-moment"] .robo-stay'))) for (const wd of document.querySelectorAll('[data-role="robo-moment"] [class*="words"]')) {
     const b = wd.getBoundingClientRect();
     if (b.width && (b.left < -1 || b.right > innerWidth + 1 || b.top < -1 || b.bottom > innerHeight + 1)) out.push(`words off-screen (left ${Math.round(b.left)}, right ${Math.round(b.right)}, top ${Math.round(b.top)})`);
   }
