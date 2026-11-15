@@ -1,5 +1,5 @@
 import { mulberry32 } from './rng';
-import { AREA_H, AREA_W, CHEER_LINES, HORIZON_Y, KINDS, PLACE_PROMPT, depthScale, initialWorld, pickCheer, pickPrompt, snapPlacement, zoneOf, isValidWorld, repairWorld, makeOffer, picksOwed, placeItem, type WorldState } from './world';
+import { AREA_H, AREA_W, CHEER_LINES, HORIZON_Y, KINDS, PLACE_PROMPT, depthScale, ROBO_WORLD_H, HOUSE_DOOR_H, robotUnits, initialWorld, pickCheer, pickPrompt, snapPlacement, zoneOf, isValidWorld, repairWorld, makeOffer, picksOwed, placeItem, type WorldState } from './world';
 
 const empty = initialWorld();
 
@@ -120,4 +120,11 @@ test('repairWorld nulls a bad offer, leaves a good one, and never touches the re
   expect(repairWorld(good)).toBe(good);
   expect(repairWorld(null)).toBeNull();
   expect(repairWorld({ ...w, items: null })).toEqual({ ...w, items: null, offer: null });
+});
+
+test('Robo is smaller than a house door at every depth', () => {
+  expect(ROBO_WORLD_H).toBeLessThan(HOUSE_DOOR_H);
+  expect(robotUnits(HORIZON_Y)).toBeCloseTo(24 * 0.4);
+  expect(robotUnits(AREA_H)).toBeCloseTo(24 * depthScale(AREA_H));
+  for (const y of [110, 200, 300, 360]) expect(robotUnits(y)).toBeLessThan(HOUSE_DOOR_H * depthScale(y));
 });

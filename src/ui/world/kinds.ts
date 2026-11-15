@@ -11,7 +11,7 @@ const SHAPES: Record<WorldKind, string> = {
   mountain: `<path d="M-60 0 L-18 -56 L0 -36 L22 -70 L64 0 Z" fill="#b9b3d6" ${S}/><path d="M22 -70 L12 -54 L22 -50 L30 -58 Z" fill="#fff" ${S}/>`,
   tree: `<path d="M0 0 L0 -26" ${S} fill="none"/><path d="M-20 -22 C-26 -44 -10 -62 0 -60 C12 -64 28 -46 20 -22 Z" fill="#8fd18a" ${S}/>`,
   bush: `<path d="M-22 0 C-30 -18 -10 -26 -2 -20 C6 -30 26 -20 22 0 Z" fill="#7cc47a" ${S}/>`,
-  house: `<rect x="-22" y="-30" width="44" height="30" fill="#ffd9a8" ${S}/><path d="M-28 -30 L0 -54 L28 -30 Z" fill="#e88a7a" ${S}/><rect x="-6" y="-16" width="12" height="16" fill="#b98a5e" ${S}/>`,
+  house: `<rect x="-24" y="-38" width="48" height="38" fill="#ffd9a8" ${S}/><path d="M-30 -38 L0 -64 L30 -38 Z" fill="#e88a7a" ${S}/><rect x="-9" y="-28" width="18" height="28" rx="3" fill="#b98a5e" ${S}/><circle cx="4" cy="-14" r="1.5" fill="#2b2b2b"/>`,
   lake: `<ellipse cx="0" cy="0" rx="42" ry="13" fill="#9fd4f2" ${S}/>`,
 };
 

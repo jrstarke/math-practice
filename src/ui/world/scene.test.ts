@@ -100,3 +100,7 @@ test('a wider scene carries the sky, ground and hills out to its edges (none cut
   expect(Math.min(...starts.map((h) => h[0]))).toBeLessThanOrEqual(-105); // runs off the left edge
   expect(Math.max(...starts.map((h) => h[1]))).toBeGreaterThanOrEqual(375); // and the right
 });
+
+test('the house has a door 28 tall', () => {
+  expect(drawKind('house', 0, 0, 1)).toMatch(/<rect[^>]*height="28"/);
+});

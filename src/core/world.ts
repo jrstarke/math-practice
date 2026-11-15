@@ -91,6 +91,12 @@ export function snapPlacement(kind: WorldKind, x: number, y: number): { x: numbe
 /** Things lower on the screen are nearer, so drawn bigger. */
 export const depthScale = (y: number): number => 0.4 + 0.75 * (y - HORIZON_Y) / (AREA_H - HORIZON_Y);
 
+/** Robo's height in world units at scale 1, and the house door's: Robo is always a bit shorter than a door. */
+export const ROBO_WORLD_H = 24;
+export const HOUSE_DOOR_H = 28;
+/** How tall Robo stands, in world units, with his feet at `feetY`. */
+export const robotUnits = (feetY: number): number => ROBO_WORLD_H * depthScale(feetY);
+
 export const CHEER_LINES: readonly string[] = ["That's awesome!", 'That looks great!', 'Cool!', "It's perfect!", 'I love it!', 'Wow!'];
 
 export const pickCheer = (last: string | null, rng: Rng): string => pickStyle(CHEER_LINES, last, rng);
