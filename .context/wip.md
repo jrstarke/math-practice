@@ -11,6 +11,10 @@
   her answer the math slides away (0.5 s, by the viewport height), the scene plays, the math slides back; » (data-role=world-skip)
   is the only way out; a window resize ends it; a pick owed after the day celebration opens with the math snapped back under it.
   (5) shots.mjs world flow: frame parity + celebrations (stars, conga, day) on 4 views, passes; RM check below.
+  Final review fixes (df73092): Robo is placed once the keys are back (he used to slide up from below the screen), taps/keys ignored
+  400 ms after a celebration ends (a double-tap on » muted the app under Reduce Motion), slide by 110vh. Deferred minors: safeBottom probe
+  is never removed; pick strip ~178px vs fixed 176px (phone, two-line words, unverified); » has no click/keyboard; install tip stays over
+  the world; » slides the math back over 0.5 s, not instantly.
   **Next:** user tries it on dev (push the branch to dev's main only on their say-so), then on-iPad checks: slide smoothness over
   the blurred world, the words bubble looks small next to the big Robo (not scaled), » not tapped by accident, the pick/background
   now matching, conga in the world. Then release 3 (the world grows).
