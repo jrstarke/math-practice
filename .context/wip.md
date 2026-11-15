@@ -17,7 +17,8 @@
 - **Open / next (user to decide):**
   1. The dim while placing is heavy and murky on the iPad (rgba(43,42,76,.55) over everything outside the zone):
      proposed a light, colour-keeping veil (20-25%) only outside the zone. No answer yet.
-  2. The pick's world frame is fitted ABOVE the bottom strip (Robo, words, tray, ~190pt, 18% of the height), so it is
+  2. RESOLVED (user, 2026-11-15): frame sizing seems OK after the edge-to-edge fixes; no tray change needed.
+     (Old note:) The pick's world frame is fitted ABOVE the bottom strip (Robo, words, tray, ~190pt, 18% of the height), so it is
      ~650pt wide on the portrait iPad. Options offered: overlay the tray on the world (bigger frame, tray covers the
      nearest ground), a side tray in landscape, or both. No answer yet.
   3. Release 2 = celebrations into the world (slide-away, » skip, no pan); release 3 = the world grows (areas, swipe,
