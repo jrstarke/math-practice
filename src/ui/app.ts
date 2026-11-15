@@ -22,6 +22,7 @@ import { chooseMode, laneTop, momentSize, peekPosition, placeUp, spotPosition, u
 import { createRobo, type MomentPlace } from './robo/robo';
 import type { SoundPlayer } from './sound';
 import { createWorldBackground } from './world/background';
+import { isWorldMoment, worldMomentPlace } from './world/moment';
 import { createPick } from './world/pick';
 
 export interface AppDeps {
@@ -48,6 +49,9 @@ export const PASS_STEP_MS = 1500;
 export const ACTION_GUARD_MS = 400;
 /** Robo welcomes her on opening the app, and on coming back after at least this long away. */
 export const WELCOME_AFTER_MS = 30 * 60 * 1000;
+/** A world celebration starts this long after her answer, so she sees the tick first; the math then slides away over SLIDE_MS. */
+export const WORLD_DELAY_MS = 600;
+export const SLIDE_MS = 500;
 const TRY_AGAIN = 'Not quite — try again';
 const ROBO_TRY_AGAIN = 'Not quite — try again!';
 /** How far the problem's card reaches past the problem (and picture) on each side. */
@@ -90,6 +94,8 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   let roboAway = false; // a walk, high five or kick is playing in standing mode
   let greeting = false; // Robo is saying hello at its spot
   let pickPending = false; // a pick is owed and opens when the moment playing now ends
+  let worldMoment = false; // a celebration is playing in her world: the math is away (or sliding)
+  let worldSnap = false; // end the world moment without the slide back (a rotation, or a pick covering the app)
   let pickView: { el: HTMLElement; destroy(): void } | null = null;
   let lastCheer: string | null = null; // in memory: the pick's last cheer line, so it doesn't repeat
 
@@ -120,7 +126,10 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
       robo.el, robo.overlay);
   // Her world, blurred and still behind the math (once she has one).
   const bg = createWorldBackground();
-  root.replaceChildren(bg.el, appEl);
+  // » ends a world celebration early; it is the only thing that does.
+  const skipBtn = el('button', { type: 'button', class: 'world-skip', 'data-role': 'world-skip', 'aria-label': 'Skip' }, '»');
+  skipBtn.hidden = true;
+  root.replaceChildren(bg.el, appEl, skipBtn);
   if (shouldShowInstallTip(nav, progress)) appEl.prepend(createInstallTip());
 
   function showWorld() {
@@ -203,10 +212,12 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     // A moment is placed in pixels for the layout it started in; if a rotation or resize moved the stage or the
     // controls it would be in the wrong place (or a second Robo, peek → standing), so it ends.
     const layout = JSON.stringify([rect(stageEl), rect(controlsEl)]);
-    if (momentTimer && layout !== roboLayout) endMoment();
-    roboLayout = layout;
+    // (A world moment ignores this: the math is slid away, and the next problem resizes the stage under it. A real
+    // window resize ends it in onResize.)
+    if (momentTimer && !worldMoment && layout !== roboLayout) endMoment();
+    if (!worldMoment) roboLayout = layout;
     roboMode = deps.roboMode ?? chooseMode(document.documentElement.clientWidth || window.innerWidth, rect(controlsEl));
-    robo.show(roboMode === 'standing' && !pickView); // the pick brings its own Robo
+    robo.show(roboMode === 'standing' && !pickView && !worldMoment); // the pick brings its own Robo
     if (roboMode === 'standing' && roboWanted) roboUp(); else roboDown();
     syncMessage();
   }
@@ -216,7 +227,20 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     roboAway = false;
     robo.endMoment();
     endGreeting();
+    if (worldMoment) endWorldMoment();
     if (pickPending && !pickView) startPick();
+  }
+
+  /** The math slides back (at once if a pick is about to cover it, or the screen turned), the world blurs, Robo is back. */
+  function endWorldMoment() {
+    const snap = worldSnap || pickPending;
+    worldMoment = false;
+    if (snap) appEl.setAttribute('data-snap', '');
+    appEl.removeAttribute('data-world-moment');
+    if (snap) { void appEl.offsetWidth; appEl.removeAttribute('data-snap'); }
+    bg.focus(false);
+    skipBtn.hidden = true;
+    measureRobo(); // Robo back
   }
 
   /** The pick: full screen over the app. Its offer is saved before it shows, so a reload never loses it. */
@@ -268,7 +292,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   /** Hello, at Robo's spot. Never while it's up beside the problem or away on a moment: nothing may cover her work. */
   function greet() {
     // roboWanted: a hint or Pass is showing (on small screens a peek's words would sit on the hint).
-    if (pickView || roboWanted || (roboMode === 'standing' && (roboPlace !== 'spot' || roboAway))) return;
+    if (pickView || worldMoment || roboWanted || (roboMode === 'standing' && (roboPlace !== 'spot' || roboAway))) return;
     endMoment();
     if (pickView) return; // ending a moment that held a pick opened it: no hello under the pick
     const ms = robo.greet(welcomeWords(progress.total), momentPlace());
@@ -305,7 +329,26 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     };
   }
 
+  /** A celebration in her world: after a beat the math slides away and the world comes into focus, the scene plays big
+   * on her ground, then the math slides back. The same timer chain throughout, so endMoment() stops it at any point. */
+  function playWorldMoment(big: BigMoment) {
+    endMoment();
+    worldMoment = true;
+    momentTimer = later(() => {
+      appEl.setAttribute('data-world-moment', '');
+      bg.focus(true);
+      robo.show(false);
+      skipBtn.hidden = false;
+      momentTimer = later(() => {
+        const ms = robo.play(big, worldMomentPlace(window.innerWidth, window.innerHeight));
+        sound.robo();
+        momentTimer = later(() => { momentTimer = null; endMoment(); syncMessage(); }, ms);
+      }, SLIDE_MS);
+    }, WORLD_DELAY_MS);
+  }
+
   function playMoment(big: BigMoment) {
+    if (isWorldMoment(big, progress.world.items.length)) { playWorldMoment(big); return; }
     endMoment();
     const ms = robo.play(big, momentPlace());
     roboAway = roboMode === 'standing';
@@ -378,7 +421,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     robo.think();
     render();
     // A moment still playing from the last answer: fit it to the room under this problem.
-    if (momentTimer) robo.refit(momentPlace());
+    if (momentTimer && !worldMoment) robo.refit(momentPlace());
   }
 
   function finish(a: Attempt) {
@@ -494,6 +537,8 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     sound.unlock();
     // The pick handles its own taps (its listener has already run); nothing under it may take one.
     if (pickView) return;
+    // While the math is away only » does anything.
+    if (worldMoment) { if ((e.target as HTMLElement).closest?.('[data-role="world-skip"]')) endMoment(); return; }
     const target = e.target as HTMLElement;
     const keyEl = target.closest<HTMLElement>('[data-key]');
     if (keyEl) { e.preventDefault(); handleKey(keyEl.dataset.key as Key); return; }
@@ -520,7 +565,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
 
   function onKeyDown(e: KeyboardEvent) {
     sound.unlock();
-    if (pickView) return; // the answer under the pick can't change
+    if (pickView || worldMoment) return; // the answer under the pick (or the slid-away math) can't change
     const key = keyFromKeyboard(e);
     if (!key) return;
     e.preventDefault();
@@ -536,7 +581,10 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   measureRobo();
   if (awayLongEnough()) greet();
   document.addEventListener('visibilitychange', onVisibility);
-  const onResize = () => measureRobo();
+  const onResize = () => {
+    if (worldMoment) { worldSnap = true; endMoment(); worldSnap = false; } // a rotation ends a world celebration
+    measureRobo();
+  };
   window.addEventListener('resize', onResize);
 
   // Re-fit the multiplication picture when .problem-area's own box changes size (rotation, the
@@ -566,6 +614,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
       resizeObserver?.disconnect();
       robo.el.remove();
       robo.overlay.remove();
+      skipBtn.remove();
       if (pickView) { pickView.destroy(); pickView.el.remove(); pickView = null; }
       pickPending = false;
       bg.destroy();

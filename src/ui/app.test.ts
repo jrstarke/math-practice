@@ -2,7 +2,8 @@
 import { defaultProgress, type OpKey, type Progress } from '../core/progress';
 import { hintLimit, solve } from '../core/solver';
 import { localDate } from '../core/days';
-import { ACTION_GUARD_MS } from './app';
+import { ACTION_GUARD_MS, SLIDE_MS, WORLD_DELAY_MS } from './app';
+import css from './world/world.css?raw';
 import { setup, START } from './testUtil';
 
 test('renders a problem and number pad', () => {
@@ -1014,5 +1015,212 @@ describe("Robo's world", () => {
     s.app.destroy();
     expect(pick(s)).toBeNull();
     expect(s.q('[data-role="world-bg"]')).toBeNull();
+  });
+});
+
+describe("Robo's world celebrations", () => {
+  const today = localDate(new Date(START));
+  const yesterday = localDate(new Date(START - 24 * 60 * 60_000));
+  const standing = { roboMode: 'standing' as const };
+  type S = ReturnType<typeof setup>;
+  const tree = { kind: 'tree' as const, area: 0, x: 60, y: 170 };
+  const answerRight = (s: S) => { s.typeAnswer(s.correctAnswer()); s.tap('[data-key="submit"]'); };
+  const appEl = (s: S) => s.q('.app')!;
+  const away = (s: S) => appEl(s).hasAttribute('data-world-moment');
+  const skip = (s: S) => s.q('[data-role="world-skip"]')!;
+  const pickEl = (s: S) => s.q('[data-role="pick"]');
+  const down = (target: Element, init: MouseEventInit = {}) => target.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, ...init }));
+  const world = (over: Partial<Progress['world']> = {}) => ({ ...defaultProgress().world, items: [tree], picksUsed: 1, ...over });
+  /** Her 40th star is her next right answer (a 20-star walk with roboRng 0), with a world. */
+  const at39 = (items = [tree]): Progress => ({ ...defaultProgress(), total: 39, hiddenAt: START, world: world({ items }) });
+  /** Her day completes on the next right answer (day 3, no pick owed). */
+  const dayDone = (): Progress => ({ ...defaultProgress(), total: 41, hiddenAt: START, world: world(),
+    day: { date: today, right: 9, days: 2, lastDone: yesterday, practised: 2 } });
+  const walk = (p: Progress) => setup(1, { ...standing, roboRng: () => 0 }, p);
+  /** The slide is done and the scene is playing. */
+  const inTheWorld = (s: S) => { answerRight(s); s.advance(WORLD_DELAY_MS + SLIDE_MS); };
+
+  test('a 20-star celebration with a world: the tick shows, the math slides away, it plays in the world, the math comes back', () => {
+    const s = walk(at39());
+    answerRight(s);
+    expect(away(s)).toBe(false);
+    expect(s.q('[data-moment]')).toBeNull();
+    s.advance(WORLD_DELAY_MS);
+    expect(away(s)).toBe(true);
+    expect(s.q('[data-role="world-bg"]')!.hasAttribute('data-focus')).toBe(true);
+    expect(s.q('[data-role="robo"]')!.hidden).toBe(true);
+    expect(s.q('[data-moment]')).toBeNull(); // the slide comes first
+    s.advance(SLIDE_MS);
+    expect(s.q('[data-moment="walk"]')).not.toBeNull();
+    expect(skip(s).hidden).toBe(false);
+    s.advance(4000);
+    expect(away(s)).toBe(false);
+    expect(s.q('[data-role="world-bg"]')!.hasAttribute('data-focus')).toBe(false);
+    expect(s.q('[data-moment]')).toBeNull();
+    expect(skip(s).hidden).toBe(true);
+    expect(s.q('[data-role="robo"]')!.hidden).toBe(false);
+  });
+
+  test('the world scene is the strip scene at the world size', () => {
+    const s = walk(at39());
+    inTheWorld(s);
+    const m = s.q('[data-moment="walk"]') as HTMLElement;
+    // jsdom's window is 1024x768: the lane is 0.34 of the height (261 px), against the strip's 136 (--s is the ratio)
+    expect(Number(m.style.getPropertyValue('--s'))).toBeCloseTo(Math.round(768 * 0.34) / 136, 2);
+  });
+
+  test('the 100s conga plays in the world', () => {
+    const s = walk({ ...defaultProgress(), total: 99, hiddenAt: START, world: world() });
+    inTheWorld(s);
+    expect(s.q('[data-moment="conga"]')).not.toBeNull();
+    expect(away(s)).toBe(true);
+  });
+
+  test('the day streak plays in the world', () => {
+    const s = walk(dayDone());
+    inTheWorld(s);
+    expect(s.q('[data-moment="day"]')).not.toBeNull();
+    expect(away(s)).toBe(true);
+  });
+
+  test('with no items in the world every celebration plays in the strip as before', () => {
+    const s = walk(at39([]));
+    answerRight(s);
+    expect(s.q('[data-moment="walk"]')).not.toBeNull();
+    s.advance(WORLD_DELAY_MS + SLIDE_MS);
+    expect(away(s)).toBe(false);
+    expect(s.q('[data-role="world-bg"]')!.hasAttribute('data-focus')).toBe(false);
+  });
+
+  test('level-ups and the unlock kick stay in the strip even with a world', () => {
+    const up = setup(1, { ...standing, roboRng: () => 0 }, {
+      ...defaultProgress(), hiddenAt: START, world: world(),
+      unlocked: ['addition', 'subtraction', 'multiplication', 'division'] as OpKey[],
+      addition: { level: 9, window: [], calibrationLeft: 0 }, subtraction: { level: 9, window: [], calibrationLeft: 0 },
+      multiplication: { level: 9, window: [], calibrationLeft: 0 }, division: { level: 1, window: [1], calibrationLeft: 9 },
+      welcome: { op: 'division' as OpKey, left: 1 },
+    });
+    answerRight(up);
+    up.advance(WORLD_DELAY_MS + SLIDE_MS);
+    expect(up.q('[data-moment="high-five"]')).not.toBeNull();
+    expect(away(up)).toBe(false);
+    const kick = setup(1, standing, {
+      ...defaultProgress(), hiddenAt: START, world: world(), unlocked: ['addition', 'subtraction', 'multiplication'] as OpKey[],
+      addition: { level: 9, window: [], calibrationLeft: 0 }, subtraction: { level: 9, window: [], calibrationLeft: 0 },
+      multiplication: { level: 1, window: [1], calibrationLeft: 9 }, welcome: { op: 'multiplication' as OpKey, left: 1 },
+    });
+    answerRight(kick);
+    expect(kick.q('[data-moment="kick"]')).not.toBeNull();
+    expect(away(kick)).toBe(false);
+  });
+
+  test('only the » button ends it: taps on the pad, the world and the card do nothing; the button brings the math back at once', () => {
+    const s = walk(at39());
+    inTheWorld(s);
+    down(s.q('[data-key="5"]')!);
+    down(s.q('[data-role="world-bg"]')!);
+    down(s.q('[data-role="robo-moment"]')!);
+    down(s.root);
+    expect(away(s)).toBe(true);
+    expect(s.q('[data-moment="walk"]')).not.toBeNull();
+    expect(skip(s).textContent).toBe('»');
+    expect(skip(s).getAttribute('aria-label')).toBe('Skip');
+    down(skip(s));
+    expect(away(s)).toBe(false);
+    expect(s.q('[data-moment]')).toBeNull();
+    expect(s.q('[data-role="world-bg"]')!.hasAttribute('data-focus')).toBe(false);
+    expect(skip(s).hidden).toBe(true);
+    s.advance(10_000); // nothing left to fire
+    expect(away(s)).toBe(false);
+  });
+
+  test('nothing can be answered while the math is away: pad, Hint, Pass and the keyboard do nothing', () => {
+    const s = walk(at39());
+    inTheWorld(s);
+    const saves = s.saved.length;
+    for (const sel of ['[data-key="5"]', '[data-key="submit"]', '[data-action="hint"]', '[data-action="pass"]']) down(s.q(sel)!);
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: '5' }));
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    expect(s.answerText()).toBe('');
+    expect(s.saved.length).toBe(saves);
+    expect(s.q('[data-role="bubble"], .bubble')?.textContent ?? '').toBe('');
+  });
+
+  test('when the math comes back the keys work', () => {
+    const s = walk(at39());
+    inTheWorld(s);
+    down(skip(s));
+    s.advance(ACTION_GUARD_MS);
+    const saves = s.saved.length;
+    answerRight(s);
+    expect(s.saved.length).toBe(saves + 1);
+  });
+
+  test('a day celebration that owes a pick: finishing it opens the pick, with the math back under it', () => {
+    const s = walk({ ...defaultProgress(), total: 41, hiddenAt: START, world: world({ picksUsed: 0 }),
+      day: { date: today, right: 9, days: 0, lastDone: null, practised: 0 } });
+    inTheWorld(s);
+    expect(s.q('[data-moment="day"]')).not.toBeNull();
+    s.advance(3500);
+    expect(pickEl(s)).not.toBeNull();
+    expect(away(s)).toBe(false); // the math slid back under the pick
+    expect(s.q('[data-role="world-skip"]')!.hidden).toBe(true);
+  });
+
+  test('skipping a day celebration that owes a pick opens the pick too', () => {
+    const s = walk({ ...defaultProgress(), total: 41, hiddenAt: START, world: world({ picksUsed: 0 }),
+      day: { date: today, right: 9, days: 0, lastDone: null, practised: 0 } });
+    inTheWorld(s);
+    down(skip(s));
+    expect(pickEl(s)).not.toBeNull();
+    expect(s.root.querySelectorAll('[data-role="pick"]')).toHaveLength(1);
+    expect(away(s)).toBe(false);
+  });
+
+  test('a rotation (any resize) ends it at once: math and Robo back, nothing left to fire', () => {
+    const s = walk(at39());
+    inTheWorld(s);
+    window.dispatchEvent(new Event('resize'));
+    expect(away(s)).toBe(false);
+    expect(s.q('[data-moment]')).toBeNull();
+    expect(s.q('[data-role="world-bg"]')!.hasAttribute('data-focus')).toBe(false);
+    expect(s.q('[data-role="robo"]')!.hidden).toBe(false);
+    expect(skip(s).hidden).toBe(true);
+    expect(() => s.advance(20_000)).not.toThrow();
+    expect(away(s)).toBe(false);
+  });
+
+  test('a rotation during the delay or the slide also ends it', () => {
+    const s = walk(at39());
+    answerRight(s);
+    s.advance(WORLD_DELAY_MS + 100);
+    expect(away(s)).toBe(true);
+    window.dispatchEvent(new Event('resize'));
+    expect(away(s)).toBe(false);
+    s.advance(20_000);
+    expect(s.q('[data-moment]')).toBeNull();
+  });
+
+  test('a welcome-back greeting does not cut a world celebration short', () => {
+    const s = walk(at39());
+    inTheWorld(s);
+    s.hide();
+    s.away(31 * 60_000);
+    s.show();
+    expect(away(s)).toBe(true);
+    expect(s.q('[data-moment="walk"]')).not.toBeNull();
+  });
+
+  test('css: the slide moves the problem up and the keys down; Reduce Motion fades; the » is a finger wide, above the scene', () => {
+    const slide = css.match(/\.app\[data-world-moment\][^{]*\{[^}]*\}/g)!.join('\n');
+    expect(slide).toMatch(/translateY\(-/);
+    expect(slide).toMatch(/translateY\(/);
+    expect(slide).toMatch(/pointer-events:\s*none/);
+    const reduce = css.slice(css.indexOf('@media (prefers-reduced-motion: reduce)', css.indexOf('data-world-moment')));
+    expect(reduce).toMatch(/data-world-moment/);
+    expect(reduce.slice(0, reduce.indexOf('}\n}'))).not.toMatch(/translateY/);
+    expect(css).toMatch(/\.world-skip\s*\{[^}]*min-width:\s*44px[^}]*min-height:\s*44px/);
+    expect(css).toMatch(/\.world-skip\s*\{[^}]*z-index:\s*6/);
+    expect(css).not.toMatch(/filter:\s*blur/);
   });
 });

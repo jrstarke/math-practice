@@ -28,6 +28,19 @@
 /* Empty answer boxes read as boxes on the white card (not the leading blank op cell). */
 .app[data-world] .answer-row .cell:empty:not(:first-child) { background: #fff3dd; }
 
+/* ---- A celebration in her world: the problem and top bar slide up, the keys and buttons slide down, the world (sharp,
+   see .world-sharp) is left on its own. Nothing here takes a tap while it plays: only the » does. ---- */
+.app[data-world] .topbar, .app[data-world] .stage, .app[data-world] .controls { transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out; }
+.app[data-snap] .topbar, .app[data-snap] .stage, .app[data-snap] .controls { transition: none; }
+.app[data-world-moment] .topbar, .app[data-world-moment] .stage { transform: translateY(-120%); pointer-events: none; }
+.app[data-world-moment] .controls { transform: translateY(120%); pointer-events: none; }
+.world-skip {
+  position: fixed; z-index: 6; right: max(12px, env(safe-area-inset-right)); top: max(12px, env(safe-area-inset-top));
+  min-width: 44px; min-height: 44px; padding: 0; border: 0; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55); color: #2b2a4c; font: 700 22px/1 system-ui; box-shadow: 0 2px 0 rgba(0, 0, 0, 0.12);
+  -webkit-appearance: none; appearance: none; touch-action: manipulation; cursor: pointer;
+}
+
 /* ---- The pick (data-role="pick"): full screen, above the app and Robo's layers ---- */
 .pick {
   position: fixed; left: 0; top: 0; width: 100%; height: 100%; z-index: 20; overflow: hidden;
@@ -91,5 +104,7 @@
 @keyframes pick-pop { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
 
 @media (prefers-reduced-motion: reduce) {
+  /* No sliding: the math fades out and back. */
+  .app[data-world-moment] .topbar, .app[data-world-moment] .stage, .app[data-world-moment] .controls { transform: none; opacity: 0; }
   .pick, .pick-kind[data-selected] { animation: none; }
 }
