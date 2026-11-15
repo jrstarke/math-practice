@@ -366,7 +366,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
         const { feetY, ...place } = worldMomentPlace(window.innerWidth, window.innerHeight, progress.world.items, big);
         front.show(progress.world.items, feetY);
         const ms = robo.play(big, place);
-        if (wantsSparkles(big)) sparkles.play(sparkleCircle(place), ms);
+        if (wantsSparkles(big)) sparkles.play(sparkleCircle(big.kind === 'conga' ? { ...place, centerX: place.viewportWidth / 2 } : place), ms); // the conga walks the whole width
         sound.robo();
         momentTimer = later(() => { momentTimer = null; endMoment(); syncMessage(); }, ms);
       }, SLIDE_MS);

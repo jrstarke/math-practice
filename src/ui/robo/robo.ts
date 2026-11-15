@@ -2,7 +2,7 @@ import type { BigMoment } from '../../core/robo';
 import { createFigure, setFigure } from './drawing';
 import { ROBO_H, ROBO_W, type RoboMode } from './layout';
 import { BALL, cheering, div, slot, words } from './pieces';
-import { buildScene, congaLength } from './scenes';
+import { buildScene, congaLength, STAY_WORDS_WX } from './scenes';
 
 export const MOMENT_MS = { walk: 4000, highFive: 2500, kick: 3000, day: 3500, peek: 2500, surprise: 1200, welcome: 3000, flash: 600 } as const;
 
@@ -97,15 +97,16 @@ export function createRobo(): RoboView {
     if (at.centerX !== undefined && (m.classList.contains('robo-stay') || m.dataset.moment === 'day')) {
       // The scene is the full viewport wide with its content centred on 50%: shift it so that centre is centerX,
       // keeping room for the words on its left and the robot on its right.
-      const lo = Math.min(at.viewportWidth / 2, 240), hi = Math.max(at.viewportWidth / 2, at.viewportWidth - 120);
+      // The words end at cx - k*wx (k: the scale, wx: --wx in scenes.css; the day's are 68s) and may be 220px wide: keep at
+      // least WORDS_MIN px of them, with a 16px margin, on screen (a bigger Robo or a wider --wx pushes the clamp right).
+      const day = m.dataset.moment === 'day';
+      const k = Number(m.style.getPropertyValue(day ? '--s' : '--a'));
+      const wx = day ? 68 : (STAY_WORDS_WX as Record<string, number>)[m.dataset.moment ?? ''] ?? 130;
+      const lo = Math.min(at.viewportWidth / 2, Math.max(240, k * wx + 16 + WORDS_MIN)), hi = Math.max(at.viewportWidth / 2, at.viewportWidth - 120);
       const cx = Math.min(hi, Math.max(lo, at.centerX));
       m.style.left = `${cx - at.viewportWidth / 2}px`;
-      // The day words end at cx - 68s and must not run off the left edge.
-      const dayWords = m.querySelector<HTMLElement>('.robo-words');
-      if (dayWords && m.dataset.moment === 'day') {
-        const s = Number(m.style.getPropertyValue('--s'));
-        dayWords.style.maxWidth = `${Math.max(0, Math.min(260, Math.round(cx - 68 * s - 16)))}px`;
-      }
+      const w = m.querySelector<HTMLElement>('.robo-words');
+      if (w) w.style.maxWidth = `${Math.max(0, Math.min(day ? 260 : 220, Math.round(cx - k * wx - 16)))}px`;
     } else if (!peeking) m.style.left = '';
     if (peeking) {
       m.style.left = `${at.peek.left}px`;
@@ -258,11 +259,13 @@ export function createRobo(): RoboView {
   return view;
 }
 
+const WORDS_MIN = 120;
 const FIREWORKS_W = 170;
 const FIREWORKS_H = 136;
 const MIN_FIREWORKS = 0.5;
 
-/** Bursts of sparks beside Robo for a 10+ day: the box is 170 × 136 at full scale and shrinks with --s like the ball. */
+/** Bursts of sparks for a 10+ day. In the strip: beside Robo, 170 × 136 at full scale, shrinking with --s like the ball. In the
+ * world (fit() places it): a fixed size (--fw, 1 unless the sky is short), centred over Robo, one robot height above his head. */
 function fireworks(): HTMLElement {
   const box = div('robo-fireworks', { 'data-role': 'fireworks' });
   box.innerHTML = FIREWORKS;

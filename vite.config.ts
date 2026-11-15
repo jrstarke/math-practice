@@ -28,5 +28,5 @@ export default defineConfig({
       },
     }),
   ],
-  test: { globals: true, css: { include: [/world\.css/] } },
+  test: { globals: true, css: { include: [/world\.css/, /scenes\.css/] } },
 });

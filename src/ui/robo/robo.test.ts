@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { BigMoment } from '../../core/robo';
+import scenesCss from './scenes.css?inline';
+import { STAY_WORDS_WX } from './scenes';
 import { createRobo, MOMENT_MS, type MomentPlace, type RoboView } from './robo';
 
 const standing: MomentPlace = { mode: 'standing', spot: { left: 647, top: 932 }, laneTop: 504, size: 136, viewportWidth: 810, peek: { left: 349, top: 504 }, wordsAt: { x: 405, bottom: 188, width: 778 } };
@@ -40,6 +42,22 @@ describe('a world moment draws small robots', () => {
   it('without centerX the scene stays where it was', () => {
     robo.play({ kind: 'levelUp', style: 'jump-together', words: 'x' }, standing);
     expect(moment()!.style.left).toBe('');
+  });
+});
+
+describe('stay scenes keep their words on screen', () => {
+  // A crowded world puts Robo at the far left: his centre clamps to 240 and the words must not run off the left edge.
+  const styles = ['jump-together', 'pass', 'dance', 'tower', 'keepy-uppy', 'light-show', 'header'] as const;
+  it.each(styles)('%s', style => {
+    robo.play({ kind: 'levelUp', style, words: 'x' }, { ...standing, robotH: 40, size: 40, laneTop: 300, centerX: 10 });
+    const m = moment()!;
+    expect(m.classList.contains('robo-stay')).toBe(true);
+    const wx = STAY_WORDS_WX[style];
+    expect(scenesCss).toMatch(new RegExp(`\\[data-moment="${style}"\\]\\s*\\{\\s*--wx:\\s*${wx}px`)); // the table is the CSS's
+    const w = m.querySelector<HTMLElement>('.robo-words')!;
+    const left = Number.parseFloat(m.style.left) + 810 / 2 - Number(m.style.getPropertyValue('--a')) * wx - Number.parseFloat(w.style.maxWidth);
+    expect(left).toBeGreaterThanOrEqual(15);
+    expect(Number.parseFloat(w.style.maxWidth)).toBeGreaterThanOrEqual(120);
   });
 });
 

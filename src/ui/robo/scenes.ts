@@ -17,6 +17,8 @@ export const ROOM: Record<SceneName, number> = {
 };
 
 export const WALK_MS = 4000;
+/** How far left of centre each stay scene's words end, in full-size px (the same numbers as --wx in scenes.css; a test keeps them equal). */
+export const STAY_WORDS_WX = { 'jump-together': 130, pass: 182, dance: 68, tower: 112, 'keepy-uppy': 68, 'light-show': 68, header: 226 } as const;
 const HIGH_FIVE_MS = 2500;
 /** Conga robots stand this many robot widths apart (they overlap a little; their bodies don't touch). */
 export const CONGA_SPACING = 0.7;

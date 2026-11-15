@@ -211,7 +211,8 @@
 /* Reduce Motion: nothing travels, jumps or swings; each scene fades in and out in its final pose. */
 @media (prefers-reduced-motion: reduce) {
   /* Every arm and leg in a scene stands still (more specific than any scene's own limb rule, kick included). */
-  .robo-moment-layer .robo-scene [data-part] .robo-leg, .robo-moment-layer .robo-scene [data-part] .robo-arm { animation: none; }
+  .robo-moment-layer .robo-scene [data-part] .robo-leg, .robo-moment-layer .robo-scene [data-part] .robo-arm,
+  .robo-words-layer .robo-scene [data-part] .robo-leg, .robo-words-layer .robo-scene [data-part] .robo-arm { animation: none; }
   .robo-walking .robo-body-group, .robo-walking .robo-leg, .robo-walking .robo-arm,
   .robo-conga-step .robo-body-group, .robo-conga-step .robo-leg, .robo-conga-step .robo-arm { animation: none; }
   /* The walker's inline animation-duration (the conga's) carries over to the fade. */

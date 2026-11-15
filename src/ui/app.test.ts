@@ -1096,6 +1096,16 @@ describe("Robo's world celebrations", () => {
     expect(layer.children.length).toBe(0);
   });
 
+  test('the conga sparkles ring the middle of the screen, where the line walks', () => {
+    const near = { kind: 'bush' as const, area: 0, x: 100, y: 355 };
+    const ring = (s: S) => [...s.q('[data-role="sparkles"]')!.children].map(k => Number.parseFloat((k as HTMLElement).style.left));
+    const c = walk({ ...at39([tree, near]), total: 99 });
+    inTheWorld(c);
+    expect(c.q('[data-moment="conga"]')).not.toBeNull();
+    const xs = ring(c);
+    expect((Math.min(...xs) + Math.max(...xs)) / 2).toBeCloseTo(window.innerWidth / 2, 0);
+  });
+
   test('the world scene is the strip scene at the world size', () => {
     const s = walk(at39());
     inTheWorld(s);
