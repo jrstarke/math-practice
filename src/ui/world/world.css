@@ -34,8 +34,10 @@
 .app[data-snap] .topbar, .app[data-snap] .stage, .app[data-snap] .controls { transition: none; }
 .app[data-world-moment] .topbar, .app[data-world-moment] .stage { transform: translateY(-110vh); pointer-events: none; } /* by the screen, not by the element: a short one must clear it too */
 .app[data-world-moment] .controls { transform: translateY(110vh); pointer-events: none; }
+/* What stands nearer than Robo's feet, drawn over him (7 is the »; Robo's moment layer is 5). No display, so hidden hides it. */
+.world-front { position: fixed; z-index: 6; pointer-events: none; }
 .world-skip {
-  position: fixed; z-index: 6; right: max(12px, env(safe-area-inset-right)); top: max(12px, env(safe-area-inset-top));
+  position: fixed; z-index: 7; right: max(12px, env(safe-area-inset-right)); top: max(12px, env(safe-area-inset-top));
   min-width: 44px; min-height: 44px; padding: 0; border: 0; border-radius: 50%;
   background: rgba(255, 255, 255, 0.55); color: #2b2a4c; font: 700 22px/1 system-ui; box-shadow: 0 2px 0 rgba(0, 0, 0, 0.12);
   -webkit-appearance: none; appearance: none; touch-action: manipulation; cursor: pointer;

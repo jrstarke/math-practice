@@ -1032,7 +1032,7 @@ describe("Robo's world celebrations", () => {
   const down = (target: Element, init: MouseEventInit = {}) => target.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, ...init }));
   const world = (over: Partial<Progress['world']> = {}) => ({ ...defaultProgress().world, items: [tree], picksUsed: 1, ...over });
   /** Her 40th star is her next right answer (a 20-star walk with roboRng 0), with a world. */
-  const at39 = (items = [tree]): Progress => ({ ...defaultProgress(), total: 39, hiddenAt: START, world: world({ items }) });
+  const at39 = (items: Progress['world']['items'] = [tree]): Progress => ({ ...defaultProgress(), total: 39, hiddenAt: START, world: world({ items }) });
   /** Her day completes on the next right answer (day 3, no pick owed). */
   const dayDone = (): Progress => ({ ...defaultProgress(), total: 41, hiddenAt: START, world: world(),
     day: { date: today, right: 9, days: 2, lastDone: yesterday, practised: 2 } });
@@ -1060,6 +1060,21 @@ describe("Robo's world celebrations", () => {
     expect(skip(s).hidden).toBe(true);
     s.advance(SLIDE_MS + SLIDE_SETTLE_MS); // Robo is measured again once the math is back
     expect(s.q('[data-role="robo"]')!.hidden).toBe(false);
+  });
+
+  test('the front picture shows during the scene (above the moment layer, under the skip) and goes with it', () => {
+    const near = { kind: 'bush' as const, area: 0, x: 100, y: 355 };
+    const s = walk(at39([tree, near]));
+    const front = () => s.q('[data-role="world-front"]') as HTMLImageElement;
+    expect(front().hidden).toBe(true);
+    inTheWorld(s);
+    expect(front().hidden).toBe(false);
+    expect(decodeURIComponent(front().getAttribute('src')!)).toContain('data-kind="bush"');
+    const kids = [...s.q('.app')!.parentElement!.children];
+    expect(kids.indexOf(front())).toBeGreaterThan(kids.indexOf(s.q('.app')!));
+    expect(kids.indexOf(front())).toBeLessThan(kids.indexOf(skip(s)));
+    s.advance(4000);
+    expect(front().hidden).toBe(true);
   });
 
   test('the world scene is the strip scene at the world size', () => {
@@ -1254,7 +1269,7 @@ describe("Robo's world celebrations", () => {
     expect(reduce).toMatch(/data-world-moment/);
     expect(reduce.slice(0, reduce.indexOf('}\n}'))).not.toMatch(/translateY/);
     expect(css).toMatch(/\.world-skip\s*\{[^}]*min-width:\s*44px[^}]*min-height:\s*44px/);
-    expect(css).toMatch(/\.world-skip\s*\{[^}]*z-index:\s*6/);
+    expect(css).toMatch(/\.world-skip\s*\{[^}]*z-index:\s*7/);
     expect(css).not.toMatch(/filter:\s*blur/);
   });
 });

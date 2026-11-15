@@ -22,6 +22,7 @@ import { chooseMode, laneTop, momentSize, peekPosition, placeUp, spotPosition, u
 import { createRobo, type MomentPlace } from './robo/robo';
 import type { SoundPlayer } from './sound';
 import { createWorldBackground } from './world/background';
+import { createWorldFront } from './world/front';
 import { isWorldMoment, worldMomentPlace } from './world/moment';
 import { createPick } from './world/pick';
 
@@ -130,10 +131,12 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
       robo.el, robo.overlay);
   // Her world, blurred and still behind the math (once she has one).
   const bg = createWorldBackground();
+  // What stands nearer than Robo's feet, drawn over him during a celebration (above his layers, under the »).
+  const front = createWorldFront();
   // » ends a world celebration early; it is the only thing that does.
   const skipBtn = el('button', { type: 'button', class: 'world-skip', 'data-role': 'world-skip', 'aria-label': 'Skip' }, '»');
   skipBtn.hidden = true;
-  root.replaceChildren(bg.el, appEl, skipBtn);
+  root.replaceChildren(bg.el, appEl, front.el, skipBtn);
   if (shouldShowInstallTip(nav, progress)) appEl.prepend(createInstallTip());
 
   function showWorld() {
@@ -246,6 +249,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
     if (snap) { void appEl.offsetWidth; appEl.removeAttribute('data-snap'); }
     bg.focus(false);
     skipBtn.hidden = true;
+    front.hide();
     // Robo is placed from the controls' rect, so wait until the keys are back (a measure mid-slide puts him off-screen).
     if (snap) measureRobo();
     else {
@@ -355,7 +359,8 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
       robo.show(false);
       skipBtn.hidden = false;
       momentTimer = later(() => {
-        const { feetY: _feetY, ...place } = worldMomentPlace(window.innerWidth, window.innerHeight, progress.world.items, big); // feetY is for the front layer (next)
+        const { feetY, ...place } = worldMomentPlace(window.innerWidth, window.innerHeight, progress.world.items, big);
+        front.show(progress.world.items, feetY);
         const ms = robo.play(big, place);
         sound.robo();
         momentTimer = later(() => { momentTimer = null; endMoment(); syncMessage(); }, ms);
@@ -632,6 +637,8 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
       robo.el.remove();
       robo.overlay.remove();
       skipBtn.remove();
+      front.destroy();
+      front.el.remove();
       if (pickView) { pickView.destroy(); pickView.el.remove(); pickView = null; }
       pickPending = false;
       bg.destroy();

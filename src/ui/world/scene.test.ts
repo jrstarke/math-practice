@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { KINDS, depthScale, type WorldItem } from '../../core/world';
 import { drawKind, KIND_NAMES } from './kinds';
-import { sceneExtent, sceneSvg, svgDataUri, SKY_TOP, SKY_LOW, GROUND } from './scene';
+import { frontSvg, sceneExtent, sceneSvg, svgDataUri, SKY_TOP, SKY_LOW, GROUND } from './scene';
 
 const parse = (s: string) => new DOMParser().parseFromString(s, 'image/svg+xml');
 const it = (kind: WorldItem['kind'], x: number, y: number): WorldItem => ({ kind, area: 0, x, y });
@@ -103,4 +103,31 @@ test('a wider scene carries the sky, ground and hills out to its edges (none cut
 
 test('the house has a door 28 tall', () => {
   expect(drawKind('house', 0, 0, 1)).toMatch(/<rect[^>]*height="28"/);
+});
+
+describe('frontSvg: only what stands nearer than Robo\'s feet', () => {
+  const items = [it('tree', 50, 120), it('bush', 60, 200), it('house', 70, 201), it('tree', 80, 300), it('mountain', 90, 250)];
+  const extent = { x0: 0, x1: 270 };
+  test('draws items with y strictly greater than feetY, never mountains', () => {
+    const g = kindsIn(frontSvg(items, 200, { extent }));
+    expect(g.map((e) => e.getAttribute('data-y'))).toEqual(['201', '300']);
+    expect(g.map((e) => e.getAttribute('data-kind'))).not.toContain('mountain');
+  });
+  test('same viewBox as sceneSvg and the same drawing per item; no sky or ground', () => {
+    const wide = { x0: -40, x1: 310 };
+    const front = frontSvg(items, 200, { extent: wide });
+    const d = parse(front);
+    expect(d.documentElement.getAttribute('viewBox')).toBe(parse(sceneSvg(items, { extent: wide })).documentElement.getAttribute('viewBox'));
+    expect(d.querySelector('rect[fill="url(#sky)"]')).toBeNull();
+    expect(d.querySelector('linearGradient')).toBeNull();
+    expect(front).not.toContain(SKY_TOP);
+    expect(front).not.toContain(GROUND);
+    const full = kindsIn(sceneSvg(items, { extent: wide })).find((e) => e.getAttribute('data-y') === '300')!;
+    expect(kindsIn(front).find((e) => e.getAttribute('data-y') === '300')!.outerHTML).toBe(full.outerHTML);
+  });
+  test('nothing nearer still gives a valid svg', () => {
+    const d = parse(frontSvg(items, 400, { extent }));
+    expect(d.querySelector('parsererror')).toBeNull();
+    expect(kindsIn(frontSvg(items, 400, { extent }))).toHaveLength(0);
+  });
 });

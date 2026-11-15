@@ -53,3 +53,14 @@ export function sceneExtent(frameLeft: number, frameWidth: number, screenWidth: 
   const unit = frameWidth / AREA_W;
   return { left: -frameLeft, width: screenWidth, extent: { x0: 0 - frameLeft / unit, x1: (screenWidth - frameLeft) / unit } };
 }
+
+/**
+ * Only the things that stand nearer than Robo's feet (y strictly greater than `feetY`, mountains never), drawn exactly
+ * as sceneSvg draws them over the same extent, with no sky, ground or hills: a transparent picture to lay over him.
+ */
+export function frontSvg(items: WorldItem[], feetY: number, opts: { extent: { x0: number; x1: number } }): string {
+  const { x0, x1 } = opts.extent;
+  const near = items.map((it, i) => ({ it, i })).filter((e) => e.it.kind !== 'mountain' && e.it.y > feetY)
+    .sort((a, b) => a.it.y - b.it.y || a.i - b.i).map((e) => tag(drawKind(e.it.kind, e.it.x, e.it.y, itemScale(e.it)), e.it));
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x0} 0 ${x1 - x0} ${AREA_H}" preserveAspectRatio="xMidYMid slice">${near.join('')}</svg>`;
+}
