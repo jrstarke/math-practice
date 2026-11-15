@@ -37,8 +37,9 @@ everything else in her world.
 - **Depth order.** Robo's layer sits between two copies of the world picture: items with y at or above his feet (farther) are
   drawn behind him, items with y below his feet (nearer) in front. Today's blurred background plus the sharp twin that fades in
   becomes: the sharp twin is split into a "behind" and an "in front" picture, and the celebration scene is placed between them.
-- **Party.** Because he is small, stars, sparkles, and the day's effects scale up (about 2x their size today) and are drawn
-  around him in screen pixels, so the show still fills the screen. Robo's words bubble also scales up so it stays readable.
+- **Party.** Because he is small, a burst of sparkles (new, drawn in screen pixels, about 3x Robo's height across) plays
+  around him so the show still fills the screen. The words bubble keeps its size (it was too small next to the big Robo, and is
+  about right next to a small one).
 - **Kept as is.** The slide-away, the » skip, the 6 s cap, the 400 ms tap guard, and the shared world frame all stay.
 
 ## Left to the builder
