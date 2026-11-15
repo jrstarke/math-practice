@@ -50,3 +50,10 @@
 - **Slide:** problem + top bar up, keys down (user: down), by the viewport height; 0.6 s delay so she sees her tick; » top right,
   the only way to skip; a pick owed after the day celebration opens right after it (math snapped back under it).
 - **Conga cap:** 6 s in the world (faster than the strip's walk) to keep the whole thing under ~8 s.
+
+## 2026-11-15 Robo at the world's scale (release 2.1, branch feat/robo-in-scale)
+- **House door redrawn to 28 world units, Robo 24 x depthScale** (HOUSE_DOOR_H / ROBO_WORLD_H in src/core/world.ts): Robo is always a bit shorter than a door, because friends will live in the houses (user's rule). User chose option B "roomier houses" from the mockups.
+- **Robo roams only for the conga** (it takes the clearest lane, chooseLaneY); stars and day stand him in the emptiest patch (chooseSpot). No camera follow: the world stays still and only Robo moves.
+- **Front picture instead of splitting the background:** items nearer than his feet are drawn again in a transparent picture laid exactly over the sharp world (src/ui/world/front.ts), so a house in front can cover his legs without redrawing or splitting the background.
+- Sparkles for stars, conga and the lower day tiers; the 10+ day fireworks stay screen-sized but shrink to fit the sky over him, no sparkles on that tier.
+- Robots never draw under 20px (MIN_ROBOT_H): on a phone in landscape (852x393) Robo is floored at 20px and is no longer smaller than the door there (accepted ruling).

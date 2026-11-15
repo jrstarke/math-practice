@@ -42,9 +42,16 @@
      Screenshots: out/world-<view>-{none,bg,bg-hint,pick,ghost,switched,rotated,cheer,after}[-rm].png.
   7. World celebrations (2026-11-15): the world flow also checks (a) the pick's picture and the background picture have the same
      rect after placing (one frame), (b) a 20-star walk, a conga (total 99) and a day celebration with a world: after the delay+slide the
-     problem/keys are off screen, world in focus (data-focus), » >=44px top right, Robo >=30% of the height, a tap on the world
+     problem/keys are off screen, world in focus (data-focus), » >=44px top right, Robo house-door-sized (item 8), a tap on the world
      doesn't end it, » does and keys/controls are back where they were, whole thing under 8 s, conga under 6.4 s. RM=1: no transform.
      Screenshots out/world-<view>-cel-{stars,conga,day}.png. Run from /tmp/claude-1000/pw with playwright installed there.
+  8. Robo in scale (2026-11-15): smallRoboCheck runs on every world celebration above (WORLD_ITEMS) and, in a section at the end,
+     for three worlds (one tree, a house at the very bottom, a crowded one) x stars/conga/day on ipad102-p, ipad102-l-tab and
+     ip15-land (852x393; sampled at 250 ms and 1.4 s). Asserts: Robo's boxes inside the viewport (only the day scene is held to left/right;
+     the walk and the conga come in from the sides), height >= 20px (the floor) and < a door at his depth (skipped where the 20px floor
+     applies: ip15-land and small phones), the day words on screen, a nearer house covers <= 60% of his box. Screenshots
+     out/scale-<view>-<world>-<stars|conga|day>-<0|1>.png (-1 only for bottom-house); STATS=1 prints each case's numbers. Takes ~10 min with WORLD_ONLY=1;
+     don't use `timeout` below 15 min. PUBLISH_PORT may be taken (5173): pass URL=http://localhost:<the port in dev.log>.
   - Robo poses/moments preview (dev only, not built): /robo-preview.html and /robo-preview.html?moment=walk|walk-friend|<level-up style>|stars-<20-star style>|conga-2|conga-5|conga-10|kick|day-1|day-3|day-7|day-12|welcome|peek|surprise|wrong|right|up (&size=68 for a short lane)
   - Gotchas: $PUBLISH_PORT may already be taken by another process — then Vite picks the next port (check dev.log) and the
     URL must match. Vite's file watcher can miss edits on the /workspace mount: if a run looks like old code,

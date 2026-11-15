@@ -1,9 +1,10 @@
 # WIP (updated 2026-11-15)
 
-## >>> RESUME HERE (updated 2026-11-15, evening)
-- **Next: build "Robo at the world's scale" (release 2.1) on branch feat/robo-in-scale (local, NOT pushed).** Release 2 is live on dev+prod (main = 2eb4d60). Spec docs/superpowers/specs/2026-11-15-robo-in-scale-design.md, plan docs/superpowers/plans/2026-11-15-robo-in-scale.md (6 tasks, committed, nothing built). Execution method NOT chosen yet: I recommended subagent-driven (Tasks 3-5 depend on each other's interfaces); ask the user.
+## >>> RESUME HERE (updated 2026-11-15, night)
+- **"Robo at the world's scale" (release 2.1) is BUILT on branch feat/robo-in-scale: local, NOT pushed, not merged.** Spec docs/superpowers/specs/2026-11-15-robo-in-scale-design.md, plan docs/superpowers/plans/2026-11-15-robo-in-scale.md (6 tasks, all done; layout check in shots.mjs, see running.md item 8). Next: the user reviews on the iPad, then merge to main and push dev (ask first).
+- What to check on the iPad: (1) Robo's size beside a house door (he should be a bit shorter than the door); (2) a house nearer than his feet covering his legs (the front picture); (3) the sparkle burst round him on the 20-star walk, conga and lower day tiers; (4) the conga's path: it roams along the clearest lane and stays under 6 s; (5) the day-celebration words bubble stays on screen at the left edge.
 - Why: in world celebrations Robo was 34% of the screen tall (about 2x a house), so he walked over a house placed at the bottom ("Godzilla"). The user's rule: friends will live in the houses, so they must be smaller than a door.
-- Decisions (the user's, from mockups): Robo about 24 units x depthScale and the house door redrawn to 28 (option B "roomier houses", no following camera); stars/day: Robo stands in the emptiest patch, only the conga roams a clear path; nearer items stand in front of him (a transparent "front" picture); sparkles for stars, conga and the lower day tiers with the words bubble unchanged; the 10+ day fireworks stay screen-sized and burst in the sky above him, no sparkles on that tier.
+- Decisions are in decisions.md (2026-11-15 Robo at the world's scale): door 28, Robo 24, roam only for the conga, no camera follow, front picture.
 - The visual companion server may still be running (screens in .superpowers/brainstorm/, gitignored); restart with its start-server.sh --project-dir /workspace if not.
 
 ## (earlier, 2026-11-15, later) release 2 notes

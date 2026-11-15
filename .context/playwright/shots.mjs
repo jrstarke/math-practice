@@ -471,6 +471,48 @@ const pickStill = page => page.evaluate(() => {
   return moving.length ? [`moves under Reduce Motion: ${[...new Set(moving)].join(', ')}`] : [];
 });
 
+// Robo at the world's scale (2026-11-15): runs in the page during a world celebration. Takes [items, moment, rm] and returns
+// { out: issues, stats }. The frame is read off the front picture (same top and height as the sharp world, 3:4).
+// Robo's boxes (the .robo-slot rects) stay inside the viewport (the 20-star walk and the conga walk in from the sides, so only
+// the day scene, which stands still, is held to the left and right; all are held to the top and bottom), his height is >= 20px (the floor) and smaller than a house door at his depth, except
+// where the 20px floor made him taller than the scale would (then it is only held to the floor); the words stay on screen;
+// a house nearer than his feet may cover him but never more than 60% of his box.
+const smallRoboCheck = ([items, moment, rm]) => {
+  const out = [];
+  const img = document.querySelector('[data-role="world-front"]');
+  if (!img || img.hidden) return { out: ['no front picture'], stats: {} };
+  const fr = img.getBoundingClientRect(), fh = fr.height, fw = fh * 270 / 360, ftop = fr.top, fleft = fr.left + (fr.width - fw) / 2;
+  const slots = [...document.querySelectorAll('[data-role="robo-moment"] .robo-slot')];
+  if (!slots.length) return { out: ['no Robo in the scene'], stats: {} };
+  const rects = slots.map(e => e.getBoundingClientRect());
+  const hMax = Math.max(...slots.map(e => e.offsetHeight));
+  const hOf = y => 0.4 + 0.75 * (y - 90) / 270;
+  const feet = Math.max(...rects.map(b => b.bottom));
+  const feetY = (feet - ftop) / fh * 360, k = fw / 270;
+  if (rects.some(b => b.top < -1 || b.bottom > innerHeight + 1)) out.push('a robot is above or below the screen');
+  if (moment === 'day' && rects.some(b => b.left < -1 || b.right > innerWidth + 1)) out.push('a robot is off the side of the screen');
+  if (hMax < 19) out.push(`Robo is ${hMax}px, under the 20px floor`);
+  const raw = 24 * hOf(feetY) * k, door = 28 * hOf(feetY) * k;
+  const floored = raw < 20;
+  if (!floored && !(hMax < door)) out.push(`Robo ${hMax}px is not smaller than a door ${door.toFixed(1)}px at his depth`);
+  if (!rm && moment === 'day') for (const wd of document.querySelectorAll('[data-role="robo-moment"] [class*="words"]')) {
+    const b = wd.getBoundingClientRect();
+    if (b.width && (b.left < -1 || b.right > innerWidth + 1 || b.top < -1 || b.bottom > innerHeight + 1)) out.push(`words off-screen (left ${Math.round(b.left)}, right ${Math.round(b.right)}, top ${Math.round(b.top)})`);
+  }
+  // A nearer house covers his legs, not all of him.
+  const covers = [];
+  for (const it of items.filter(i => i.kind === 'house' && i.y > feetY)) {
+    const sc = hOf(it.y) * k;
+    const cx = fleft + it.x * k, by = ftop + it.y / 360 * fh;
+    const house = { l: cx - 30 * sc, r: cx + 30 * sc, t: by - 64 * sc, b: by };
+    for (const b of rects) {
+      const ow = Math.min(b.right, house.r) - Math.max(b.left, house.l), oh = Math.min(b.bottom, house.b) - Math.max(b.top, house.t);
+      if (ow > 0 && oh > 0) { const f = ow * oh / (b.width * b.height); covers.push(+f.toFixed(2)); if (f > 0.6) out.push(`a house covers ${Math.round(f * 100)}% of Robo`); }
+    }
+  }
+  return { out, stats: { hMax, raw: +raw.toFixed(1), door: +door.toFixed(1), floored, feetY: Math.round(feetY), covers: Math.max(0, ...covers) } };
+};
+
 for (const [name, w, h] of views.filter(([n]) => WORLD_VIEWS.includes(n))) {
   const issues = new Set();
   const add = (tag, list) => list.forEach(i => issues.add(`${i} [${tag}]`));
@@ -605,15 +647,10 @@ for (const [name, w, h] of views.filter(([n]) => WORLD_VIEWS.includes(n))) {
       if (!document.querySelector('[data-role="world-bg"]').hasAttribute('data-focus')) out.push('the world is not in focus');
       if (!skip || skip.width < 44 || skip.height < 44) out.push('the » is smaller than 44px');
       else if (skip.right < innerWidth - 120 || skip.top > 120) out.push('the » is not in the top right');
-      const slots = [...document.querySelectorAll('[data-role="robo-moment"] .robo-slot')].map(e => e.getBoundingClientRect());
-      if (!slots.length) out.push('no Robo in the scene');
-      else {
-        // (Reduce Motion's still conga is shrunk to the screen's width by scenes.css --fit, so it may be smaller on a phone.)
-        if (Math.max(...slots.map(b => b.height)) < innerHeight * (RMFLAG && LABEL === 'conga' ? 0.15 : 0.3)) out.push('Robo is smaller than 30% of the screen height');
-        if (slots.some(b => b.top < -1 || b.bottom > innerHeight + 1)) out.push('a robot is above or below the screen');
-      }
       return out;
     }, [RM, label]));
+    // Robo is house-door sized now (no longer 30% of the height): see smallRoboCheck.
+    add(label, (await page.evaluate(smallRoboCheck, [fixture.world.items, moment, RM])).out);
     // A tap in the middle of the screen (the world) does nothing.
     await page.touchscreen.tap(w / 2, h / 2);
     await page.waitForTimeout(200);
@@ -646,6 +683,53 @@ for (const [name, w, h] of views.filter(([n]) => WORLD_VIEWS.includes(n))) {
   if (!ok) failures++;
   const list = [...issues];
   console.log(`world-${name}`.padEnd(22), ok ? 'ok' : 'FAIL', ok ? '' : '\n    ' + list.slice(0, 8).join('\n    ') + (list.length > 8 ? `\n    …+${list.length - 8}` : ''));
+}
+
+// ---- Robo in scale (2026-11-15): three worlds x stars/conga/day on an iPad portrait, an iPad landscape and a phone
+// landscape (ip15-land, where robotH is floored at 20px by an accepted ruling, so there only the floor and the screen are held,
+// not "smaller than the door"). Each is sampled twice (just after the scene opens and ~1.2 s on) with smallRoboCheck.
+const SCALE_VIEWS = ['ipad102-p', 'ipad102-l-tab', 'ip15-land'];
+const SCALE_WORLDS = {
+  'one-tree': [{ kind: 'tree', area: 0, x: 60, y: 170 }],
+  'bottom-house': [{ kind: 'house', area: 0, x: 135, y: 355 }, { kind: 'mountain', area: 0, x: 190, y: 90 }],
+  crowded: [
+    { kind: 'mountain', area: 0, x: 80, y: 90 }, { kind: 'mountain', area: 0, x: 200, y: 90 },
+    { kind: 'house', area: 0, x: 60, y: 200 }, { kind: 'house', area: 0, x: 200, y: 250 }, { kind: 'house', area: 0, x: 120, y: 330 },
+    { kind: 'tree', area: 0, x: 30, y: 280 }, { kind: 'tree', area: 0, x: 240, y: 330 }, { kind: 'tree', area: 0, x: 170, y: 190 },
+    { kind: 'bush', area: 0, x: 60, y: 340 }, { kind: 'bush', area: 0, x: 220, y: 200 }, { kind: 'lake', area: 0, x: 120, y: 280 },
+  ],
+};
+const SCALE_MOMENTS = [
+  ['stars', 19, '?roboRng=0', 'walk', { right: 0, days: 3, practised: 3 }],
+  ['conga', 99, '', 'conga', { right: 0, days: 3, practised: 3 }],
+  ['day', 41, '', 'day', { right: 9, days: 2, practised: 2 }],
+];
+for (const [name, w, h] of views.filter(([n]) => SCALE_VIEWS.includes(n))) {
+  const issues = new Set();
+  const stats = [];
+  for (const [wname, items] of Object.entries(SCALE_WORLDS)) {
+    for (const [label, total, query, moment, day] of SCALE_MOMENTS) {
+      const tag = `${wname} ${label}`;
+      const fixture = { ...progressFor(1), total, day: { date: TODAY, lastDone: YESTERDAY, ...day }, world: { items, picksUsed: 1, offer: null } };
+      const { ctx, page, errors } = await open(name, w, h, fixture, query);
+      await answerNow(page);
+      try { await page.waitForSelector(`[data-moment="${moment}"]`, { timeout: 8000 }); } catch { issues.add(`no ${moment} scene [${tag}]`); await ctx.close(); continue; }
+      for (const [i, wait] of [[0, 250], [1, 1200]]) {
+        await page.waitForTimeout(wait);
+        if (!(await page.$(`[data-moment="${moment}"]`))) break;
+        const r = await page.evaluate(smallRoboCheck, [items, moment, RM]);
+        r.out.forEach(m => issues.add(`${m} [${tag} t${i}]`));
+        if (i === 0) stats.push(`${tag}: ${JSON.stringify(r.stats)}`);
+        if (i === 0 || wname === 'bottom-house') await page.screenshot({ path: `${OUT}/scale-${name}-${wname}-${label}-${i}${RM ? '-rm' : ''}.png` });
+      }
+      errors.forEach(m => issues.add(`${m} [${tag} errors]`));
+      await ctx.close();
+    }
+  }
+  const ok = issues.size === 0;
+  if (!ok) failures++;
+  console.log(`scale-${name}`.padEnd(22), ok ? 'ok' : 'FAIL', ok ? '' : '\n    ' + [...issues].slice(0, 20).join('\n    '));
+  if (process.env.STATS) console.log('    ' + stats.join('\n    '));
 }
 
 await browser.close();
