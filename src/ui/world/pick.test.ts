@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { PLACE_PROMPT, pickPrompt, type WorldItem, type WorldKind } from '../../core/world';
-import { fitFrame } from './frame';
+import { createWorldBackground } from './background';
+import { fitFrame, worldFrame } from './frame';
 import { PICK_CHEER_MS, createPick, type PickDeps } from './pick';
 
 // The frame is stubbed to a 270×360 box at (100, 50): one client pixel per area unit, so area (x, y) is (x+100, y+50).
@@ -171,16 +172,33 @@ test('with a kind chosen, taps on the tray background or outside the frame place
   expect(t.ghostAt()).toEqual({ kind: 'tree', x: 120, y: 200 });
 });
 
-test('the frame fits in the space above the tray, standing on it', () => {
+test('the frame is the shared world frame: above the strip, standing on it, whatever the strip measures', () => {
+  Object.defineProperty(window, 'innerWidth', { configurable: true, value: 810 });
+  Object.defineProperty(window, 'innerHeight', { configurable: true, value: 1080 });
   const t = setup();
   const bottom = t.q('.pick-bottom')!;
-  Object.defineProperty(bottom, 'offsetHeight', { configurable: true, get: () => 168 });
+  Object.defineProperty(bottom, 'offsetHeight', { configurable: true, get: () => 300 }); // must be ignored
   window.dispatchEvent(new Event('resize'));
-  const f = fitFrame(window.innerWidth, window.innerHeight - 168);
-  const top = window.innerHeight - 168 - f.height;
+  const f = worldFrame(810, 1080);
   const frame = t.q('[data-role="pick-frame"]')!;
   expect([frame.style.left, frame.style.top, frame.style.width, frame.style.height])
-    .toEqual([`${f.left}px`, `${top}px`, `${f.width}px`, `${f.height}px`]);
+    .toEqual([`${f.left}px`, `${f.top}px`, `${f.width}px`, `${f.height}px`]);
+});
+
+test.each([[810, 1080], [1080, 740], [393, 852]])('the pick and the blurred background draw the world identically at %ix%i', (w, h) => {
+  Object.defineProperty(window, 'innerWidth', { configurable: true, value: w });
+  Object.defineProperty(window, 'innerHeight', { configurable: true, value: h });
+  const t = setup();
+  const bg = createWorldBackground();
+  const frame = t.q('[data-role="pick-frame"]')!, scene = t.q('.pick-scene')!;
+  const bgImg = bg.el.querySelector('img')!;
+  const n = (s: string) => Number.parseFloat(s || '0');
+  // The pick's picture sits inside its frame; the background's sits on the page. Compare them on the page.
+  expect(n(bgImg.style.left)).toBeCloseTo(n(frame.style.left) + n(scene.style.left), 5);
+  expect(n(bgImg.style.top)).toBeCloseTo(n(frame.style.top), 5);
+  expect(n(bgImg.style.width)).toBeCloseTo(n(scene.style.width), 5);
+  expect(n(bgImg.style.height)).toBeCloseTo(n(frame.style.height), 5);
+  bg.destroy();
 });
 
 test('destroy before the timer means onDone never fires', () => {

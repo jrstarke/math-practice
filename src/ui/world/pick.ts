@@ -4,7 +4,7 @@ import {
 } from '../../core/world';
 import { el } from '../dom';
 import { createFigure, setFigure } from '../robo/drawing';
-import { fitFrame } from './frame';
+import { worldFrame } from './frame';
 import { KIND_NAMES, drawKind } from './kinds';
 import { GROUND, SKY_LOW, SKY_TOP, itemScale, sceneExtent, sceneSvg, svgDataUri } from './scene';
 
@@ -64,7 +64,7 @@ export function createPick(deps: PickDeps): { el: HTMLElement; destroy(): void }
   let spot: { x: number; y: number } | null = null;
   let locked = false;
   let timer: ReturnType<typeof setTimeout> | null = null;
-  let box = fitFrame(window.innerWidth, window.innerHeight);
+  let box = worldFrame(window.innerWidth, window.innerHeight);
 
   function drawGhost(): void {
     overlay.innerHTML = '';
@@ -103,11 +103,8 @@ export function createPick(deps: PickDeps): { el: HTMLElement; destroy(): void }
   }
 
   function layout(): void {
-    // The world fits in the space above the tray strip (Robo, its words and the choices), standing on it, so all of
-    // the ground she can place on is visible and tappable.
-    const above = Math.max(0, window.innerHeight - bottom.offsetHeight);
-    const fit = fitFrame(window.innerWidth, above);
-    box = { ...fit, top: above - fit.height };
+    // The shared frame: the world above the tray strip, standing on it, exactly as it is behind the math.
+    box = worldFrame(window.innerWidth, window.innerHeight);
     Object.assign(frame.style, { left: px(box.left), top: px(box.top), width: px(box.width), height: px(box.height) });
     // The picture is wider than the frame: sky, ground and hills run to the screen's edges, the area sits in the middle.
     const s = sceneExtent(box.left, box.width, window.innerWidth);
@@ -172,9 +169,6 @@ export function createPick(deps: PickDeps): { el: HTMLElement; destroy(): void }
 
   root.addEventListener('pointerdown', onPointerDown);
   window.addEventListener('resize', layout);
-  // The strip's height is only known once it's in the document (and changes if its words wrap differently).
-  const strip = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => layout());
-  strip?.observe(bottom);
   layout();
 
   return {
@@ -182,7 +176,6 @@ export function createPick(deps: PickDeps): { el: HTMLElement; destroy(): void }
     destroy() {
       root.removeEventListener('pointerdown', onPointerDown);
       window.removeEventListener('resize', layout);
-      strip?.disconnect();
       if (timer) clearTimeout(timer);
       timer = null;
     },

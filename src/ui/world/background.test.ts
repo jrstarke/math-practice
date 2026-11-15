@@ -2,6 +2,7 @@
 import type { WorldItem } from '../../core/world';
 import css from './world.css?raw';
 import { createWorldBackground } from './background';
+import { worldFrame } from './frame';
 
 const tree: WorldItem = { kind: 'tree', area: 0, x: 100, y: 200 };
 const lake: WorldItem = { kind: 'lake', area: 0, x: 135, y: 300 };
@@ -70,21 +71,24 @@ test('update rebuilds the picture only when the items changed', () => {
   expect(svgOf(bg.el)).toContain('data-kind="lake"');
 });
 
-test('the picture spans the screen width at the height fitFrame gives, and shows more of the world beside the area, on mount and on resize', () => {
+test('the picture spans the screen width at the height worldFrame gives, and shows more of the world beside the area, on mount and on resize', () => {
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: 810 });
   Object.defineProperty(window, 'innerHeight', { configurable: true, value: 1080 });
   const bg = createWorldBackground();
   bg.update([tree]);
   expect(img(bg.el).style.width).toBe('810px');
-  expect(img(bg.el).style.height).toBe('1080px');
+  expect(img(bg.el).style.height).toBe(`${worldFrame(810, 1080).height}px`);
+expect(img(bg.el).style.top).toBe(`${worldFrame(810, 1080).top}px`);
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1080 });
   Object.defineProperty(window, 'innerHeight', { configurable: true, value: 810 });
   window.dispatchEvent(new Event('resize'));
   expect(img(bg.el).style.width).toBe('1080px'); // the scenery runs to the screen's edges
   expect(img(bg.el).style.left).toBe('0px');
-  expect(img(bg.el).style.height).toBe('810px');
+  const f2 = worldFrame(1080, 810);
+expect(img(bg.el).style.height).toBe(`${f2.height}px`);
   const view = decodeURIComponent(img(bg.el).src).match(/viewBox="(-?[\d.]+) 0 ([\d.]+) 360"/)!;
-  expect(Number(view[1])).toBeCloseTo(-236.25 / (607.5 / 270), 5); // x0: the area starts 236.25px in
-  expect(Number(view[2])).toBeCloseTo(1080 / (607.5 / 270), 5);
+  const unit = f2.width / 270;
+  expect(Number(view[1])).toBeCloseTo(-f2.left / unit, 5); // x0: the area starts f2.left px in
+  expect(Number(view[2])).toBeCloseTo(1080 / unit, 5);
   bg.destroy();
 });

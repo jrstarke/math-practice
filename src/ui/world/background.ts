@@ -1,7 +1,7 @@
 import './world.css';
 import { AREA_H, AREA_W, HORIZON_Y, type WorldItem } from '../../core/world';
 import { el } from '../dom';
-import { fitFrame } from './frame';
+import { worldFrame } from './frame';
 import { GROUND, SKY_LOW, SKY_TOP, sceneExtent, sceneSvg, svgDataUri } from './scene';
 
 const px = (n: number) => `${n}px`;
@@ -21,7 +21,7 @@ export function createWorldBackground(): { el: HTMLElement; update(items: WorldI
   let rev = 0;
 
   function layout(): void {
-    const box = fitFrame(window.innerWidth, window.innerHeight);
+    const box = worldFrame(window.innerWidth, window.innerHeight);
     // Wider than the area: the scenery runs to the screen's edges.
     const s = sceneExtent(box.left, box.width, window.innerWidth);
     Object.assign(img.style, { left: px(s.left + box.left), top: px(box.top), width: px(s.width), height: px(box.height) });
