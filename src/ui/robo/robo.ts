@@ -109,11 +109,14 @@ export function createRobo(): RoboView {
     }
     const fw = m.querySelector<HTMLElement>('.robo-fireworks');
     if (fw && world) {
-      // In the sky over him: fixed size (not --s), centred on Robo, its bottom one robot height above his head.
-      const top = Math.max(8 - (Number.parseFloat(m.style.top) || 0), -(FIREWORKS_H + height));
-      fw.style.setProperty('--fw', '1');
-      fw.style.left = `calc(50% - ${FIREWORKS_W / 2}px)`;
-      fw.style.top = `${top}px`;
+      // In the sky over him: centred on Robo, its bottom one robot height above his head (the day's Robo is at the
+      // layer's top, so his head is y = 0 here). Too little sky: shrink it with --fw to fit, or skip it when tiny.
+      const sky = (Number.parseFloat(m.style.top) || 0) - height - 8;
+      const k = Math.min(1, Math.floor(sky / FIREWORKS_H * 1000) / 1000);
+      fw.hidden = k < MIN_FIREWORKS;
+      fw.style.setProperty('--fw', String(k));
+      fw.style.left = `calc(50% - ${Math.round(FIREWORKS_W * k / 2 * 100) / 100}px)`;
+      fw.style.top = `${-Math.round(FIREWORKS_H * k + height)}px`;
     }
     const slots = m.querySelectorAll<HTMLElement>('.robo-slot');
     for (const s of slots) {
@@ -246,6 +249,7 @@ export function createRobo(): RoboView {
 
 const FIREWORKS_W = 170;
 const FIREWORKS_H = 136;
+const MIN_FIREWORKS = 0.5;
 
 /** Bursts of sparks beside Robo for a 10+ day: the box is 170 × 136 at full scale and shrinks with --s like the ball. */
 function fireworks(): HTMLElement {

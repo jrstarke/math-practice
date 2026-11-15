@@ -5,7 +5,6 @@ import { createSparkles, sparkleCircle, wantsSparkles } from './sparkles';
 
 afterEach(() => { vi.unstubAllGlobals(); });
 const reduce = (on: boolean) => vi.stubGlobal('matchMedia', (q: string) => ({ matches: on && q.includes('reduce'), media: q }));
-const stars = () => [...createSparkles().el.children];
 
 describe('createSparkles', () => {
   it('play adds 10 stars on a circle of radius r around (x, y); stop removes them', () => {
@@ -23,7 +22,6 @@ describe('createSparkles', () => {
     }
     s.stop();
     expect(s.el.children).toHaveLength(0);
-    expect(stars()).toHaveLength(0);
   });
   it('under Reduce Motion the stars are still: data-still and no animation class', () => {
     reduce(true);

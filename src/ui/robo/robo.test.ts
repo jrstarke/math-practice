@@ -53,6 +53,21 @@ describe('fireworks in the sky', () => {
     expect(Number.parseFloat(f.style.top) + 136).toBeLessThanOrEqual(0);
     expect(f.style.left).toBe('calc(50% - 85px)');
   });
+  it('on a high spot they shrink to fit the sky, never sliding down onto Robo', () => {
+    robo.play(fw, { ...standing, robotH: 40, size: 40, laneTop: 150, centerX: 400 });
+    const f = fwEl(), m = moment()!;
+    const k = Number(f.style.getPropertyValue('--fw'));
+    expect(k).toBeLessThan(1);
+    expect(f.hidden).toBe(false);
+    const mTop = Number.parseFloat(m.style.top);
+    const bottom = mTop + Number.parseFloat(f.style.top) + 136 * k; // screen y of the bottom edge
+    expect(bottom).toBeLessThanOrEqual(mTop - 40 + 0.5); // one robot height above his head (at the layer's top)
+    expect(mTop + Number.parseFloat(f.style.top)).toBeGreaterThanOrEqual(7);
+  });
+  it('with hardly any sky they are skipped', () => {
+    robo.play(fw, { ...standing, robotH: 40, size: 40, laneTop: 90, centerX: 400 });
+    expect(fwEl().hidden).toBe(true);
+  });
   it('in the strip they are unchanged: right of Robo, scaled by --s', () => {
     robo.play(fw, standing);
     const f = fwEl();
