@@ -1,7 +1,7 @@
 // Robo's celebrations: one small builder per level-up, 20-star and 100s celebration. Their moves are in scenes.css.
 import type { BigMoment, LevelUpStyle, StarStyle } from '../../core/robo';
 import { CONGA_LIGHTS, setFigure, paintLight } from './drawing';
-import { ROBO_W } from './layout';
+import { ROBO_H, ROBO_W } from './layout';
 import { ball, cheering, div, slot, words } from './pieces';
 import type { MomentPlace } from './robo';
 import './scenes.css';
@@ -29,8 +29,8 @@ export function congaLength(robots: number, robotW = ROBO_W): number {
 }
 
 /** The conga walks at the walk's speed (one Robo and its words cross the screen in 4 s), so a longer line takes longer. */
-export function congaMs(robots: number, viewportWidth: number): number {
-  return Math.round(WALK_MS * (viewportWidth + congaLength(robots)) / (viewportWidth + congaLength(1)));
+export function congaMs(robots: number, viewportWidth: number, robotW = ROBO_W): number {
+  return Math.round(WALK_MS * (viewportWidth + congaLength(robots, robotW)) / (viewportWidth + congaLength(1, robotW)));
 }
 
 type Builder = (m: HTMLElement, big: SceneMoment, at: MomentPlace) => number;
@@ -56,7 +56,8 @@ function highFive(m: HTMLElement, big: SceneMoment): number {
 /** Robo leads a line of friends across, bobbing with a kick every few steps. Friend k has the k-th colour. */
 function conga(m: HTMLElement, big: SceneMoment, at: MomentPlace): number {
   const robots = big.kind === 'conga' ? big.robots : 2;
-  const ms = congaMs(robots, at.viewportWidth);
+  // Robots bigger than the strip's (a world moment) take longer to cross; a world moment caps it (maxMs).
+  const ms = Math.min(congaMs(robots, at.viewportWidth, Math.max(ROBO_W, ROBO_W * at.size / ROBO_H)), at.maxMs ?? Infinity);
   // Laid out right to left (row-reverse): the words lead, then Robo, then the friends in order.
   const line = div('robo-walker robo-conga');
   line.style.animationDuration = `${ms}ms`;

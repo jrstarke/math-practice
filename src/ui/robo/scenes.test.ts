@@ -55,6 +55,19 @@ describe('buildScene', () => {
     expect(node.querySelector<HTMLElement>('.robo-walker')!.style.animationDuration).toBe(`${ms}ms`);
   });
 
+  it('bigger robots take longer to pass, and a world moment caps the conga at its maxMs', () => {
+    expect(congaMs(10, 810, 302)).toBeGreaterThan(congaMs(10, 810));
+    const big: MomentPlace = { ...standing, size: 367, maxMs: 6000 };
+    const { node, ms } = buildScene({ kind: 'conga', robots: 10, words: walkWords(900) }, big);
+    expect(ms).toBeLessThanOrEqual(6000);
+    expect(node.querySelector<HTMLElement>('.robo-walker')!.style.animationDuration).toBe(`${ms}ms`);
+    expect(buildScene({ kind: 'conga', robots: 10, words: walkWords(900) }, { ...standing, size: 367 }).ms).toBeGreaterThan(6000);
+  });
+
+  it('the strip conga is unchanged by the world options', () => {
+    expect(buildScene({ kind: 'conga', robots: 5, words: walkWords(400) }, standing).ms).toBe(congaMs(5, 810));
+  });
+
   it('walk, walk-friend and high five keep their scenes', () => {
     const walk = buildScene({ kind: 'stars', style: 'walk', words: walkWords(40) }, standing);
     expect([walk.node.dataset.moment, walk.node.querySelectorAll('.robo-figure').length, walk.ms]).toEqual(['walk', 1, 4000]);

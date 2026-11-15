@@ -17,6 +17,8 @@ export interface MomentPlace {
   peek: { left: number; top: number };
   /** Peek mode: where the words go, centred on x with their bottom edge here (just above the problem). */
   wordsAt: { x: number; bottom: number; width: number };
+  /** A world moment: the longest a scene may play (a long conga walks faster to fit). */
+  maxMs?: number;
 }
 
 export interface RoboView {
