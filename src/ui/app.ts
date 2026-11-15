@@ -139,7 +139,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   skipBtn.hidden = true;
   // Sparkles round the small Robo: same z as his layer, later in the page, so over him and under the front picture.
   const sparkles = createSparkles();
-  root.replaceChildren(bg.el, appEl, sparkles.el, front.el, skipBtn);
+  root.replaceChildren(bg.el, appEl, sparkles.el, front.el, robo.wordsOverlay, skipBtn);
   if (shouldShowInstallTip(nav, progress)) appEl.prepend(createInstallTip());
 
   function showWorld() {
@@ -641,6 +641,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
       resizeObserver?.disconnect();
       robo.el.remove();
       robo.overlay.remove();
+      robo.wordsOverlay.remove();
       skipBtn.remove();
       front.destroy();
       front.el.remove();

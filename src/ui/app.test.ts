@@ -1077,6 +1077,25 @@ describe("Robo's world celebrations", () => {
     expect(front().hidden).toBe(true);
   });
 
+  test('the words are drawn over the front picture (z and page order) and under the skip; Robo stays behind it', () => {
+    const near = { kind: 'bush' as const, area: 0, x: 100, y: 355 };
+    const s = walk(at39([tree, near]));
+    inTheWorld(s);
+    const layer = s.q('[data-role="robo-words"]')!;
+    const front = s.q('[data-role="world-front"]')!;
+    expect(layer.querySelector('.robo-words')).not.toBeNull();
+    expect(layer.querySelector('.robo-slot')).not.toBeNull(); // a twin, hidden but for the words (CSS)
+    const z = (sel: string) => Number(css.match(new RegExp('\\' + sel + '\\s*\\{[^}]*z-index:\\s*(\\d+)'))![1]);
+    expect(z('.robo-words-layer')).toBeGreaterThanOrEqual(z('.world-front'));
+    expect(z('.robo-words-layer')).toBeLessThan(z('.world-skip'));
+    const kids = [...s.q('.app')!.parentElement!.children];
+    expect(kids.indexOf(layer)).toBeGreaterThan(kids.indexOf(front));
+    expect(kids.indexOf(layer)).toBeLessThan(kids.indexOf(skip(s)));
+    expect(css).toMatch(/\.robo-moment-layer\[data-split\] \.robo-words\s*\{[^}]*visibility:\s*hidden/);
+    s.advance(4000);
+    expect(layer.children.length).toBe(0);
+  });
+
   test('the world scene is the strip scene at the world size', () => {
     const s = walk(at39());
     inTheWorld(s);

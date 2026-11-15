@@ -30,6 +30,9 @@ export interface RoboView {
   el: HTMLElement;
   /** data-role="robo-moment": a fixed, full-viewport layer for moments. */
   overlay: HTMLElement;
+  /** data-role="robo-words": in a world moment, a twin of the scene that shows only the words, so they can sit above the
+   * front picture while Robo and his friends stay behind it. Empty otherwise. */
+  wordsOverlay: HTMLElement;
   show(visible: boolean): void;
   moveTo(p: { left: number; top: number }, place: 'spot' | 'up' | 'point'): void;
   think(): void;
@@ -64,6 +67,7 @@ export function createRobo(): RoboView {
   el.style.height = `${ROBO_H}px`;
   el.append(bubble, figure);
   const overlay = div('robo-moment-layer', { 'data-role': 'robo-moment', 'aria-hidden': 'true' });
+  const wordsOverlay = div('robo-words-layer', { 'data-role': 'robo-words', 'aria-hidden': 'true' });
   let surprises = 0;
 
   function say(text: string) {
@@ -175,6 +179,7 @@ export function createRobo(): RoboView {
   const view: RoboView = {
     el,
     overlay,
+    wordsOverlay,
     show(visible) {
       el.hidden = !visible;
     },
@@ -216,6 +221,8 @@ export function createRobo(): RoboView {
       }
       const { node, ms } = standingMoment(big, at);
       overlay.replaceChildren(node);
+      if (at.robotH !== undefined) wordsOverlay.replaceChildren(node.cloneNode(true)); else wordsOverlay.replaceChildren();
+      overlay.toggleAttribute('data-split', at.robotH !== undefined);
       view.refit(at);
       el.setAttribute('data-away', '');
       return ms;
@@ -223,6 +230,8 @@ export function createRobo(): RoboView {
     refit(at) {
       const m = overlay.querySelector<HTMLElement>('[data-moment]');
       if (m) fit(m, at);
+      const twin = wordsOverlay.querySelector<HTMLElement>('[data-moment]');
+      if (twin) fit(twin, at);
     },
     surprise() {
       el.dataset.surprise = surprises++ % 2 === 0 ? 'wave' : 'bounce';
@@ -240,6 +249,8 @@ export function createRobo(): RoboView {
     },
     endMoment() {
       overlay.replaceChildren();
+      overlay.removeAttribute('data-split');
+      wordsOverlay.replaceChildren();
       el.removeAttribute('data-away');
       el.removeAttribute('data-surprise');
     },
