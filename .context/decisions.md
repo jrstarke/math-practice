@@ -57,3 +57,9 @@
 - **Front picture instead of splitting the background:** items nearer than his feet are drawn again in a transparent picture laid exactly over the sharp world (src/ui/world/front.ts), so a house in front can cover his legs without redrawing or splitting the background.
 - Sparkles for stars, conga and the lower day tiers; the 10+ day fireworks stay screen-sized but shrink to fit the sky over him, no sparkles on that tier.
 - Robots never draw under 20px (MIN_ROBOT_H): on a phone in landscape (852x393) Robo is floored at 20px and is no longer smaller than the door there (accepted ruling).
+
+## 2026-11-15 Release 3 (the world grows), brainstorm decisions (user)
+- The world is an incentive for math, not a toy: no free-explore mode; she is in it only for a pick or a celebration.
+- Placing anywhere: the pick opens on the newest area; she can swipe back to older areas to place (option 1).
+- Look: peek and swipe (option A): faded sliver of the neighbouring area on each side, page dots, snap one area at a time, no arrow buttons.
+- Still my proposals, awaiting the user's okay: one wide SVG panned by transform; "A new place!" on the first pick in a new area; pan lengths; fixed 3x4 area shape. See wip.md RESUME HERE.
