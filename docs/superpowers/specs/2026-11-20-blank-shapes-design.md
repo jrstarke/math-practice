@@ -20,7 +20,7 @@ find the missing number by counting up, making 10 or undoing the operation, with
 ## Goals
 
 - **A "blank shape" on add/sub problems** (user chose this over a new operation and over a drill mode, 2026-11-20).
-  Same two ladders, same adaptation, same scoring, same unlock rules, same progress. No new operation and no migration.
+  Same two ladders, same adaptation, same scoring, same unlock rules. No new operation.
 - **Placed by what BC teaches when (user: "as they make sense among the levels for the curriculum"; user reviewed the
   placement 2026-11-20: "looks reasonable"):**
 
@@ -44,6 +44,13 @@ find the missing number by counting up, making 10 or undoing the operation, with
 - **Hints for shapes are their own, short, and stop one step short** (my call): e.g. "What do you add to 6 to make 10?",
   then counting up from 6, or "10 − 6": what's left. Each tap goes one step further; the last hint stops before the
   answer; only Pass shows it. They do not use the column hints (carry/borrow columns would be nonsense here).
+- **Re-level when a new style arrives (user, 2026-11-20: "each time we add a new style/shape of problem, we may want to
+  re-level set").** Progress gets a `styleVersion`; a table says which operations re-settle at each style version.
+  When she loads a save older than the current style version, those operations keep their level as the starting point,
+  clear their score window and get the 10-problem calibration again (two perfect answers move up fast, a miss moves
+  down), once. This release is style version 1 and re-levels addition and subtraction (my call: the user said "may
+  want"; it is cheap, keeps her level, and the table makes turning it off a one-line change). Future new shapes bump
+  the version and name their operations, with no new storage key. A new player is not re-levelled.
 - A blank problem counts toward the level ladder like any other (my call: if a shape trips her up it holds her level
   back, which is the right signal). Streak, total, scoring, day streak, Robo and the world react exactly as today.
 
@@ -58,8 +65,8 @@ find the missing number by counting up, making 10 or undoing the operation, with
 
 ## Anti-goals
 
-- Losing or changing existing progress. The saved progress format does not change (the shape is part of a problem,
-  not of progress).
+- Losing existing progress. The save moves to v10 (adds `styleVersion`); every field she has stays, and the v9 key is
+  read, never written, so a rollback still finds her last v9 save.
 - Making the ordinary problems rarer than 2 in 3 at a shape level, or the app feeling like a different game.
 - Hints that give the answer (the last hint always stops one step short).
 - Any change that makes today's problems or levels behave differently when no shape is used.
@@ -76,6 +83,8 @@ find the missing number by counting up, making 10 or undoing the operation, with
   the horizontal view (`renderHorizontalProblem`: `a × b =` then answer boxes). Neither draws the blank inline.
 - Hints come from `solve(p)` returning `Step[]` (text, optional column, scratch, ghost digits keyed by answer column);
   `revealState`/`hintLimit` merge them; `app.ts` renders them. Add/sub steps are column-by-column.
+- Progress is v9 under `math-practice-progress-v9`; `src/storage.ts` has one upgrade function per version, each
+  version its own key, older keys read once and never written.
 - Hidden test surface: ~830 unit tests, `tsc` clean, a Playwright layout check (`.context/running.md`) that screenshots
   problems per view and checks nothing overlaps; its fixtures use the current progress format.
 - Her iPad is the target (iPadOS 18, 810pt wide in portrait; rotation must not break layout).
