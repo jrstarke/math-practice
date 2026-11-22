@@ -1,4 +1,4 @@
-import { initialOpState } from './core/adaptive';
+import { initialOpState, SHAPE_MAX_STAGE } from './core/adaptive';
 import { initialDayStreak, type DayStreak } from './core/days';
 import { isValidWorld, initialWorld, repairWorld } from './core/world';
 import { defaultProgress, type OpKey, type Progress } from './core/progress';
@@ -7,7 +7,8 @@ import { defaultProgress, type OpKey, type Progress } from './core/progress';
  * Each version lives under its own key, so an older build never reads a newer record and resets her progress.
  * Older keys are read once to migrate and never written, so a rollback still finds the last save it understands.
  */
-export const STORAGE_KEY = 'math-practice-progress-v9';
+export const STORAGE_KEY = 'math-practice-progress-v10';
+export const V9_STORAGE_KEY = 'math-practice-progress-v9';
 export const V8_STORAGE_KEY = 'math-practice-progress-v8';
 export const V7_STORAGE_KEY = 'math-practice-progress-v7';
 export const V6_STORAGE_KEY = 'math-practice-progress-v6';
@@ -27,9 +28,9 @@ type KV = Pick<Storage, 'getItem' | 'setItem'>;
 const isObj = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && x !== null && !Array.isArray(x);
 const isIntIn = (x: unknown, lo: number, hi: number) => Number.isInteger(x) && (x as number) >= lo && (x as number) <= hi;
 
-function isValidOpState(x: unknown): boolean {
+function isValidOpState(x: unknown, maxLevel = 9): boolean {
   return isObj(x)
-    && isIntIn(x.level, 1, 9)
+    && isIntIn(x.level, 1, maxLevel)
     && Array.isArray(x.window)
     && x.window.length <= 5
     && x.window.every(v => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 1)
@@ -46,8 +47,10 @@ function hasValidCommonFields(x: Record<string, unknown>): boolean {
     && typeof x.installTipShown === 'boolean';
 }
 
+/** v10 added the blank-shape ladders. */
+type ProgressV9 = Omit<Progress, 'version' | 'shapes'> & { version: 9 };
 /** v9 added Robo's world. */
-type ProgressV8 = Omit<Progress, 'version' | 'world'> & { version: 8 };
+type ProgressV8 = Omit<ProgressV9, 'version' | 'world'> & { version: 8 };
 /** v8 added days practised in total to the day streak. */
 type ProgressV7 = Omit<ProgressV8, 'version' | 'day'> & { version: 7; day: Omit<DayStreak, 'practised'> };
 /** v7 added the day streak and when the app was last hidden. */
@@ -146,12 +149,21 @@ function isValidProgressV8(x: unknown): x is ProgressV8 {
   return isObj(x) && x.version === 8 && hasValidV6Fields(x) && isValidDayStreak(x.day) && isValidHiddenAt(x.hiddenAt);
 }
 
-export function isValidProgress(x: unknown): x is Progress {
+function isValidProgressV9(x: unknown): x is ProgressV9 {
   return isObj(x) && x.version === 9 && hasValidV6Fields(x) && isValidDayStreak(x.day) && isValidHiddenAt(x.hiddenAt)
     && isValidWorld(x.world);
 }
 
-/** Fields v6, v7, v8 and v9 share. */
+function isValidShapes(x: unknown): boolean {
+  return isObj(x) && isValidOpState(x.addition, SHAPE_MAX_STAGE) && isValidOpState(x.subtraction, SHAPE_MAX_STAGE);
+}
+
+export function isValidProgress(x: unknown): x is Progress {
+  return isObj(x) && x.version === 10 && hasValidV6Fields(x) && isValidDayStreak(x.day) && isValidHiddenAt(x.hiddenAt)
+    && isValidWorld(x.world) && isValidShapes(x.shapes);
+}
+
+/** Fields v6 to v10 share. */
 function hasValidV6Fields(x: Record<string, unknown>): boolean {
   return hasValidCommonFields(x)
     && isValidOpState(x.multiplication) && isValidOpState(x.division)
@@ -206,8 +218,13 @@ function upgradeV7(p: ProgressV7): ProgressV8 {
 }
 
 /** v8 players start with an empty world; her first pick arrives once she has practised enough days. */
-function upgradeV8(p: ProgressV8): Progress {
+function upgradeV8(p: ProgressV8): ProgressV9 {
   return { ...p, version: 9, world: initialWorld() };
+}
+
+/** v9 players start both blank-shape ladders at stage 1, calibrating. */
+function upgradeV9(p: ProgressV9): Progress {
+  return { ...p, version: 10, shapes: { addition: initialOpState(), subtraction: initialOpState() } };
 }
 
 function readJson(storage: KV, key: string): unknown {
@@ -226,22 +243,25 @@ export function createStore(storage: KV | null): ProgressStore {
         const raw = readJson(storage, STORAGE_KEY);
         const current = isObj(raw) && 'world' in raw ? { ...raw, world: repairWorld(raw.world) } : raw;
         if (isValidProgress(current)) return current;
+        const rawV9 = readJson(storage, V9_STORAGE_KEY);
+        const v9 = isObj(rawV9) && 'world' in rawV9 ? { ...rawV9, world: repairWorld(rawV9.world) } : rawV9;
+        if (isValidProgressV9(v9)) return upgradeV9(v9);
         const v8 = readJson(storage, V8_STORAGE_KEY);
-        if (isValidProgressV8(v8)) return upgradeV8(v8);
+        if (isValidProgressV8(v8)) return upgradeV9(upgradeV8(v8));
         const v7 = readJson(storage, V7_STORAGE_KEY);
-        if (isValidProgressV7(v7)) return upgradeV8(upgradeV7(v7));
+        if (isValidProgressV7(v7)) return upgradeV9(upgradeV8(upgradeV7(v7)));
         const v6 = readJson(storage, V6_STORAGE_KEY);
-        if (isValidProgressV6(v6)) return upgradeV8(upgradeV7(upgradeV6(v6)));
+        if (isValidProgressV6(v6)) return upgradeV9(upgradeV8(upgradeV7(upgradeV6(v6))));
         const v5 = readJson(storage, V5_STORAGE_KEY);
-        if (isValidProgressV5(v5)) return upgradeV8(upgradeV7(upgradeV6(upgradeV5(v5))));
+        if (isValidProgressV5(v5)) return upgradeV9(upgradeV8(upgradeV7(upgradeV6(upgradeV5(v5)))));
         const v4 = readJson(storage, V4_STORAGE_KEY);
-        if (isValidProgressV4(v4)) return upgradeV8(upgradeV7(upgradeV6(upgradeV5(upgradeV4(v4)))));
+        if (isValidProgressV4(v4)) return upgradeV9(upgradeV8(upgradeV7(upgradeV6(upgradeV5(upgradeV4(v4))))));
         const v3 = readJson(storage, V3_STORAGE_KEY);
-        if (isValidProgressV3(v3)) return upgradeV8(upgradeV7(upgradeV6(upgradeV5(upgradeV4(upgradeV3(v3))))));
+        if (isValidProgressV3(v3)) return upgradeV9(upgradeV8(upgradeV7(upgradeV6(upgradeV5(upgradeV4(upgradeV3(v3)))))));
         const v2 = readJson(storage, V2_STORAGE_KEY);
-        if (isValidProgressV2(v2)) return upgradeV8(upgradeV7(upgradeV6(upgradeV5(upgradeV4(upgradeV3(upgradeV2(v2)))))));
+        if (isValidProgressV2(v2)) return upgradeV9(upgradeV8(upgradeV7(upgradeV6(upgradeV5(upgradeV4(upgradeV3(upgradeV2(v2))))))));
         const v1 = readJson(storage, LEGACY_STORAGE_KEY);
-        return isValidProgressV1(v1) ? upgradeV8(upgradeV7(upgradeV6(upgradeV5(upgradeV4(upgradeV3(upgradeV2(upgradeV1(v1)))))))) : defaultProgress();
+        return isValidProgressV1(v1) ? upgradeV9(upgradeV8(upgradeV7(upgradeV6(upgradeV5(upgradeV4(upgradeV3(upgradeV2(upgradeV1(v1))))))))) : defaultProgress();
       } catch {
         return defaultProgress();
       }

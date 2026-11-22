@@ -5,8 +5,11 @@ import { initialWorld, type WorldState } from './world';
 
 export type OpKey = 'addition' | 'subtraction' | 'multiplication' | 'division';
 
+/** The operations a blank shape (a missing-number problem) can be about. */
+export type ShapeKey = 'addition' | 'subtraction';
+
 export interface Progress {
-  version: 9;
+  version: 10;
   unlocked: OpKey[]; // operations in the mix; once unlocked, always unlocked
   addition: OpState;
   subtraction: OpState;
@@ -25,11 +28,13 @@ export interface Progress {
   hiddenAt: number | null;
   /** Robo's world: what she has placed, the picks used and the pick on offer. */
   world: WorldState;
+  /** The blank-shape ladder per operation (three stages). */
+  shapes: Record<ShapeKey, OpState>;
 }
 
 export function defaultProgress(): Progress {
   return {
-    version: 9,
+    version: 10,
     unlocked: ['addition'],
     addition: initialOpState(),
     subtraction: initialOpState(),
@@ -44,6 +49,7 @@ export function defaultProgress(): Progress {
     day: initialDayStreak(),
     hiddenAt: null,
     world: initialWorld(),
+    shapes: { addition: initialOpState(), subtraction: initialOpState() },
   };
 }
 

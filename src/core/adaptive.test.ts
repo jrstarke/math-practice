@@ -1,4 +1,4 @@
-import { initialOpState, pickLevel, update, type LevelChange, type OpState } from './adaptive';
+import { initialOpState, pickLevel, SHAPE_MAX_STAGE, update, type LevelChange, type OpState } from './adaptive';
 import { mulberry32 } from './rng';
 
 const run = (s: OpState, scores: number[]) =>
@@ -56,3 +56,13 @@ test('pickLevel edges and calibration', () => {
     expect(pickLevel(calibrating4, rng)).toBe(4);
   }
 });
+
+test('maxLevel: a level-up past it is no change, below it still moves', () => {
+  expect(update({ level: 3, window: [1, 1, 1, 1], calibrationLeft: 0 }, 1, 3)).toEqual({ state: { level: 3, window: [1, 1, 1, 1, 1], calibrationLeft: 0 }, change: 0 });
+  expect(update({ level: 2, window: [1, 1, 1, 1], calibrationLeft: 0 }, 1, 3)).toMatchObject({ state: { level: 3 }, change: 1 });
+});
+test('maxLevel: pickLevel never goes above it', () => {
+  const rng = mulberry32(5);
+  for (let i = 0; i < 1000; i++) expect(pickLevel(normal(2), rng, 2)).toBeLessThanOrEqual(2);
+});
+test('SHAPE_MAX_STAGE is 3', () => expect(SHAPE_MAX_STAGE).toBe(3));
