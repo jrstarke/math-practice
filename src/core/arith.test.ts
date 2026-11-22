@@ -1,4 +1,4 @@
-import { answerColumns, answerOf, borrowCount, carryCount, digitsOf } from './arith';
+import { answerColumns, answerOf, resultOf, borrowCount, carryCount, digitsOf } from './arith';
 
 test('digitsOf', () => {
   expect(digitsOf(302)).toEqual([2, 0, 3]);
@@ -27,4 +27,25 @@ test('answerOf / answerColumns', () => {
   expect(answerColumns({ op: '+', a: 68, b: 57, level: 7 })).toBe(3);
   expect(answerOf({ op: '×', a: 6, b: 7, level: 1 })).toBe(42);
   expect(answerColumns({ op: '×', a: 24, b: 3, level: 7 })).toBe(2);
+});
+
+test('answerOf is the typed number for shaped problems', () => {
+  expect(answerOf({ op: '+', a: 6, b: 4, level: 1, shape: 'missing-b' })).toBe(4);
+  expect(answerOf({ op: '-', a: 12, b: 5, level: 2, shape: 'missing-a' })).toBe(12);
+  expect(answerOf({ op: '+', a: 5, b: 7, level: 2, shape: 'flipped' })).toBe(7);
+  expect(answerOf({ op: '+', a: 8, b: 3, c: 5, level: 2, shape: 'balance' })).toBe(6);
+  expect(answerOf({ op: '+', a: 6, b: 4, level: 1 })).toBe(10);
+  expect(answerOf({ op: '-', a: 9, b: 4, level: 1 })).toBe(5);
+  expect(answerOf({ op: '×', a: 6, b: 7, level: 1 })).toBe(42);
+  expect(answerOf({ op: '÷', a: 72, b: 3, level: 7 })).toBe(24);
+});
+
+test('resultOf is the arithmetic result', () => {
+  expect(resultOf({ op: '+', a: 6, b: 4, level: 1, shape: 'missing-b' })).toBe(10);
+  expect(resultOf({ op: '-', a: 12, b: 5, level: 2, shape: 'missing-a' })).toBe(7);
+});
+
+test('answerColumns follows the typed number', () => {
+  expect(answerColumns({ op: '+', a: 8, b: 3, c: 5, level: 2, shape: 'balance' })).toBe(1);
+  expect(answerColumns({ op: '+', a: 9, b: 8, c: 1, level: 2, shape: 'balance' })).toBe(2);
 });

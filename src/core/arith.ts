@@ -10,12 +10,24 @@ export function digitsOf(n: number): number[] {
   return out;
 }
 
-export function answerOf(p: Problem): number {
+/** The arithmetic result of `a op b`, whatever the shape. */
+export function resultOf(p: Problem): number {
   switch (p.op) {
     case '+': return p.a + p.b;
     case '-': return p.a - p.b;
     case '×': return p.a * p.b;
     case '÷': return p.a / p.b;
+  }
+}
+
+/** The number the child types: the result, or the blank's value for a shaped problem. */
+export function answerOf(p: Problem): number {
+  switch (p.shape) {
+    case undefined: return resultOf(p);
+    case 'missing-b':
+    case 'flipped': return p.b;
+    case 'missing-a': return p.a;
+    case 'balance': return p.a + p.b - (p.c ?? 0);
   }
 }
 
