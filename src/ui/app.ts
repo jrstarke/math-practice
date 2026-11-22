@@ -6,6 +6,7 @@ import type { Progress } from '../core/progress';
 import type { Rng } from '../core/rng';
 import { decideRobo, initialRoboMemory, welcomeWords, type BigMoment, type RoboOutcome } from '../core/robo';
 import { nextProblem, recordResult, RECENT_LIMIT, type AttemptInput } from '../core/session';
+import { SHAPE_SHARE } from '../core/shapes';
 import { hintLimit, revealState, solve, type RevealState, type Step } from '../core/solver';
 import type { Problem } from '../core/types';
 import { makeOffer, pickCheer, picksOwed, placeItem } from '../core/world';
@@ -13,6 +14,7 @@ import type { ProgressStore } from '../storage';
 import { el } from './dom';
 import { shake } from './feedback';
 import { createHintBubble } from './hintBubble';
+import { renderBlankProblem } from './blankProblemView';
 import { renderHorizontalProblem } from './horizontalProblemView';
 import { createInstallTip, shouldShowInstallTip } from './installTip';
 import { createNumberPad, keyFromKeyboard } from './numberPad';
@@ -41,6 +43,8 @@ export interface AppDeps {
   version?: string;
   /** Robo's surprises use their own random source, so seeded problem sequences don't change. */
   roboRng?: Rng;
+  /** The share (0..1) of addition and subtraction problems that are blank shapes. Defaults to SHAPE_SHARE; tests and the dev URL set it. */
+  shapeShare?: number;
   /** Tests only: fix Robo's mode instead of measuring the layout. */
   roboMode?: RoboMode;
 }
@@ -411,7 +415,8 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   }
 
   function render() {
-    const renderFn = problem.op === '×' || problem.op === '÷' ? renderHorizontalProblem : renderColumnProblem;
+    const renderFn = problem.shape ? renderBlankProblem
+      : problem.op === '×' || problem.op === '÷' ? renderHorizontalProblem : renderColumnProblem;
     renderFn(problemHost, { problem, entry, ghosts: reveal.ghosts, highlight: reveal.column, phase });
     totalEl.textContent = `⭐ ${progress.total}`;
     messageEl.textContent = message || unlockNote;
@@ -432,8 +437,7 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   }
 
   function showNext() {
-    // Task 6 wires AppDeps.shapeShare
-    problem = nextProblem(progress, recent, rng, 0);
+    problem = nextProblem(progress, recent, rng, deps.shapeShare ?? SHAPE_SHARE);
     entry = initialEntry();
     attempt = { wrongSubmits: 0, hintsUsed: 0, passed: false, firstSubmitMs: 0 };
     firstSubmitted = false;

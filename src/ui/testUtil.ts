@@ -17,11 +17,17 @@ export function setup(seed = 1, overrides: Partial<AppDeps> = {}, initial: Progr
   let wall = START;
   const store: ProgressStore = { load: () => initial, save: p => void saved.push(p) };
   const sound = { unlock: vi.fn(), correct: vi.fn(), wrong: vi.fn(), levelUp: vi.fn(), robo: vi.fn(), pop: vi.fn(), setMuted: vi.fn() };
-  const app = mountApp({ root, rng: mulberry32(seed), now: () => t, clock: () => wall, store, sound, roboRng: () => 0.1, ...overrides });
+  const app = mountApp({ root, rng: mulberry32(seed), now: () => t, clock: () => wall, store, sound, roboRng: () => 0.1, shapeShare: 0, ...overrides });
 
   const q = (sel: string) => root.querySelector<HTMLElement>(sel);
   const tap = (sel: string) => q(sel)!.dispatchEvent(new Event('pointerdown', { bubbles: true }));
   const current = () => {
+    const shaped = q('[data-shape]');
+    if (shaped) {
+      const d = shaped.dataset;
+      const op: '+' | '-' = q('[data-role="op"]')!.textContent!.includes('+') ? '+' : '-';
+      return { a: +d.a!, b: +d.b!, op, shape: d.shape, c: d.c === undefined ? undefined : +d.c };
+    }
     const opText = q('[data-role="op"]')!.textContent!;
     const op: '+' | '-' | '×' | '÷' = opText.includes('+') ? '+' : opText.includes('×') ? '×' : opText.includes('÷') ? '÷' : '-';
     return {
@@ -33,6 +39,7 @@ export function setup(seed = 1, overrides: Partial<AppDeps> = {}, initial: Progr
   const typeAnswer = (n: number) => { for (const d of String(n)) tap(`[data-key="${d}"]`); };
   const correctAnswer = () => {
     const c = current();
+    if ('shape' in c && c.shape) return c.shape === 'missing-a' ? c.a : c.shape === 'balance' ? c.a + c.b - c.c! : c.b;
     return c.op === '+' ? c.a + c.b : c.op === '-' ? c.a - c.b : c.op === '÷' ? c.a / c.b : c.a * c.b;
   };
   const answerText = () => q('[data-role="answer"]')!.textContent!.replace(/\D/g, '');

@@ -160,6 +160,24 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 .answer-row.correct { color: var(--good); animation: bounce 0.5s ease; }
 .answer-row:not(:empty) .cell:not(:empty) { position: relative; z-index: 1; }
 
+/* Blank shape: the whole sum on one line with the answer boxes in place. The line's font-size is the usual cell
+   size, shrunk so --units (the line's width in em, set by the view) always fits the room, so it never wraps or
+   runs under the picture, bubble or controls, in portrait or landscape. */
+.problem.blank-problem { align-items: center; max-width: 100%; }
+.blank-line {
+  display: flex; align-items: center; justify-content: center; gap: 0.3em; white-space: nowrap;
+  font-size: min(calc(var(--cell) * 0.8), calc(94vw / var(--units)));
+  font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums;
+}
+@supports (container-type: size) {
+  .blank-line { font-size: min(calc(var(--cell) * 0.8), calc(94cqw / var(--units))); }
+}
+.blank-line .op { color: var(--accent); }
+.blank-wrap { flex: none; }
+.blank-boxes { display: grid; grid-template-columns: repeat(var(--cols), 0.85em); height: 1.2em; }
+.blank-boxes.ghost-row { height: auto; }
+.blank-boxes.answer-row.focused .cell { box-shadow: inset 0 -4px 0 var(--accent); }
+
 .message { min-height: 1.6em; font-size: 1.3rem; font-weight: 700; color: var(--bad); text-align: center; }
 .message.good { color: var(--good); }
 

@@ -1302,3 +1302,79 @@ describe("Robo's world celebrations", () => {
     expect(css).not.toMatch(/filter:\s*blur/);
   });
 });
+
+describe('blank shapes', () => {
+  const shaped = (seed = 1) => setup(seed, { shapeShare: 1 });
+
+  test('a shape problem draws the blank in the sum, and the typed number finishes it', () => {
+    const s = shaped();
+    expect(s.q('[data-shape]')).not.toBeNull();
+    const first = s.current();
+    s.typeAnswer(s.correctAnswer());
+    s.tap('[data-key="submit"]');
+    expect(s.saved).toHaveLength(1);
+    expect(s.q('[data-role="answer"]')!.classList.contains('correct')).toBe(true);
+    s.advance(1000);
+    expect(s.current()).not.toEqual(first);
+  });
+
+  test('typing the sum instead of the blank is wrong', () => {
+    const s = shaped();
+    const c = s.current();
+    const sum = c.op === '+' ? c.a + c.b : c.a - c.b;
+    expect(sum).not.toBe(s.correctAnswer());
+    s.typeAnswer(sum);
+    s.tap('[data-key="submit"]');
+    expect(s.saved).toHaveLength(0);
+    expect(s.q('[data-role="answer"]')!.classList.contains('faded')).toBe(true);
+  });
+
+  test('two hints show two bubbles and no ghost digits; Hint is then disabled', () => {
+    const s = shaped();
+    s.tap('[data-action="hint"]');
+    const first = s.q('[data-role="bubble"]')!.textContent;
+    expect(first).not.toBe('');
+    s.tap('[data-action="hint"]');
+    const second = s.q('[data-role="bubble"]')!.textContent;
+    expect(second).not.toBe(first);
+    expect(s.root.querySelectorAll('[data-ghost]').length).toBe(0);
+    expect((s.q('[data-action="hint"]') as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  test('Pass shows the ghost digits of the typed number, then Next works', () => {
+    const s = shaped();
+    const answer = s.correctAnswer();
+    s.tap('[data-action="pass"]');
+    s.advance(10000);
+    const digits = [...s.root.querySelectorAll('[data-ghost]')]
+      .sort((x, y) => Number(y.getAttribute('data-ghost')) - Number(x.getAttribute('data-ghost')))
+      .map(e => e.textContent).join('');
+    expect(digits).toBe(String(answer));
+    s.tap('[data-action="next"]');
+    expect(s.q('[data-action="next"]')).toBeNull();
+    expect(s.q('[data-role="answer"]')!.textContent).toBe('');
+  });
+
+  test('a shape miss leaves the arithmetic level alone', () => {
+    const s = shaped();
+    s.tap('[data-action="pass"]');
+    s.advance(10000);
+    const saved = s.saved.at(-1)!;
+    expect(saved.addition.level).toBe(defaultProgress().addition.level);
+    expect(saved.subtraction.level).toBe(defaultProgress().subtraction.level);
+  });
+
+  test('without the dep, the default share still serves plain problems too', () => {
+    const s = setup(1, { shapeShare: undefined });
+    let plain = 0, shapes = 0;
+    for (let i = 0; i < 40; i++) {
+      if (s.q('[data-shape]')) shapes++; else plain++;
+      s.tap('[data-action="pass"]');
+      s.advance(10000);
+      s.tap('[data-action="next"]');
+      s.advance(ACTION_GUARD_MS + 1);
+    }
+    expect(plain).toBeGreaterThan(0);
+    expect(shapes).toBeGreaterThan(0);
+  });
+});

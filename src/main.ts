@@ -21,6 +21,16 @@ function devRoboRng(): (() => number) | undefined {
   return v >= 0 && v < 1 ? () => v : undefined;
 }
 
+/** Dev only (stripped from builds): ?shapeShare=<0..1> sets the share of add/sub problems that are blank shapes
+ * (1 for all of them, 0 for none), so the layout check can reach them. */
+function devShapeShare(): number | undefined {
+  if (!import.meta.env.DEV) return undefined;
+  const raw = new URLSearchParams(location.search).get('shapeShare');
+  if (raw === null || raw === '') return undefined;
+  const v = Number(raw);
+  return v >= 0 && v <= 1 ? v : undefined;
+}
+
 mountApp({
   root: document.getElementById('app')!,
   rng: mulberry32(Date.now()),
@@ -30,6 +40,7 @@ mountApp({
   sound: createSound(),
   version: __APP_VERSION__,
   roboRng: devRoboRng(),
+  shapeShare: devShapeShare(),
 });
 
 registerSW({
