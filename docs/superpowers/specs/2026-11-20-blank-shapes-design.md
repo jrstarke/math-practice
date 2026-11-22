@@ -4,6 +4,8 @@ Date: 2026-11-20. Size: project. Builds on the add/sub levels (`src/core/operati
 research in `docs/research/2026-11-20-bc-curriculum-recommendation.md` (item 1) and
 `docs/research/2026-11-19-bc-curriculum-gaps.md`.
 
+**Status: APPROVED by the user, 2026-11-22**, including the calls marked "my calls" (1 in 3 share, 70/20/10 stage mix, short hints that stop one step short, no shape in the welcome).
+
 ## Intent and why
 
 The child is in Grade 2 (British Columbia). Today every add/sub problem has the same shape: two numbers, an operator,
