@@ -15,3 +15,19 @@ test.each([
   expect(matchesLevel({ op, a, b, level })).toBe(false));
 
 test('targetMs', () => expect(targetMs({ op: '+', a: 47, b: 38, level: 6 })).toBe(12000));
+
+test('matchesLevel on shapes', () => {
+  const ok = { op: '+', a: 6, b: 3, level: 1, shape: 'missing-b', stage: 1 } as const;
+  expect(matchesLevel(ok)).toBe(true);
+  expect(matchesLevel({ ...ok, shape: 'missing-a' })).toBe(false);
+  expect(matchesLevel({ ...ok, stage: undefined })).toBe(false);
+  expect(matchesLevel({ ...ok, stage: 4 })).toBe(false);
+  expect(matchesLevel({ ...ok, stage: 2 })).toBe(false);
+  expect(matchesLevel({ op: '×', a: 2, b: 3, level: 1, shape: 'missing-b', stage: 1 })).toBe(false);
+  const bal = { op: '+', a: 8, b: 5, level: 2, shape: 'balance', stage: 2, c: 4 } as const;
+  expect(matchesLevel(bal)).toBe(true);
+  expect(matchesLevel({ ...bal, c: 13 })).toBe(false);
+  expect(matchesLevel({ ...bal, c: 8 })).toBe(false);
+  expect(matchesLevel({ ...bal, c: undefined })).toBe(false);
+  expect(matchesLevel({ ...bal, op: '-', a: 13, b: 5 })).toBe(false);
+});

@@ -1,13 +1,20 @@
 import { answerColumns } from './arith';
 import type { Problem } from './types';
 import { OPS } from './operations/registry';
+import { balanceCOk, numberLevelsFor, shapesFor } from './shapeTables';
 
 export const MIN_LEVEL = 1;
 export const MAX_LEVEL = 9;
 
 /** True iff the problem satisfies the rules of its level for its operation (spec §3). */
 export function matchesLevel(p: Problem): boolean {
-  return OPS[p.op].matchesLevel(p);
+  if (!OPS[p.op].matchesLevel(p)) return false;
+  if (p.shape === undefined) return true;
+  const stage = p.stage;
+  if (stage === undefined || !Number.isInteger(stage) || stage < 1 || stage > 3) return false;
+  if (!numberLevelsFor(stage).includes(p.level)) return false;
+  if (!shapesFor(p.op, stage).includes(p.shape)) return false;
+  return p.shape !== 'balance' || balanceCOk(p.a, p.b, p.c);
 }
 
 /** Time within which a first-try answer counts as "quick" (spec §4). */
