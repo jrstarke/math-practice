@@ -1,5 +1,6 @@
 import type { Problem } from './types';
 import { OPS } from './operations/registry';
+import { solveShape } from './operations/shapeHints';
 import type { Ghost, Step, RevealState } from './operations/types';
 
 // Re-export for backward compatibility
@@ -7,6 +8,7 @@ export type { Ghost, Step, RevealState };
 
 /** Column-by-column worked solution used for hints and Pass (spec §8). */
 export function solve(p: Problem): Step[] {
+  if (p.shape) return solveShape(p);
   return OPS[p.op].solve(p);
 }
 
