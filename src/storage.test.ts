@@ -493,6 +493,17 @@ test('saving after a v9 upgrade writes only the v10 key and leaves the v9 string
   expect([...s.m.keys()].sort()).toEqual([STORAGE_KEY, V9_STORAGE_KEY].sort());
 });
 
+test.each([
+  ['a bad kind', ['tree', 'dragon', 'bush']],
+  ['duplicates', ['tree', 'tree', 'bush']],
+  ['not an array', 'tree'],
+])('a v9 record whose offer has %s is repaired and upgraded to v10 with her items kept', (_, offer) => {
+  const s = mem();
+  const world = { ...v9Record.world, offer };
+  s.m.set(V9_STORAGE_KEY, JSON.stringify({ ...v9Record, world }));
+  expect(createStore(s).load()).toEqual({ ...v9Record, version: 10, world: { ...world, offer: null }, shapes: initialShapes });
+});
+
 test('a valid v10 record with moved shape ladders round-trips', () => {
   const s = mem();
   const p = { ...defaultProgress(), shapes: { addition: { level: 3, window: [1, 0.5], calibrationLeft: 4 }, subtraction: { level: 2, window: [], calibrationLeft: 0 } } };

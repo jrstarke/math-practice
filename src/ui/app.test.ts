@@ -1319,14 +1319,32 @@ describe('blank shapes', () => {
   });
 
   test('typing the sum instead of the blank is wrong', () => {
-    const s = shaped();
-    const c = s.current();
-    const sum = c.op === '+' ? c.a + c.b : c.a - c.b;
-    expect(sum).not.toBe(s.correctAnswer());
-    s.typeAnswer(sum);
+    // The blank holds only as many digits as the answer, so skip a draw whose sum starts with the answer (9 + [] = 10).
+    let seed = 1;
+    let s = shaped(seed);
+    const sumOf = () => { const c = s.current(); return String(c.op === '+' ? c.a + c.b : c.a - c.b); };
+    while (sumOf().startsWith(String(s.correctAnswer()))) s = shaped(++seed);
+    s.typeAnswer(Number(sumOf()));
     s.tap('[data-key="submit"]');
     expect(s.saved).toHaveLength(0);
     expect(s.q('[data-role="answer"]')!.classList.contains('faded')).toBe(true);
+  });
+
+  test('typing the sum into a short blank is wrong and shows only the first digit typed', () => {
+    for (let seed = 1; seed < 200; seed++) {
+      const s = shaped(seed);
+      const c = s.current();
+      const sum = String(c.op === '+' ? c.a + c.b : c.a - c.b);
+      const ans = String(s.correctAnswer());
+      if (sum.length <= ans.length || sum.slice(0, ans.length) === ans) continue;
+      s.typeAnswer(Number(sum));
+      expect(s.answerText()).toBe(sum.slice(0, ans.length));
+      s.tap('[data-key="submit"]');
+      expect(s.saved).toHaveLength(0);
+      expect(s.q('[data-role="answer"]')!.classList.contains('faded')).toBe(true);
+      return;
+    }
+    throw new Error('no seed gave a sum longer than the blank');
   });
 
   test('two hints show two bubbles and no ghost digits; Hint is then disabled', () => {

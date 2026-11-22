@@ -64,5 +64,9 @@ test('maxLevel: a level-up past it is no change, below it still moves', () => {
 test('maxLevel: pickLevel never goes above it', () => {
   const rng = mulberry32(5);
   for (let i = 0; i < 1000; i++) expect(pickLevel(normal(2), rng, 2)).toBeLessThanOrEqual(2);
+  const free = mulberry32(5);
+  const seen = new Set<number>();
+  for (let i = 0; i < 1000; i++) seen.add(pickLevel(normal(2), free));
+  expect(seen.has(3)).toBe(true);
 });
 test('SHAPE_MAX_STAGE is 3', () => expect(SHAPE_MAX_STAGE).toBe(3));

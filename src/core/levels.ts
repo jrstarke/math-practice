@@ -24,5 +24,7 @@ export function targetMs(p: Problem): number {
 
 /** Maximum length of the answer for this problem. */
 export function maxAnswerLength(p: Problem): number {
+  // A blank shape draws one box per digit of the number she types, so that is all she may type.
+  if (p.shape !== undefined) return answerColumns(p);
   return OPS[p.op].maxAnswerLen(p);
 }

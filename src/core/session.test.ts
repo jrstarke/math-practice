@@ -271,3 +271,16 @@ test('two perfect shape answers raise the stage only when arithmetic allows', ()
   expect(run(atLevels(2))).toBe(2);
   expect(run(atLevels(1))).toBe(1);
 });
+
+test('an identical shape problem in recent is held back by the repeat check at share 1', () => {
+  const p = { ...defaultProgress(), unlocked: ['addition' as OpKey] };
+  const first = nextProblem(p, [], mulberry32(1), 1);
+  expect(first.shape).toBeDefined();
+  let repeats = 0;
+  for (let seed = 1; seed < 400; seed++) {
+    if (same(nextProblem(p, [], mulberry32(seed), 1), first)) repeats++; // the generator does produce it unchecked
+    expect(same(nextProblem(p, [first], mulberry32(seed), 1), first)).toBe(false);
+  }
+  expect(repeats).toBeGreaterThan(0);
+});
+const same = (x: Problem, y: Problem) => x.op === y.op && x.a === y.a && x.b === y.b && x.shape === y.shape && x.c === y.c;

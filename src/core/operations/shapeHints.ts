@@ -27,9 +27,9 @@ function solvedText(p: Problem): string {
   const ans = answerOf(p);
   if (p.shape === 'balance') {
     const s = p.a + p.b;
-    return `${p.a} + ${p.b} = ${s}, and ${p.c} + ${ans} = ${s}, so the missing number is ${ans}.`;
+    return `${p.a} + ${p.b} = ${s}, and ${ans} + ${p.c} = ${s}, so the missing number is ${ans}.`;
   }
-  return `${p.a} ${p.op} ${p.b} = ${resultOf(p)}, so the missing number is ${ans}.`;
+  return `${p.a} ${p.op === '-' ? '−' : '+'} ${p.b} = ${resultOf(p)}, so the missing number is ${ans}.`;
 }
 
 /** Two short hints, then the solved sentence with the typed number ghosted in (Pass only). */

@@ -1,4 +1,7 @@
-import { matchesLevel, targetMs } from './levels';
+import { matchesLevel, maxAnswerLength, targetMs } from './levels';
+import { initialEntry, pressKey, type Key } from './entry';
+import { OPS } from './operations/registry';
+import type { Problem } from './types';
 
 test.each([
   ['+', 3, 5, 1], ['+', 7, 8, 2], ['+', 23, 4, 3], ['+', 34, 25, 4], ['+', 27, 8, 5],
@@ -30,4 +33,20 @@ test('matchesLevel on shapes', () => {
   expect(matchesLevel({ ...bal, c: 8 })).toBe(false);
   expect(matchesLevel({ ...bal, c: undefined })).toBe(false);
   expect(matchesLevel({ ...bal, op: '-', a: 13, b: 5 })).toBe(false);
+});
+
+test('maxAnswerLength: the box count for a blank shape, the usual limit otherwise', () => {
+  expect(maxAnswerLength({ op: '+', a: 6, b: 4, level: 1, shape: 'missing-b', stage: 1 })).toBe(1);
+  expect(maxAnswerLength({ op: '+', a: 40, b: 25, level: 4, shape: 'missing-b', stage: 3 })).toBe(2);
+  const plain = { op: '+', a: 34, b: 25, level: 4 } as const;
+  expect(maxAnswerLength(plain)).toBe(OPS['+'].maxAnswerLen(plain));
+});
+
+test('a one-box blank holds typing at one digit, a two-box blank fills both, and the sum cannot show a misleading digit', () => {
+  const one = { op: '+', a: 6, b: 4, level: 1, shape: 'missing-b', stage: 1 } as const; // 6 + [] = 10
+  const press = (p: Problem, keys: Key[]) => keys.reduce((s, k) => pressKey(s, k, maxAnswerLength(p)).state, initialEntry());
+  expect(press(one, ['1', '4']).answer).toBe('1');
+  expect(press(one, ['1', '0']).answer).toBe('1');
+  const two = { op: '+', a: 40, b: 25, level: 4, shape: 'missing-b', stage: 3 } as const;
+  expect(press(two, ['2', '5', '9']).answer).toBe('25');
 });
