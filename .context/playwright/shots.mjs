@@ -8,7 +8,7 @@ const views = process.env.VIEWS ? JSON.parse(process.env.VIEWS) : [
   ['ipad-p', 820, 1180], ['ipad-l', 1180, 820], ['ipad-l-tab', 1180, 745], ['ipad102-l-tab', 1080, 740], ['ipad102-p', 810, 1080], ['ipad102-p-tab', 810, 1005], ['se-land', 667, 375], ['ip15-land', 852, 393], ['ip15-land-notch', 852, 393],
   ['ipad6-l', 1024, 768], ['ipad6-l-tabs', 1024, 665], ['ipad102-l-tabs', 1080, 707], ['ipad6-p-tabs', 768, 918],
 ];
-const STORAGE_KEY = 'math-practice-progress-v9';
+const STORAGE_KEY = 'math-practice-progress-v10';
 const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const TODAY = ymd(new Date()), YESTERDAY = ymd(new Date(Date.now() - 86_400_000));
 const ATTEMPT_CAP = 20;
@@ -22,7 +22,7 @@ const LEVELS = OP === '÷' ? [1, 2, 6, 7, 8, 9] : [1, 7, 8, 9];
 const nine = { level: 9, window: [], calibrationLeft: 0 };
 function progressFor(level) {
   return {
-    version: 9,
+    version: 10,
     unlocked: ['addition', 'subtraction', 'multiplication', 'division'],
     addition: nine,
     subtraction: nine,
@@ -33,6 +33,7 @@ function progressFor(level) {
     // Hidden just now, so there's no welcome: flows that want one set hiddenAt: null.
     day: { date: null, right: 0, days: 0, lastDone: null, practised: 0 }, hiddenAt: Date.now(),
     world: { items: [], picksUsed: 0, offer: null },
+    shapes: { addition: { level: 1, window: [], calibrationLeft: 10 }, subtraction: { level: 1, window: [], calibrationLeft: 10 } },
   };
 }
 
@@ -121,7 +122,9 @@ function measure([longHint, expect]) {
 // ROBO_ONLY=1 skips the per-level picture checks and runs only the Robo flow below.
 // WORLD_ONLY=1 runs only the world flow at the end.
 const WORLD_ONLY = !!process.env.WORLD_ONLY;
-for (const level of process.env.ROBO_ONLY || WORLD_ONLY ? [] : LEVELS) {
+// SHAPES_ONLY=1 runs just the blank-shapes flow at the end.
+const SHAPES_ONLY = !!process.env.SHAPES_ONLY;
+for (const level of process.env.ROBO_ONLY || WORLD_ONLY || SHAPES_ONLY ? [] : LEVELS) {
   const progress = progressFor(level);
   for (const [name, w, h] of views) {
     for (const tip of [false, true]) {
@@ -149,7 +152,7 @@ for (const level of process.env.ROBO_ONLY || WORLD_ONLY ? [] : LEVELS) {
           if (name.endsWith('notch')) await page.addInitScript(() => addEventListener('DOMContentLoaded', () => {
             const s = document.createElement('style'); s.textContent = '.app{padding-left:59px!important;padding-right:59px!important}'; document.head.append(s);
           }));
-          await page.goto(URL);
+          await page.goto(URL + '?shapeShare=0');
           await page.waitForSelector('[data-role="answer"]', { state: 'attached' });
           const op = await page.$eval('[data-role="op"]', e => e.textContent);
           if (op === OP) { gotMult = true; break; }
@@ -212,17 +215,20 @@ const roboFixtures = {
 const dayFixture = n => ({ ...progressFor(1), total: 12, day: { date: TODAY, right: 9, days: n - 1, lastDone: YESTERDAY, practised: n - 1 },
   world: { items: [], picksUsed: Math.ceil((n - 1) / 3), offer: null } });
 
-async function open(name, w, h, progress, query = '') {
+// The dev-only ?shapeShare=0 keeps every other flow on plain arithmetic (a third of add/sub problems are blank shapes by default,
+// and answerNow reads the top/bottom rows a blank problem doesn't have); the shapes flow passes ?shapeShare=1 itself.
+const withShare = q => q.includes('shapeShare') ? q : q ? `${q}&shapeShare=0` : '?shapeShare=0';
+async function open(name, w, h, progress, query = '', seed = 7919) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true, isMobile: w < 1000, reducedMotion: RM ? 'reduce' : 'no-preference' });
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', e => errors.push('PAGEERROR ' + e.message));
-  await page.addInitScript(([p, key]) => {
+  await page.addInitScript(([p, key, s]) => {
     localStorage.setItem(key, JSON.stringify({ ...p, installTipShown: true }));
     let first = true; const real = Date.now;
-    Date.now = () => (first ? (first = false, 7919) : real());
-  }, [progress, STORAGE_KEY]);
-  await page.goto(URL + query);
+    Date.now = () => (first ? (first = false, s) : real());
+  }, [progress, STORAGE_KEY, seed]);
+  await page.goto(URL + withShare(query));
   await page.waitForSelector('[data-role="answer"]', { state: 'attached' });
   await page.waitForTimeout(300); // first ResizeObserver measure
   return { ctx, page, errors };
@@ -275,7 +281,7 @@ const momentCheck = page => page.evaluate(() => {
   return issues;
 });
 
-for (const [name, w, h] of WORLD_ONLY ? [] : views) {
+for (const [name, w, h] of WORLD_ONLY || SHAPES_ONLY ? [] : views) {
   const issues = new Set();
   const add = (tag, list) => list.forEach(i => issues.add(`${i} [${tag}]`));
   const shot = (page, state) => page.screenshot({ path: `${OUT}/robo-${name}-${state}${RM ? '-rm' : ''}.png` });
@@ -374,7 +380,7 @@ for (const [name, w, h] of WORLD_ONLY ? [] : views) {
 // ---- Short lane: every celebration on the dev preview with a 56 px lane (the smallest momentSize gives), every
 // animation stepped through 5%..95%: slots, balls, goal and (in scenes that don't rotate them) robots' drawn bodies
 // stay inside the lane. The words are left out: their 3-line box is taller than a 56 px lane (a known, older issue).
-if (!WORLD_ONLY) {
+if (!WORLD_ONLY && !SHAPES_ONLY) {
   const scenes = ['high-five', 'jump-together', 'pass', 'dance', 'tower', 'keepy-uppy', 'light-show', 'header', 'cartwheel',
     ...['walk', 'walk-friend', 'dribble', 'hop', 'stop-wave', 'ball-ride', 'cartwheel'].map(x => `stars-${x}`), 'conga-2', 'conga-10'];
   const ROTATING = ['cartwheel', 'dance', 'light-show', 'ball-ride', 'header'];
@@ -513,7 +519,7 @@ const smallRoboCheck = ([items, moment, rm]) => {
   return { out, stats: { hMax, raw: +raw.toFixed(1), door: +door.toFixed(1), floored, feetY: Math.round(feetY), covers: Math.max(0, ...covers) } };
 };
 
-for (const [name, w, h] of views.filter(([n]) => WORLD_VIEWS.includes(n))) {
+for (const [name, w, h] of SHAPES_ONLY ? [] : views.filter(([n]) => WORLD_VIEWS.includes(n))) {
   const issues = new Set();
   const add = (tag, list) => list.forEach(i => issues.add(`${i} [${tag}]`));
   const shot = (page, state) => page.screenshot({ path: `${OUT}/world-${name}-${state}${RM ? '-rm' : ''}.png` });
@@ -704,7 +710,7 @@ const SCALE_MOMENTS = [
   ['conga', 99, '', 'conga', { right: 0, days: 3, practised: 3 }],
   ['day', 41, '', 'day', { right: 9, days: 2, practised: 2 }],
 ];
-for (const [name, w, h] of views.filter(([n]) => SCALE_VIEWS.includes(n))) {
+for (const [name, w, h] of SHAPES_ONLY ? [] : views.filter(([n]) => SCALE_VIEWS.includes(n))) {
   const issues = new Set();
   const stats = [];
   for (const [wname, items] of Object.entries(SCALE_WORLDS)) {
@@ -730,6 +736,99 @@ for (const [name, w, h] of views.filter(([n]) => SCALE_VIEWS.includes(n))) {
   if (!ok) failures++;
   console.log(`scale-${name}`.padEnd(22), ok ? 'ok' : 'FAIL', ok ? '' : '\n    ' + [...issues].slice(0, 20).join('\n    '));
   if (process.env.STATS) console.log('    ' + stats.join('\n    '));
+}
+
+// ---- Blank shapes (2026-11-22): `6 + [ ] = 10` and its kin, per view in WORLD_VIEWS (her iPad both ways, a landscape iPad, a phone).
+// Fixture: addition level 4 (so every stage's numbers are allowed), only addition unlocked, no welcome, shapes.addition at stage
+// 1, 2 and 3 in turn (still calibrating, so every problem is exactly that stage), ?shapeShare=1 (every addition problem is a blank).
+// Per stage x seed (a different first Date.now each, so a different problem): fresh, hint 1, rotated mid-hint and back, hint 2 (and
+// any further hint until the button stops), Pass (and the answer shown). Each state runs measure() (problem, answer, bubble, picture,
+// controls, Robo against each other and the screen) plus blankCheck (the sum fits its box: one line, parts not overlapping, boxes
+// inside it, a box and a digit big enough, the shape belongs to the stage). SHAPE_SEEDS=n sets the seeds per stage (default 24: stage 2 has three shapes, 8 seeds never drew flipped).
+// Screenshots: OUT/shapes-<view>-s<stage>-<state>.png (first seed only).
+const SHAPE_SEEDS = +(process.env.SHAPE_SEEDS ?? 24);
+const shapeFixture = stage => ({ ...progressFor(1), unlocked: ['addition'], welcome: null, total: 41,
+  addition: { level: 4, window: [], calibrationLeft: 0 },
+  shapes: { addition: { level: stage, window: [], calibrationLeft: 10 }, subtraction: { level: 1, window: [], calibrationLeft: 10 } } });
+const blankCheck = ([stage]) => {
+  const out = [];
+  const prob = document.querySelector('.problem'), line = document.querySelector('.blank-line');
+  if (!prob?.classList.contains('blank-problem') || !line) return ['not a blank problem'];
+  const shape = prob.dataset.shape;
+  const pr = prob.getBoundingClientRect(), lr = line.getBoundingClientRect();
+  if (lr.left < pr.left - 1 || lr.right > pr.right + 1 || lr.top < pr.top - 1 || lr.bottom > pr.bottom + 1) out.push('the sum spills out of the problem box');
+  if (line.scrollWidth > line.clientWidth + 1) out.push(`the sum is wider than its line ${line.scrollWidth}>${line.clientWidth}`);
+  if (lr.left < -1 || lr.right > innerWidth + 1) out.push('the sum is off-screen x');
+  const parts = [...line.children].map(e => e.getBoundingClientRect());
+  const tops = parts.map(b => b.top);
+  if (Math.max(...tops) - Math.min(...tops) > Math.max(...parts.map(b => b.height)) * 0.75) out.push('the sum wraps to more than one line');
+  for (let i = 1; i < parts.length; i++) if (parts[i].left < parts[i - 1].right - 1) out.push(`part ${i} overlaps part ${i - 1}`);
+  const answer = document.querySelector('[data-role="answer"]'), ar = answer.getBoundingClientRect();
+  if (ar.left < lr.left - 1 || ar.right > lr.right + 1) out.push('the answer boxes are outside the sum');
+  const cells = [...answer.querySelectorAll('.cell')].map(c => c.getBoundingClientRect());
+  if (!cells.length) out.push('no answer boxes');
+  if (cells.some(c => c.height < 38 || c.width < 20)) out.push(`a box is ${Math.round(Math.min(...cells.map(c => c.width)))}x${Math.round(Math.min(...cells.map(c => c.height)))}`);
+  const term = line.querySelector('.term');
+  if (term && parseFloat(getComputedStyle(term).fontSize) < 20) out.push(`digits are ${getComputedStyle(term).fontSize}`);
+  const stageShapes = { 1: ['missing-b'], 2: ['missing-a', 'flipped', 'balance'], 3: ['missing-b', 'missing-a'] }[stage];
+  if (!stageShapes.includes(shape)) out.push(`shape ${shape} is not a stage ${stage} shape`);
+  if (stage === 3 && !(+prob.dataset.a >= 10 || +prob.dataset.b >= 10)) out.push('stage 3 has no two-digit number');
+  return out;
+};
+const shapesSeen = {};
+for (const [name, w, h] of WORLD_ONLY ? [] : views.filter(([n]) => WORLD_VIEWS.includes(n))) {
+  const issues = new Set();
+  const add = (tag, list) => list.forEach(i => issues.add(`${i} [${tag}]`));
+  for (const stage of [1, 2, 3]) {
+    for (let seed = 1; seed <= SHAPE_SEEDS; seed++) {
+      const { ctx, page, errors } = await open(name, w, h, shapeFixture(stage), '?shapeShare=1', seed * 7919);
+      const tagOf = s => `s${stage} seed ${seed} ${s}`;
+      const shot = state => seed === 1 ? page.screenshot({ path: `${OUT}/shapes-${name}-s${stage}-${state.replace(/ /g, '-')}.png` }) : null;
+      const snap = async (state, expect = expectFor(name)) => {
+        add(tagOf(state), (await page.evaluate(measure, [undefined, expect])).issues);
+        add(tagOf(state), await page.evaluate(blankCheck, [stage]));
+        await shot(state);
+      };
+      const shape = await page.$eval('.problem', e => e.dataset.shape ?? 'none');
+      (shapesSeen[`${name} s${stage}`] ??= new Set()).add(shape);
+      await snap('fresh');
+      let hints = 0;
+      for (; hints < 6; hints++) {
+        if (await page.$eval('[data-action="hint"]', b => b.disabled)) break;
+        await page.dispatchEvent('[data-action="hint"]', 'pointerdown');
+        await page.waitForTimeout(400);
+        await snap(`hint${hints + 1}`);
+        if (hints === 0) {
+          // A rotation mid-hint: the sum, its boxes and the hint still fit, then back where it was.
+          await page.setViewportSize({ width: h, height: w });
+          await page.waitForTimeout(500);
+          await snap('rotated', null);
+          await page.setViewportSize({ width: w, height: h });
+          await page.waitForTimeout(500);
+          await snap('rotated back');
+        }
+      }
+      if (hints < 1) add(tagOf('hints'), ['no hint available']);
+      // Hints stop one step short: they never put the answer's digits in the boxes.
+      const shown = await page.$eval('[data-role="answer"]', e => e.textContent.replace(/\s/g, ''));
+      if (shown) add(tagOf('hints'), [`a hint filled the boxes with "${shown}"`]);
+      await page.dispatchEvent('[data-action="pass"]', 'pointerdown');
+      await page.waitForTimeout(400);
+      await snap('passing');
+      for (let i = 0; i < 12 && !(await page.$('[data-action="next"]')); i++) await page.dispatchEvent('[data-role="bubble"]', 'pointerdown');
+      await page.waitForTimeout(300);
+      await snap('passed');
+      add(tagOf('errors'), errors); await ctx.close();
+    }
+  }
+  // Every shape of every stage must have been played (a seed count too low to draw them all fails, instead of passing quietly).
+  const STAGE_SHAPES = { 1: ['missing-b'], 2: ['missing-a', 'flipped', 'balance'], 3: ['missing-b', 'missing-a'] };
+  for (const st of [1, 2, 3]) for (const sh of STAGE_SHAPES[st]) if (!shapesSeen[`${name} s${st}`].has(sh)) issues.add(`shape ${sh} never drawn in stage ${st}; raise SHAPE_SEEDS [coverage]`);
+  const ok = issues.size === 0;
+  if (!ok) failures++;
+  const list = [...issues];
+  const seen = [1, 2, 3].map(s => `s${s}:${[...shapesSeen[`${name} s${s}`]].join('/')}`).join(' ');
+  console.log(`shapes-${name}`.padEnd(22), ok ? 'ok' : 'FAIL', seen, ok ? '' : '\n    ' + list.slice(0, 12).join('\n    ') + (list.length > 12 ? `\n    …+${list.length - 12}` : ''));
 }
 
 await browser.close();

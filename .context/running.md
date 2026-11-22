@@ -16,7 +16,7 @@
      mid-walk / high five / kick with a tap-through-the-pad check). `ROBO_ONLY=1` runs just that (~3 min);
      Since 2026-11-11 it also checks the welcome (fixture hiddenAt: null) and day celebrations day-1/3/7/12 (fixture: 9 right
      today, N−1 days up to yesterday, picksUsed = floor((N−1)/5) so day 7/12 owe no pick and play their celebration).
-     Fixtures are progress v9 with hiddenAt: Date.now() so other flows get no welcome;
+     Fixtures are progress v10 (key math-practice-progress-v10; `shapes` both {level:1, window:[], calibrationLeft:10}) with hiddenAt: Date.now() so other flows get no welcome;
      `RM=1` runs it with prefers-reduced-motion. Screenshots: out/robo-<view>-<state>.png (her iPad: ipad102-p, ipad102-p-tab).
      Every measured state also checks Robo never overlaps the problem, answer boxes, bubble, picture or controls.
   5. Celebrations (2026-11-11): the Robo flow also plays every level-up style, every 20-star style, conga-2 (total 99)
@@ -52,6 +52,16 @@
      applies: ip15-land and small phones), the day words on screen, a nearer house covers <= 60% of his box. Screenshots
      out/scale-<view>-<world>-<stars|conga|day>-<0|1>.png (-1 only for bottom-house); STATS=1 prints each case's numbers. Takes ~10 min with WORLD_ONLY=1;
      don't use `timeout` below 15 min. PUBLISH_PORT may be taken (5173): pass URL=http://localhost:<the port in dev.log>.
+  9. Blank shapes (2026-11-22): `?shapeShare=<0..1>` (dev only, src/main.ts, stripped from builds) sets the share of add/sub problems
+     that are blanks (default 1/3). shots.mjs adds `?shapeShare=0` to every flow except the shapes one (so `answerNow`, which reads the
+     top/bottom rows, and the op retry loop never meet a blank). The shapes flow (end of the script; `SHAPES_ONLY=1` runs just it, ~1 min
+     at SHAPE_SEEDS=3, default 24 (~15 min for four views; 8 seeds never drew stage 2 `flipped`); skipped by WORLD_ONLY) runs on ipad102-p, ipad102-p-tab, ipad102-l-tab and ip15 with `?shapeShare=1`
+     and a fixture of addition level 4, only addition unlocked, shapes.addition.level 1, 2, 3 in turn (calibrating, so each problem is
+     exactly that stage). Per stage x seed: fresh, hint 1, rotated mid-hint and back, hint 2, Pass; each state runs measure() (problem,
+     answer, bubble, picture, controls, Robo don't overlap or leave the screen) plus blankCheck (sum on one line inside its box, parts
+     not overlapping, boxes inside the sum and >= 38px, digits >= 20px, the shape belongs to the stage, stage 3 has a two-digit number).
+     Also asserts hints never fill the boxes and a hint exists. Screenshots out/shapes-<view>-s<stage>-<state>.png (first seed). The
+     line prints which shapes were seen per stage, and the flow FAILs if any shape of any stage was never drawn (raise SHAPE_SEEDS). Addition only (subtraction blanks are not in the flow).
   - Robo poses/moments preview (dev only, not built): /robo-preview.html and /robo-preview.html?moment=walk|walk-friend|<level-up style>|stars-<20-star style>|conga-2|conga-5|conga-10|kick|day-1|day-3|day-7|day-12|welcome|peek|surprise|wrong|right|up (&size=68 for a short lane)
   - Gotchas: $PUBLISH_PORT may already be taken by another process — then Vite picks the next port (check dev.log) and the
     URL must match. Vite's file watcher can miss edits on the /workspace mount: if a run looks like old code,
