@@ -432,7 +432,8 @@ export function mountApp(deps: AppDeps): { destroy(): void } {
   }
 
   function showNext() {
-    problem = nextProblem(progress, recent, rng);
+    // Task 6 wires AppDeps.shapeShare
+    problem = nextProblem(progress, recent, rng, 0);
     entry = initialEntry();
     attempt = { wrongSubmits: 0, hintsUsed: 0, passed: false, firstSubmitMs: 0 };
     firstSubmitted = false;

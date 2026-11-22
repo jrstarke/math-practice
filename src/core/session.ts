@@ -3,9 +3,10 @@ import { countRightAnswer } from './days';
 import { generate } from './generator';
 import { targetMs } from './levels';
 import { applyUnlocks, pickOp } from './path';
-import { opKey, type OpKey, type Progress } from './progress';
+import { opKey, type OpKey, type Progress, type ShapeKey } from './progress';
 import type { Rng } from './rng';
 import { score } from './scoring';
+import { makeShapeProblem, SHAPE_SHARE, stageCap } from './shapes';
 import type { Op, Problem } from './types';
 
 export const RECENT_LIMIT = 10;
@@ -18,12 +19,24 @@ export interface AttemptInput {
   firstSubmitMs: number;
 }
 
-const same = (x: Problem, y: Problem) => x.op === y.op && x.a === y.a && x.b === y.b;
+const same = (x: Problem, y: Problem) => x.op === y.op && x.a === y.a && x.b === y.b && x.shape === y.shape && x.c === y.c;
 
 /** Pick an unlocked operation and a level, and generate a problem not seen in `recent`. */
-export function nextProblem(p: Progress, recent: Problem[], rng: Rng): Problem {
+export function nextProblem(p: Progress, recent: Problem[], rng: Rng, shapeShare: number = SHAPE_SHARE): Problem {
   const op: Op = pickOp(p, rng);
-  const level = pickLevel(p[opKey(op)], rng);
+  const key = opKey(op);
+  const welcoming = p.welcome !== null && p.welcome.op === key && p.welcome.left > 0;
+  if ((op === '+' || op === '-') && shapeShare > 0 && !welcoming && rng() < shapeShare) {
+    const sk = key as ShapeKey;
+    const cap = stageCap(p, sk);
+    const stage = Math.min(pickLevel(p.shapes[sk], rng, cap), cap);
+    let problem = makeShapeProblem(op, stage, p[sk].level, rng);
+    for (let i = 1; i < MAX_TRIES && recent.some(r => same(r, problem)); i++) {
+      problem = makeShapeProblem(op, stage, p[sk].level, rng);
+    }
+    return problem;
+  }
+  const level = pickLevel(p[key], rng);
   let problem = generate(op, level, rng);
   for (let i = 1; i < MAX_TRIES && recent.some(r => same(r, problem)); i++) {
     problem = generate(op, level, rng);
@@ -43,6 +56,13 @@ export function recordResult(p: Progress, problem: Problem, a: AttemptInput, tod
   const dayDone = counted.completed;
   const progress: Progress = { ...p, streak, bestStreak: Math.max(p.bestStreak, streak), total: p.total + (clean ? 1 : 0), welcome, day: counted.streak };
 
+  if (problem.shape) {
+    const sk = key as ShapeKey;
+    if (problem.stage !== p.shapes[sk].level) return { progress, levelChange: 0, unlocked: [], dayDone };
+    const { state } = update(p.shapes[sk], score({ ...a, targetMs: targetMs(problem) }), stageCap(p, sk));
+    progress.shapes = { ...p.shapes, [sk]: state };
+    return { progress, levelChange: 0, unlocked: [], dayDone };
+  }
   if (problem.level !== p[key].level) return { progress, levelChange: 0, unlocked: [], dayDone };
 
   const { state, change } = update(p[key], score({ ...a, targetMs: targetMs(problem) }));

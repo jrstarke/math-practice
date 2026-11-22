@@ -1,4 +1,8 @@
-import { defaultProgress, type OpKey, type Progress } from './progress';
+import { generate } from './generator';
+import { matchesLevel } from './levels';
+import { pickLevel } from './adaptive';
+import { pickOp } from './path';
+import { defaultProgress, opKey, type OpKey, type Progress } from './progress';
 import { mulberry32 } from './rng';
 import { nextProblem, recordResult, RECENT_LIMIT } from './session';
 import type { Problem } from './types';
@@ -23,7 +27,7 @@ test('nextProblem avoids the last 10 problems', () => {
   };
   for (let i = 0; i < 200; i++) {
     const n = nextProblem(p, recent, rng);
-    expect(recent.some(r => r.op === n.op && r.a === n.a && r.b === n.b)).toBe(false);
+    expect(recent.some(r => r.op === n.op && r.a === n.a && r.b === n.b && r.shape === n.shape && r.c === n.c)).toBe(false);
     recent.push(n);
     if (recent.length > RECENT_LIMIT) recent.shift();
   }
@@ -181,4 +185,89 @@ describe('the day streak', () => {
     expect(r.dayDone).toBeNull();
     expect(r.progress.day).toEqual(p.day);
   });
+});
+
+// ---- Shape problems (Task 4) ----
+const atLevels = (add: number, sh = 1): Progress => ({
+  ...defaultProgress(),
+  unlocked: both,
+  addition: calibrating(add),
+  subtraction: calibrating(add),
+  shapes: { addition: calibrating(sh), subtraction: calibrating(sh) },
+});
+
+test('share 1 on a default progress gives stage-1 missing-b that matches its level', () => {
+  const rng = mulberry32(1);
+  for (let i = 0; i < 30; i++) {
+    const n = nextProblem(defaultProgress(), [], rng, 1);
+    expect(n.shape).toBe('missing-b');
+    expect(n.stage).toBe(1);
+    expect(matchesLevel(n)).toBe(true);
+  }
+});
+
+test('share 0 never gives a shape and leaves the rng sequence as before', () => {
+  const a = mulberry32(9), b = mulberry32(9);
+  const p = at4();
+  for (let i = 0; i < 50; i++) {
+    const n = nextProblem(p, [], a, 0);
+    expect(n.shape).toBeUndefined();
+    const op = pickOp(p, b);
+    expect(n).toEqual(generate(op, pickLevel(p[opKey(op)], b), b));
+  }
+});
+
+test('stage never exceeds 3 or the arithmetic level', () => {
+  const rng = mulberry32(2);
+  const hi = atLevels(6);
+  const seen = new Set<number>();
+  for (let i = 0; i < 100; i++) seen.add(nextProblem(hi, [], rng, 1).stage!);
+  expect(Math.max(...seen)).toBeLessThanOrEqual(3);
+  expect([...seen]).toEqual([1]);
+  const lo = atLevels(2, 3);
+  for (let i = 0; i < 100; i++) expect(nextProblem(lo, [], rng, 1).stage!).toBeLessThanOrEqual(2);
+});
+
+test('no shape during a welcome', () => {
+  const rng = mulberry32(3);
+  const p = { ...atLevels(4), welcome: { op: 'subtraction' as OpKey, left: 3 } };
+  for (let i = 0; i < 100; i++) {
+    const n = nextProblem(p, [], rng, 1);
+    if (n.op === '-') expect(n.shape).toBeUndefined();
+  }
+});
+
+test('a shape problem is not suppressed by the same plain problem in recent', () => {
+  const rng = mulberry32(4);
+  const recent: Problem[] = [{ op: '+', a: 6, b: 4, level: 1 }];
+  const seen = new Set<string>();
+  for (let i = 0; i < 300; i++) {
+    const n = nextProblem(defaultProgress(), recent, rng, 1);
+    seen.add(`${n.a}+${n.b}`);
+  }
+  expect(seen.has('6+4')).toBe(true);
+});
+
+test('shape answers adapt only the shape ladder', () => {
+  const start = atLevels(4);
+  const prob: Problem = { op: '+', a: 6, b: 4, level: 1, shape: 'missing-b', stage: 1 };
+  const r = record(start, prob, clean);
+  expect(r.progress.shapes.addition.window.length).toBe(1);
+  expect(r.progress.addition).toEqual(start.addition);
+  expect(r.levelChange).toBe(0);
+  expect(r.unlocked).toEqual([]);
+  expect(r.progress.streak).toBe(start.streak + 1);
+  const miss = record(start, prob, { ...clean, passed: true });
+  expect(miss.progress.addition.level).toBe(4);
+  expect(miss.progress.shapes.addition.level).toBe(1);
+  const other = record(start, { ...prob, stage: 2 }, clean);
+  expect(other.progress.shapes).toEqual(start.shapes);
+  expect(other.progress.total).toBe(start.total + 1);
+});
+
+test('two perfect shape answers raise the stage only when arithmetic allows', () => {
+  const prob: Problem = { op: '+', a: 6, b: 4, level: 1, shape: 'missing-b', stage: 1 };
+  const run = (p: Progress) => record(record(p, prob, clean).progress, prob, clean).progress.shapes.addition.level;
+  expect(run(atLevels(2))).toBe(2);
+  expect(run(atLevels(1))).toBe(1);
 });
