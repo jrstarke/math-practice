@@ -8,7 +8,7 @@
   - Research: docs/research/2026-11-19-bc-curriculum-gaps.md and 2026-11-20-bc-curriculum-recommendation.md (shapes = item 1; later items: skip-counting, place value, mental-strategy hints, coins, even/odd).
   - The user confirmed all my calls (1/3 share, 70/20/10, hints, no shape in the welcome).
 
-- **2026-11-22: blank shapes BUILT on feat/blank-shapes (b5f64a5; 908 tests; local, not pushed, not merged). Final review + one fix wave + re-review done. Waiting on the user: merge to main and push dev? Open question: the `9 + [] = 10` typed-sum edge (see decisions.md). Subtraction blanks never checked in a browser.**
+- **2026-11-23: blank shapes is LIVE on dev and prod (main = bbf8c1a on both; merged and pushed at the user's word). Blank is at least 2 boxes wide (closed the typed-sum edge). Still unverified in a browser: subtraction blanks. Next: her iPad check (wip notes above), then release 3 (the world grows) or the next curriculum item (skip-counting, place value, mental-strategy hints).**
 
 ## (earlier) release 3 resume notes, 2026-11-15 night
 - **Release 3 brainstorm IN PROGRESS (2026-11-15): "the world grows". Next step: write the full design doc docs/superpowers/specs/2026-11-15-world-grows-design.md (project size), run the builder check (fresh subagent, brainstorming/builder-check-prompt.md), then the user approves it, then superpowers:writing-plans. Nothing built; the user has not yet answered my last message (list of my calls + "anything to change, or shall I write it up?").**
