@@ -1,4 +1,5 @@
-import { answerOf, resultOf } from '../core/arith';
+import { resultOf } from '../core/arith';
+import { maxAnswerLength } from '../core/levels';
 import { el } from './dom';
 import type { ProblemViewModel } from './problemView';
 
@@ -6,12 +7,13 @@ import type { ProblemViewModel } from './problemView';
  * Re-render a blank-shape problem: the whole sum on one line, with the blank as the answer boxes in place
  * (`6 + [ ] = 10`, `[ ] + 5 = 12`, `12 = 5 + [ ]`, `8 + 3 = [ ] + 5`). The boxes are the same `.cell`s, `data-role="answer"`
  * row and faded/correct/focused classes the other views use, so typing, shake and the ghost overlay work unchanged.
- * The box count is the digit count of the number she types (answerOf), and digits fill from the right.
+ * There are always at least BLANK_MIN_BOXES boxes (so a 10 fits, and the count doesn't give away the answer's length),
+ * more if the answer is longer (maxAnswerLength); digits fill from the right.
  */
 export function renderBlankProblem(container: HTMLElement, vm: ProblemViewModel): void {
   const { problem: p, entry, ghosts, highlight, phase } = vm;
   const shape = p.shape ?? 'missing-b';
-  const cols = Math.max(1, String(answerOf(p)).length);
+  const cols = maxAnswerLength(p);
   const sign = p.op === '-' ? '−' : '+';
 
   // A row of `cols` cells, highest column on the left (the ones digit is column 0).

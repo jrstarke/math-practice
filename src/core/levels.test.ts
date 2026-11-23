@@ -1,4 +1,4 @@
-import { matchesLevel, maxAnswerLength, targetMs } from './levels';
+import { BLANK_MIN_BOXES, matchesLevel, maxAnswerLength, targetMs } from './levels';
 import { initialEntry, pressKey, type Key } from './entry';
 import { OPS } from './operations/registry';
 import type { Problem } from './types';
@@ -35,18 +35,21 @@ test('matchesLevel on shapes', () => {
   expect(matchesLevel({ ...bal, op: '-', a: 13, b: 5 })).toBe(false);
 });
 
-test('maxAnswerLength: the box count for a blank shape, the usual limit otherwise', () => {
-  expect(maxAnswerLength({ op: '+', a: 6, b: 4, level: 1, shape: 'missing-b', stage: 1 })).toBe(1);
+test('maxAnswerLength: at least BLANK_MIN_BOXES for a blank shape, the usual limit otherwise', () => {
+  expect(BLANK_MIN_BOXES).toBe(2);
+  expect(maxAnswerLength({ op: '+', a: 6, b: 4, level: 1, shape: 'missing-b', stage: 1 })).toBe(2);
   expect(maxAnswerLength({ op: '+', a: 40, b: 25, level: 4, shape: 'missing-b', stage: 3 })).toBe(2);
+  expect(maxAnswerLength({ op: '+', a: 400, b: 250, level: 6, shape: 'missing-b', stage: 3 })).toBe(3);
   const plain = { op: '+', a: 34, b: 25, level: 4 } as const;
   expect(maxAnswerLength(plain)).toBe(OPS['+'].maxAnswerLen(plain));
 });
 
-test('a one-box blank holds typing at one digit, a two-box blank fills both, and the sum cannot show a misleading digit', () => {
+test('a one-digit blank holds two digits, so the sum shows (and is wrong); a third digit is held back', () => {
   const one = { op: '+', a: 6, b: 4, level: 1, shape: 'missing-b', stage: 1 } as const; // 6 + [] = 10
   const press = (p: Problem, keys: Key[]) => keys.reduce((s, k) => pressKey(s, k, maxAnswerLength(p)).state, initialEntry());
-  expect(press(one, ['1', '4']).answer).toBe('1');
-  expect(press(one, ['1', '0']).answer).toBe('1');
+  expect(press(one, ['1', '0']).answer).toBe('10');
+  expect(press(one, ['1', '0', '5']).answer).toBe('10');
+  expect(press(one, ['4']).answer).toBe('4');
   const two = { op: '+', a: 40, b: 25, level: 4, shape: 'missing-b', stage: 3 } as const;
   expect(press(two, ['2', '5', '9']).answer).toBe('25');
 });

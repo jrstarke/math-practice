@@ -20,7 +20,7 @@ const balance: Problem = { op: '+', a: 8, b: 3, c: 5, level: 2, shape: 'balance'
 test('missing-b reads a + [] = r', () => {
   const c = render(missingB);
   expect(flat(c)).toBe('6+=10');
-  expect(boxes(c).length).toBe(1);
+  expect(boxes(c).length).toBe(2);
   expect(c.querySelector('.problem')!.getAttribute('data-shape')).toBe('missing-b');
 });
 
@@ -40,7 +40,7 @@ test('flipped reads r = a + []', () => {
 test('balance reads a + b = [] + c, with the data attributes', () => {
   const c = render(balance);
   expect(flat(c)).toBe('8+3=+5');
-  expect(boxes(c).length).toBe(1);
+  expect(boxes(c).length).toBe(2);
   const p = c.querySelector<HTMLElement>('.problem')!;
   expect([p.dataset.shape, p.dataset.a, p.dataset.b, p.dataset.c]).toEqual(['balance', '8', '3', '5']);
 });
@@ -50,9 +50,37 @@ test('subtraction uses the minus sign', () => {
   expect(flat(c)).toBe('10−=4');
 });
 
-test('box count is the digit count of the typed number', () => {
+test('every blank has at least two boxes; more only when the answer has more digits', () => {
   expect(boxes(render({ op: '+', a: 23, b: 12, level: 3, shape: 'missing-b', stage: 3 })).length).toBe(2);
-  expect(boxes(render({ op: '+', a: 23, b: 4, level: 3, shape: 'missing-b', stage: 3 })).length).toBe(1);
+  expect(boxes(render({ op: '+', a: 23, b: 4, level: 3, shape: 'missing-b', stage: 3 })).length).toBe(2);
+  expect(boxes(render({ op: '+', a: 400, b: 250, level: 6, shape: 'missing-b', stage: 3 })).length).toBe(3);
+});
+
+test('a one-digit answer: the right digit lands in the ones box, the tens box stays empty', () => {
+  const cells = [...boxes(render(missingB, { ...initialEntry(), answer: '4' }))];
+  expect(cells.map(x => x.textContent)).toEqual(['', '4']);
+});
+
+test('typing 10 into 9 + [] shows 10 in both boxes', () => {
+  const nine: Problem = { op: '+', a: 9, b: 1, level: 1, shape: 'missing-b', stage: 1 };
+  const c = render(nine, { ...initialEntry(), answer: '10' });
+  expect([...boxes(c)].map(x => x.textContent)).toEqual(['1', '0']);
+  expect(flat(c)).toBe('9+10=10');
+});
+
+test('the answer 10 typed into 6 + [] = 10 shows 10 (the line reads 6 + 10 = 10)', () => {
+  expect(flat(render(missingB, { ...initialEntry(), answer: '10' }))).toBe('6+10=10');
+});
+
+test('ghost digits of a one-digit answer land in the ones box, the tens box empty', () => {
+  const c = render(missingB, initialEntry(), { ghosts: { 0: 4 } });
+  expect([...c.querySelectorAll('[data-role="ghosts"] .cell')].map(x => x.textContent)).toEqual(['', '4']);
+});
+
+test('the width estimate counts the real number of boxes', () => {
+  const units = (p: Problem) => Number(render(p).querySelector<HTMLElement>('.problem')!.style.getPropertyValue('--units'));
+  // 6 + [][] = 10: 2 boxes + 1 + 2 chars = 5, two signs
+  expect(units(missingB)).toBeCloseTo(5 * 0.85 + 3, 2);
 });
 
 test('typed digits fill the boxes from the right', () => {

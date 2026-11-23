@@ -1318,33 +1318,56 @@ describe('blank shapes', () => {
     expect(s.current()).not.toEqual(first);
   });
 
-  test('typing the sum instead of the blank is wrong', () => {
-    // The blank holds only as many digits as the answer, so skip a draw whose sum starts with the answer (9 + [] = 10).
-    let seed = 1;
-    let s = shaped(seed);
-    const sumOf = () => { const c = s.current(); return String(c.op === '+' ? c.a + c.b : c.a - c.b); };
-    while (sumOf().startsWith(String(s.correctAnswer()))) s = shaped(++seed);
-    s.typeAnswer(Number(sumOf()));
+  const sumOf = (s: ReturnType<typeof shaped>) => { const c = s.current(); return c.op === '+' ? c.a + c.b : c.a - c.b; };
+  const boxTexts = (s: ReturnType<typeof shaped>) =>
+    [...s.root.querySelectorAll('[data-role="answer"] .cell')].map(x => x.textContent);
+
+  test('typing the sum instead of the blank is wrong, and the sum shows in full', () => {
+    const s = shaped();
+    s.typeAnswer(sumOf(s));
+    expect(s.answerText()).toBe(String(sumOf(s)));
     s.tap('[data-key="submit"]');
     expect(s.saved).toHaveLength(0);
     expect(s.q('[data-role="answer"]')!.classList.contains('faded')).toBe(true);
   });
 
-  test('typing the sum into a short blank is wrong and shows only the first digit typed', () => {
-    for (let seed = 1; seed < 200; seed++) {
+  test('typing 10 for a sum of 10 that starts with the answer (9 + [] = 10) shows 10 and is wrong', () => {
+    for (let seed = 1; seed < 400; seed++) {
       const s = shaped(seed);
-      const c = s.current();
-      const sum = String(c.op === '+' ? c.a + c.b : c.a - c.b);
-      const ans = String(s.correctAnswer());
-      if (sum.length <= ans.length || sum.slice(0, ans.length) === ans) continue;
-      s.typeAnswer(Number(sum));
-      expect(s.answerText()).toBe(sum.slice(0, ans.length));
+      if (sumOf(s) !== 10 || !'10'.startsWith(String(s.correctAnswer()))) continue;
+      s.typeAnswer(10);
+      expect(s.answerText()).toBe('10');
       s.tap('[data-key="submit"]');
       expect(s.saved).toHaveLength(0);
       expect(s.q('[data-role="answer"]')!.classList.contains('faded')).toBe(true);
       return;
     }
-    throw new Error('no seed gave a sum longer than the blank');
+    throw new Error('no seed gave a sum of 10 that starts with the answer');
+  });
+
+  test('a one-digit answer has two boxes and sits in the ones box, which is right', () => {
+    for (let seed = 1; seed < 200; seed++) {
+      const s = shaped(seed);
+      if (String(s.correctAnswer()).length !== 1) continue;
+      expect(boxTexts(s)).toHaveLength(2);
+      s.typeAnswer(s.correctAnswer());
+      expect(boxTexts(s)).toEqual(['', String(s.correctAnswer())]);
+      s.tap('[data-key="submit"]');
+      expect(s.saved).toHaveLength(1);
+      return;
+    }
+    throw new Error('no one-digit answer');
+  });
+
+  test('a three-digit entry is held at two for a one-digit answer', () => {
+    for (let seed = 1; seed < 200; seed++) {
+      const s = shaped(seed);
+      if (String(s.correctAnswer()).length !== 1) continue;
+      s.typeAnswer(123);
+      expect(s.answerText()).toBe('12');
+      return;
+    }
+    throw new Error('no one-digit answer');
   });
 
   test('two hints show two bubbles and no ghost digits; Hint is then disabled', () => {
@@ -1371,6 +1394,19 @@ describe('blank shapes', () => {
     s.tap('[data-action="next"]');
     expect(s.q('[data-action="next"]')).toBeNull();
     expect(s.q('[data-role="answer"]')!.textContent).toBe('');
+  });
+
+  test('Pass puts a one-digit answer in the ones ghost box, the tens box empty', () => {
+    for (let seed = 1; seed < 200; seed++) {
+      const s = shaped(seed);
+      if (String(s.correctAnswer()).length !== 1) continue;
+      const answer = String(s.correctAnswer());
+      s.tap('[data-action="pass"]');
+      s.advance(10000);
+      expect([...s.root.querySelectorAll('[data-role="ghosts"] .cell')].map(x => x.textContent)).toEqual(['', answer]);
+      return;
+    }
+    throw new Error('no one-digit answer');
   });
 
   test('a shape miss leaves the arithmetic level alone', () => {

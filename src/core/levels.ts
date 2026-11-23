@@ -22,9 +22,12 @@ export function targetMs(p: Problem): number {
   return OPS[p.op].targetMs(p);
 }
 
+/** A blank shape always draws at least this many answer boxes, so a 10 fits and the box count never gives away the digit count. */
+export const BLANK_MIN_BOXES = 2;
+
 /** Maximum length of the answer for this problem. */
 export function maxAnswerLength(p: Problem): number {
-  // A blank shape draws one box per digit of the number she types, so that is all she may type.
-  if (p.shape !== undefined) return answerColumns(p);
+  // A blank shape draws BLANK_MIN_BOXES boxes (more if the answer is longer), and that is all she may type.
+  if (p.shape !== undefined) return Math.max(BLANK_MIN_BOXES, answerColumns(p));
   return OPS[p.op].maxAnswerLen(p);
 }

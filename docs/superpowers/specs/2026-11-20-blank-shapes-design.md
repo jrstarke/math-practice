@@ -52,7 +52,8 @@ Pass; and a miss on a shape never costs her an arithmetic level.
 - **No shape during the 3-problem welcome** after an unlock (my call): the new operation arrives in its ordinary form.
 - **The blank is typed into place.** The answer boxes sit where the blank is inside the sum (e.g. `6 + [ ][ ] = 10`),
   with the same number pad and the same answer-box behaviour as today (faded on a wrong answer, "correct" colour,
-  shake).
+  shake). The blank is always at least two boxes wide (more if the answer has more digits), so a 10 fits: typing the
+  sum of `9 + [ ] = 10` shows 10 and is wrong, and the box count does not give away the answer's digit count.
 - **Hints for shapes are their own, short, and stop one step short** (my call): e.g. "What do you add to 6 to make 10?",
   then counting up from 6. Each tap goes one step further; the last hint stops before the answer; only Pass shows it.
   They do not use the column hints.
